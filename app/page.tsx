@@ -664,7 +664,9 @@ export default function HomePage() {
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
                   layout
-                />
+                >
+                  {category}
+                </motion.button>
               ))}
             </motion.div>
           </motion.div>
@@ -710,7 +712,7 @@ export default function HomePage() {
                     }}
                   >
                     {/* Product Image */}
-                    <div className="relative h-72 overflow-hidden">
+                    <div className="relative aspect-square overflow-hidden">
                       <motion.div
                         className="absolute inset-0"
                         whileHover={{ scale: 1.1 }}
@@ -720,7 +722,7 @@ export default function HomePage() {
                           src={product.image}
                           alt={product.name}
                           fill
-                          className="object-cover"
+                          className="object-contain"
                         />
                       </motion.div>
                       
