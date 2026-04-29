@@ -26,7 +26,7 @@ const salesByCategory = [
 
 const recentOrders = [
   { id: '#ORD-7231', customer: 'Rohidas Sawant', product: 'Premium Desi Ghee (1L)', date: '2 mins ago', amount: '₹1,250', status: 'Processing' },
-  { id: '#ORD-7230', customer: 'Amit Patel', product: 'Organic Turmeric Powder', date: '1 hour ago', amount: '₹450', status: 'Shipped' },
+  { id: '#ORD-7230', customer: 'Amit Patel', product: 'Pure Turmeric Powder', date: '1 hour ago', amount: '₹450', status: 'Shipped' },
   { id: '#ORD-7229', customer: 'Priya Sharma', product: 'A2 Cow Milk (Monthly)', date: '3 hours ago', amount: '₹2,800', status: 'Delivered' },
   { id: '#ORD-7228', customer: 'Sanjay Kumar', product: 'Cold Pressed Mustard Oil', date: '5 hours ago', amount: '₹320', status: 'Delivered' },
   { id: '#ORD-7227', customer: 'Neha Singh', product: 'Himalayan Pink Salt', date: '1 day ago', amount: '₹150', status: 'Delivered' },

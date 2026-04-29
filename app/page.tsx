@@ -341,7 +341,7 @@ export default function HomePage() {
               >
                 <Sparkles className="w-4 h-4" />
               </motion.div>
-              <span>100% Natural & Ayurvedic</span>
+              <span>Pure & Farm-Sourced</span>
             </motion.div>
 
             <motion.h1
@@ -372,8 +372,8 @@ export default function HomePage() {
               variants={fadeInUp}
               transition={{ delay: 0.5 }}
             >
-              Discover the wisdom of ancient Ayurveda with our premium dehydrated powders,
-              heritage grains, and functional blends.
+              Experience the purity of farm-sourced heritage grains, pulses, and
+              premium dehydrated powders, delivered directly with no middleman.
             </motion.p>
 
             <motion.div
@@ -472,7 +472,7 @@ export default function HomePage() {
             variants={staggerContainer}
           >
             {[
-              { value: '100', suffix: '%', label: 'Natural Ingredients', icon: Leaf },
+              { value: 'Pure', label: 'Farm-Sourced', icon: Leaf },
               { value: `${products.length}`, suffix: '+', label: 'Product Range', icon: Package },
               { value: '1000', suffix: '+', label: 'Happy Customers', icon: Users },
               { value: 'Zero', label: 'Artificial Additives', icon: Shield },
@@ -976,7 +976,7 @@ export default function HomePage() {
                   { title: 'Sattvic', subtitle: 'सात्विक', desc: 'Pure & balanced foods' },
                   { title: 'Paushtik', subtitle: 'पौष्टिक', desc: 'Nutrient-rich formulas' },
                   { title: 'Paripurna', subtitle: 'परिपूर्ण', desc: 'Complete nourishment' },
-                  { title: 'Prakritik', subtitle: 'प्राकृतिक', desc: '100% Natural process' },
+                  { title: 'Prakritik', subtitle: 'प्राकृतिक', desc: 'Pure farm-sourced process' },
                 ].map((item, i) => (
                   <motion.div 
                     key={i} 

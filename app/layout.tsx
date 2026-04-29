@@ -11,8 +11,8 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Annavedah Foods | सात्विक, पौष्टिक आणि परिपूर्ण',
-  description: 'Traditional nutrition brand offering premium dehydrated powders, heritage grains, and Ayurvedic blends for holistic wellness. Pure, natural, and nutrient-rich.',
-  keywords: ['Annavedah', 'dehydrated powders', 'moringa', 'turmeric', 'ashwagandha', 'millet', 'ragi', 'spinach', 'ayurvedic', 'organic', 'natural foods'],
+  description: 'Traditional nutrition brand offering pure farm-sourced grains, pulses, and premium dehydrated powders for holistic wellness. Pure, authentic, and nutrient-rich.',
+  keywords: ['Annavedah', 'farm-sourced grains', 'pure pulses', 'dehydrated powders', 'moringa', 'turmeric', 'ashwagandha', 'millet', 'ragi', 'spinach', 'ayurvedic', 'pure foods'],
   authors: [{ name: 'Annavedah Foods' }],
   icons: {
     icon: [

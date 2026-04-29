@@ -1,4 +1,4 @@
-﻿export interface PackPrice {
+export interface PackPrice {
   size: string
   price: number
 }
@@ -71,32 +71,32 @@ const categoryDefaults: Record<
   }
 > = {
   Powders: {
-    description: 'Sun-dried ingredient powder for convenient daily nutrition.',
-    benefits: ['No synthetic additives', 'Easy daily use', 'Kitchen versatile'],
+    description: 'Pure farm-sourced ingredient powder for convenient daily nutrition.',
+    benefits: ['Pure & Farm-sourced', 'Easy daily use', 'Kitchen versatile'],
     usage: 'Mix into smoothies, soups, atta, batters, or warm water as needed.',
     highlights: [
       'Fine powder texture for quick mixing',
-      'Useful for home cooking and wellness routines',
+      'Farm-sourced for maximum purity',
       'Packed in practical family-size options',
     ],
   },
   Grains: {
-    description: 'Traditional grains selected for balanced everyday meals.',
-    benefits: ['Everyday staple', 'Traditional varieties', 'Family friendly'],
+    description: 'Pure, farm-sourced grains selected for balanced everyday meals.',
+    benefits: ['Everyday staple', 'Directly from farms', 'Family friendly'],
     usage: 'Wash, soak where needed, and cook as rice, bhakri, porridge, or rotis.',
     highlights: [
-      'Core kitchen essentials for regular use',
+      'Core kitchen essentials sourced with purity',
       'Works well for wholesome lunch and dinner meals',
       'Available in multiple pack sizes',
     ],
   },
   Pulses: {
-    description: 'Clean pulse range for dal, sprouts, and protein-rich meals.',
-    benefits: ['Protein source', 'Meal versatile', 'Suitable for regular cooking'],
+    description: 'Pure farm-sourced pulse range for dal, sprouts, and protein-rich meals.',
+    benefits: ['Protein source', 'Farm to kitchen', 'Suitable for regular cooking'],
     usage: 'Soak and cook as dal, curry, khichdi, sprouts, or flour blends.',
     highlights: [
       'Useful in daily Indian meal prep',
-      'Balanced choice for vegetarian protein',
+      'Pure choice for vegetarian protein',
       'Available in household quantity packs',
     ],
   },
@@ -674,21 +674,22 @@ export const blogPosts: BlogPost[] = [
 
 export const benefits = [
   {
-    title: 'Nutrient Focused',
-    description: 'Products designed for practical daily nutrition with minimal processing steps.',
+    title: 'Farm-Sourced & Pure',
+    description: 'Everything is farm-sourced with no middlemen, ensuring the best quality and purity for your family.',
   },
   {
-    title: 'Kitchen Friendly',
-    description: 'Easy to add into regular meals, snacks, and beverages without complexity.',
+    title: 'Nutrient Focused',
+    description: 'Products designed for practical daily nutrition with minimal processing steps and no hidden chemicals.',
   },
   {
     title: 'Traditional Range',
-    description: 'Includes powders, grains, pulses, and pantry essentials in one place.',
+    description: 'Includes pure grains, pulses, powders, and pantry essentials in one place.',
   },
   {
     title: 'Family Pack Options',
-    description: 'Multiple pack sizes available across major categories for household use.',
+    description: 'Multiple pack sizes available across major categories for convenient household use.',
   },
 ]
 
-export const categories: string[] = ['All', 'Powders', 'Grains', 'Pulses', 'Atta', 'Essentials', 'Papad', 'Chutney']
+export const categories: string[] = ['All', 'Grains', 'Pulses', 'Powders', 'Atta', 'Essentials', 'Papad', 'Chutney']
+

@@ -22,14 +22,14 @@ export default function HeritagePage() {
           <p className="text-sm font-semibold uppercase tracking-wide text-accent">Heritage</p>
           <h1 className="text-4xl font-bold text-primary md:text-5xl">Wisdom of generations, refined for today.</h1>
           <p className="text-lg text-foreground/80">
-            Annavedah brings together time-tested Indian nutrition and modern quality practices. Our name combines "Anna" (food) and "Veda" (knowledge), reflecting our commitment to nourishing traditions.
+            Annavedah brings together time-tested Indian nutrition and modern quality practices. Our name combines "Anna" (food) and "Veda" (knowledge), reflecting our commitment to nourishing traditions. Everything we do is to provide you with the best.
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             {[
               { title: 'Sattvic', subtitle: 'Pure & balanced foods' },
               { title: 'Paushtik', subtitle: 'Nutrient-rich formulations' },
               { title: 'Paripurna', subtitle: 'Complete nourishment' },
-              { title: 'Prakritik', subtitle: '100% natural processes' },
+              { title: 'Prakritik', subtitle: 'Pure farm-sourced processes' },
             ].map((item) => (
               <div key={item.title} className="rounded-2xl border border-border bg-card p-4">
                 <p className="text-sm font-semibold text-primary">{item.title}</p>
@@ -52,7 +52,7 @@ export default function HeritagePage() {
 
       <div className="grid gap-6 rounded-3xl border border-border bg-muted/20 p-10 md:grid-cols-3">
         {[
-          { title: 'Source', text: 'We work with growers who share our view on soil health, fair practices, and clean inputs.' },
+          { title: 'Source', text: 'Everything is farm-sourced with no middlemen. We work directly with growers who share our view on soil health and clean inputs.' },
           { title: 'Process', text: 'Low-temperature dehydration keeps micronutrients intact while removing excess moisture.' },
           { title: 'Testing', text: 'Every batch is tested for purity, potency, and consistency before it reaches you.' },
         ].map((item) => (
