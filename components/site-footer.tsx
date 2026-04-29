@@ -24,7 +24,8 @@ export function SiteFooter() {
         <div>
           <h4 className="text-lg font-semibold mb-3">Support</h4>
           <ul className="space-y-2 text-sm text-background/70">
-            <li><Link href="/returns" className="hover:text-accent transition-colors">Shipping & Returns</Link></li>
+            <li><Link href="/shipping" className="hover:text-accent transition-colors">Shipping Policy</Link></li>
+            <li><Link href="/returns" className="hover:text-accent transition-colors">Returns & Refunds</Link></li>
             <li>Quality & Testing</li>
             <li>Wholesale Enquiries</li>
           </ul>
@@ -48,6 +49,7 @@ export function SiteFooter() {
         <div className="flex flex-wrap justify-center gap-4 mb-4">
           <Link href="/privacy" className="hover:text-background transition-colors">Privacy Policy</Link>
           <Link href="/terms" className="hover:text-background transition-colors">Terms & Conditions</Link>
+          <Link href="/shipping" className="hover:text-background transition-colors">Shipping Policy</Link>
           <Link href="/returns" className="hover:text-background transition-colors">Cancellation & Refund Policy</Link>
         </div>
         (c) 2026 Annavedah Foods. Designed and created by Zyberweave.
