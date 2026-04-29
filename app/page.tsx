@@ -440,27 +440,48 @@ export default function HomePage() {
       
 
       {/* Hero Section with Full Image and Parallax */}
-      <section className="relative min-h-screen pt-32 lg:pt-40 overflow-hidden">
+      {/* h-screen = exactly one viewport — no overflow scroll */}
+      <section className="relative h-screen overflow-hidden">
         <motion.div 
           className="absolute inset-0"
           style={{ scale: heroScale, opacity: heroOpacity }}
         >
+          {/* Mobile image — portrait (shown below md) */}
+          <Image
+            src="/Products/hero_section mobile.jpeg"
+            alt="Annavedah Foods - Dehydrated Vegetable Powders"
+            fill
+            className="object-cover object-top md:hidden"
+            priority
+          />
+          {/* Tablet image — landscape tablet (shown md to lg) */}
+          <Image
+            src="/Products/hero_section_tablet.jpeg"
+            alt="Annavedah Foods - Dehydrated Vegetable Powders"
+            fill
+            className="object-cover object-center hidden md:block lg:hidden"
+            priority
+          />
+          {/* Desktop image — wide (shown lg and above) */}
           <Image
             src="/Products/Hero_section.jpeg"
             alt="Annavedah Foods - Dehydrated Vegetable Powders"
             fill
-            className="object-contain lg:object-cover"
+            className="object-cover hidden lg:block"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent" />
+          {/* Gradient overlay — stronger on mobile for text legibility over portrait image */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/50 md:bg-gradient-to-r md:from-black/55 md:via-black/25 md:to-transparent" />
         </motion.div>
         
         <motion.div 
-          className="relative z-10 container mx-auto px-4 h-[calc(100vh-80px)] flex items-center"
+          className="relative z-10 h-full flex items-center pt-20 md:pt-20 lg:pt-[136px]"
+          {/* pt offsets the fixed header: 80px mobile/tablet, 136px desktop */}
           style={{ y: heroY }}
         >
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <motion.div
-            className="max-w-xl"
+            className="max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-xl"
             initial="initial"
             animate="animate"
             variants={staggerContainer}
@@ -480,7 +501,7 @@ export default function HomePage() {
             </motion.div>
 
             <motion.h1
-              className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 text-white drop-shadow-lg"
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-4 md:mb-6 text-white drop-shadow-lg"
               variants={fadeInUp}
             >
               <motion.span 
@@ -503,7 +524,7 @@ export default function HomePage() {
             </motion.h1>
 
             <motion.p
-              className="text-lg md:text-xl text-white/90 max-w-lg leading-relaxed mb-8 drop-shadow"
+              className="text-base sm:text-lg md:text-xl text-white/90 max-w-xs sm:max-w-md md:max-w-xl leading-relaxed mb-6 md:mb-8 drop-shadow"
               variants={fadeInUp}
               transition={{ delay: 0.5 }}
             >
@@ -541,7 +562,9 @@ export default function HomePage() {
                 </Button>
               </motion.div>
             </motion.div>
+            </motion.div>
           </motion.div>
+          </div>
         </motion.div>
 
         {/* Animated Scroll indicator */}
