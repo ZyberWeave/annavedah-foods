@@ -6,6 +6,7 @@ import { CartProvider } from '@/components/cart-context'
 import Header from '@/components/Header'
 import FacebookPixel from '@/components/FacebookPixel'
 import Image from 'next/image'
+import Link from 'next/link'
 import { MapPin, Phone, Mail, Instagram, Facebook, MessageCircle, Globe } from 'lucide-react'
 import './globals.css'
 
@@ -31,7 +32,6 @@ export const metadata: Metadata = {
     locale: 'en_IN',
   },
 }
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -135,7 +135,7 @@ export default function RootLayout({
                   </li>
                   <li className="flex items-center gap-3">
                     <Phone className="w-5 h-5 text-[#c9a45c] flex-shrink-0" />
-                    <span>+91 98765 43210</span>
+                    <span>+91 97634 56100</span>
                   </li>
                   <li className="flex items-center gap-3">
                     <Mail className="w-5 h-5 text-[#c9a45c] flex-shrink-0" />
@@ -149,9 +149,10 @@ export default function RootLayout({
               <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-[#faf6f0]/60">
                 <p>© 2026 Annavedah Foods. All rights reserved.</p>
                 <div className="flex gap-6">
-                  <a href="#" className="hover:text-[#c9a45c] transition-colors">Privacy Policy</a>
-                  <a href="#" className="hover:text-[#c9a45c] transition-colors">Terms of Service</a>
-                  <a href="#" className="hover:text-[#c9a45c] transition-colors">Refund Policy</a>
+                  <Link href="/privacy" className="hover:text-[#c9a45c] transition-colors">Privacy Policy</Link>
+                  <Link href="/terms" className="hover:text-[#c9a45c] transition-colors">Terms & Conditions</Link>
+                  <Link href="/shipping" className="hover:text-[#c9a45c] transition-colors">Shipping Policy</Link>
+                  <Link href="/returns" className="hover:text-[#c9a45c] transition-colors">Cancellation, Return & Refund Policy</Link>
                 </div>
               </div>
             </div>
@@ -161,3 +162,4 @@ export default function RootLayout({
     </html>
   )
 }
+
