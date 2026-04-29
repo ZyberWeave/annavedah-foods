@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Undo2, Ban, HelpCircle, Mail, Phone, Clock, FileText, CheckCircle2 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Cancellation & Refund Policy | Annavedah Foods',
+  title: 'Cancellation, Return & Refund Policy | Annavedah Foods',
   description: 'Our policy regarding order cancellations, returns, and refunds at Annavedah Foods.',
 }
 
@@ -21,8 +21,8 @@ export default function ReturnsPage() {
             {/* Introduction */}
             <section className="prose prose-lg text-[#6b5347] max-w-none">
               <p>
-                At Annavedah Foods, we take pride in delivering authentic, high-quality food products. 
-                Due to the perishable and consumable nature of our offerings, we follow a carefully structured 
+                At Annavedah Foods, we take pride in delivering authentic, high-quality food products.
+                Due to the perishable and consumable nature of our offerings, we follow a carefully structured
                 cancellation and return policy to maintain hygiene, quality, and fairness.
               </p>
             </section>
@@ -52,13 +52,13 @@ export default function ReturnsPage() {
                   </h3>
                   <div className="grid gap-3">
                     {[
-                      { label: 'Cancelled before processing', value: '5% transaction fee' },
-                      { label: 'Cancelled after processing but before dispatch', value: '10% processing fee' },
-                      { label: 'If shipping has already been arranged', value: 'Shipping charges will be deducted' },
+                      { label: 'If cancelled before processing', value: '5% transaction fee will be deducted' },
+                      { label: 'If cancelled after processing but before dispatch', value: '10% processing fee will be deducted' },
+                      { label: 'If shipping has already been arranged', value: 'Shipping charges will also be deducted' },
                     ].map((charge, i) => (
-                      <div key={i} className="flex justify-between items-center py-2 border-b border-[#e8ddd0] last:border-0 text-sm">
+                      <div key={i} className="flex justify-between items-center py-2 border-b border-[#e8ddd0] last:border-0 text-sm gap-3">
                         <span className="text-[#6b5347]">{charge.label}</span>
-                        <span className="font-semibold text-[#8b1a1a]">{charge.value}</span>
+                        <span className="font-semibold text-[#8b1a1a] text-right">{charge.value}</span>
                       </div>
                     ))}
                   </div>
@@ -67,7 +67,7 @@ export default function ReturnsPage() {
                 <div className="mt-6 p-4 bg-[#8b1a1a]/5 rounded-xl border border-[#8b1a1a]/10">
                   <h3 className="font-bold text-[#8b1a1a] mb-2">Cancellation After Dispatch</h3>
                   <p className="text-sm text-[#6b5347]">
-                    If you request cancellation after the order has been shipped, the refund (if applicable) 
+                    If you request cancellation after the order has been shipped, the refund (if applicable)
                     will be processed after deducting both forward and return shipping charges.
                   </p>
                 </div>
@@ -82,11 +82,12 @@ export default function ReturnsPage() {
               </div>
               <div className="space-y-4">
                 <p className="text-[#6b5347] italic">Due to food safety and hygiene standards:</p>
+                <p className="text-[#6b5347]">We offer replacement or refund only in the following cases:</p>
                 <div className="grid sm:grid-cols-2 gap-4">
                   {[
                     'Damaged or leaking product',
                     'Spoiled or expired product',
-                    'Incorrect item delivered'
+                    'Incorrect item delivered',
                   ].map((item, i) => (
                     <div key={i} className="bg-white border border-[#e8ddd0] p-4 rounded-xl flex items-center gap-3">
                       <div className="w-2 h-2 rounded-full bg-[#c9a45c]" />
@@ -96,8 +97,8 @@ export default function ReturnsPage() {
                 </div>
               </div>
 
-              <div className="bg-[#f0e8dc]/30 rounded-2xl p-6 border border-[#e8ddd0]">
-                <h3 className="font-bold text-[#2d1b15] mb-4 flex items-center gap-2">
+              <div className="bg-[#f0e8dc]/30 rounded-2xl p-6 border border-[#e8ddd0] space-y-4">
+                <h3 className="font-bold text-[#2d1b15] flex items-center gap-2">
                   <HelpCircle className="w-5 h-5 text-[#c9a45c]" />
                   Reporting an Issue
                 </h3>
@@ -112,6 +113,14 @@ export default function ReturnsPage() {
                   </div>
                 </div>
               </div>
+
+              <div className="bg-[#8b1a1a]/5 rounded-2xl p-6 border border-[#8b1a1a]/20 text-[#6b5347]">
+                <h3 className="font-bold text-[#8b1a1a] mb-2">Damages & Issues</h3>
+                <p>
+                  We request you to inspect your order at the time of delivery. If the item is defective, damaged,
+                  or incorrect, please notify us immediately so we can resolve the issue promptly.
+                </p>
+              </div>
             </section>
 
             {/* Refund Policy */}
@@ -123,19 +132,16 @@ export default function ReturnsPage() {
               <div className="bg-[#faf6f0] rounded-2xl p-6 border border-[#e8ddd0] space-y-4 text-[#6b5347]">
                 <ul className="list-disc pl-5 space-y-2">
                   <li>Refunds are applicable only for approved cases (damage, defect, wrong product) and can be returned within <strong>4 working days</strong> from the day of delivery.</li>
-                  <li>Once approved, refunds will be processed within <strong>7–15 business days</strong>.</li>
+                  <li>Once approved, refunds will be processed within <strong>7-15 business days</strong>.</li>
                   <li>The amount will be credited to your original payment method.</li>
-                  <li><strong>Note on Charges:</strong> COD charges (₹99) and shipping charges are non-refundable once the product has been shipped. However, if the error is from our end (e.g., damaged or incorrect item), we will refund both the COD and shipping charges.</li>
                 </ul>
               </div>
             </section>
 
             {/* Contact */}
             <section className="bg-[#8b1a1a] text-white rounded-3xl p-8 md:p-10 text-center space-y-6">
-              <h2 className="text-2xl md:text-3xl font-bold">Need Help?</h2>
-              <p className="text-white/80">
-                If the item is defective, damaged, or incorrect, please notify us immediately so we can resolve the issue promptly.
-              </p>
+              <h2 className="text-2xl md:text-3xl font-bold">Contact Us</h2>
+              <p className="text-white/80">For support, please reach out using the details below.</p>
               <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                 <a href="mailto:hello@annavedah.com" className="flex items-center gap-2 hover:text-[#c9a45c] transition-colors">
                   <Mail className="w-5 h-5" />

@@ -21,7 +21,7 @@ export default function ShippingPage() {
             {/* Introduction */}
             <section className="prose prose-lg text-[#6b5347] max-w-none text-center">
               <p>
-                At Annavedah Foods, we ensure that every order is carefully packed and delivered 
+                At Annavedah Foods, we ensure that every order is carefully packed and delivered
                 with the freshness and authenticity you expect from us.
               </p>
             </section>
@@ -36,7 +36,7 @@ export default function ShippingPage() {
                 <ul className="space-y-4 text-[#6b5347]">
                   <li className="flex gap-3">
                     <CheckCircle2 className="w-5 h-5 text-[#c9a45c] shrink-0 mt-1" />
-                    <span>All orders are processed within <strong>24–48 hours</strong> of confirmation.</span>
+                    <span>All orders are processed within <strong>24-48 hours</strong> of confirmation.</span>
                   </li>
                   <li className="flex gap-3">
                     <CheckCircle2 className="w-5 h-5 text-[#c9a45c] shrink-0 mt-1" />
@@ -44,7 +44,7 @@ export default function ShippingPage() {
                   </li>
                   <li className="flex gap-3">
                     <CheckCircle2 className="w-5 h-5 text-[#c9a45c] shrink-0 mt-1" />
-                    <span>Once shipped, you will receive tracking details via email/SMS.</span>
+                    <span>Once your order is shipped, you will receive a confirmation with tracking details.</span>
                   </li>
                 </ul>
               </section>
@@ -56,11 +56,11 @@ export default function ShippingPage() {
                 </div>
                 <div className="space-y-4 text-[#6b5347]">
                   <p>
-                    Orders are typically delivered within <strong>3–5 business days</strong>, depending on your location.
+                    Orders are typically delivered within <strong>3-5 business days</strong>, depending on your location and our logistics partners.
                   </p>
                   <div className="p-4 bg-white rounded-xl border border-[#e8ddd0] flex gap-3 italic text-sm">
                     <Info className="w-5 h-5 text-[#c9a45c] shrink-0" />
-                    <p>Timelines may vary for remote areas or due to unforeseen circumstances.</p>
+                    <p>Delivery timelines may vary slightly for remote areas or due to unforeseen circumstances.</p>
                   </div>
                 </div>
               </section>
@@ -76,7 +76,7 @@ export default function ShippingPage() {
                   </div>
                   <h3 className="font-bold text-lg">Shipping Charges</h3>
                   <p className="text-[#6b5347] text-sm">
-                    <strong>FREE shipping</strong> on orders above ₹499. For orders below this, charges are calculated at checkout.
+                    We offer <strong>FREE shipping</strong> on orders above <strong>₹499</strong> (subject to change during promotions). For orders below this amount, shipping charges will be calculated at checkout.
                   </p>
                 </div>
 
@@ -86,7 +86,7 @@ export default function ShippingPage() {
                   </div>
                   <h3 className="font-bold text-lg">Cash on Delivery (COD)</h3>
                   <p className="text-[#6b5347] text-sm">
-                    Available at an <strong>additional charge of ₹99</strong>. This fee is applied by our logistics partners for handling COD orders.
+                    Cash on Delivery (COD) is available at an additional charge. A flat fee of <strong>₹99 + applicable logistics charges</strong> will be applied to all COD orders. This covers handling, processing, and payment settlement costs charged by our delivery partners.
                   </p>
                 </div>
               </div>
