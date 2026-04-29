@@ -436,7 +436,7 @@ export default function HomePage() {
   const prevBanner = () => setCurrentBanner((prev) => (prev - 1 + banners.length) % banners.length)
 
   return (
-    <div className="min-h-screen bg-[#faf6f0] text-[#2d1b15] overflow-x-hidden">
+    <div className="min-h-screen bg-[#faf6f0] text-[#2d1b15]">
       
 
       {/* Hero Section with Full Image and Parallax */}
