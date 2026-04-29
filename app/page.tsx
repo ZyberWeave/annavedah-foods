@@ -474,9 +474,9 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/50 md:bg-gradient-to-r md:from-black/55 md:via-black/25 md:to-transparent" />
         </motion.div>
         
+        {/* pt offsets the fixed header: 80px mobile/tablet, 136px desktop */}
         <motion.div 
           className="relative z-10 h-full flex items-center pt-20 md:pt-20 lg:pt-[136px]"
-          {/* pt offsets the fixed header: 80px mobile/tablet, 136px desktop */}
           style={{ y: heroY }}
         >
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 w-full">
