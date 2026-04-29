@@ -14,7 +14,7 @@ function PLPProductCard({ product, add }: any) {
 
   return (
     <div className="group rounded-3xl border-2 border-[#e8ddd0] bg-white overflow-hidden hover:border-[#c9a45c] transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 flex flex-col h-full">
-      <div className="relative aspect-square bg-[url('/product-bg.png')] bg-cover bg-center border-b border-[#e8ddd0]">
+      <div className="relative aspect-square bg-[url('/product-bg.webp')] bg-cover bg-center border-b border-[#e8ddd0]">
         <Link href={`/products/${product.slug}`} className="block h-full w-full">
           <Image
             src={product.image}

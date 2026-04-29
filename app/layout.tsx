@@ -69,7 +69,7 @@ export default function RootLayout({
                 <div className="flex items-center gap-3 mb-6">
                   <div className="relative w-14 h-14 rounded-full overflow-hidden border-2 border-[#c9a45c]/30">
                     <Image
-                      src="/Logo.jpg"
+                      src="/Logo.webp"
                       alt="Annavedah Foods"
                       fill
                       className="object-cover"

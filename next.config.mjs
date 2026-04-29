@@ -4,7 +4,8 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    unoptimized: true,
+    // Re-enabled: Next.js will now serve optimized, lazily-loaded images
+    formats: ['image/webp'],
   },
 }
 

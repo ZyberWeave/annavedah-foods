@@ -150,7 +150,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Moringa Powder',
     localName: 'Moringa Powder',
     category: 'Powders',
-    image: '/Products/dried powders/Moringa powder.png',
+    image: '/Products/dried powders/Moringa powder.webp',
     badge: 'Bestseller',
     packPrices: [p('100gm', 175), p('250gm', 299), p('500gm', 575), p('1000gm', 1100)],
   },
@@ -159,7 +159,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Tomato Powder',
     localName: 'Tomato Powder',
     category: 'Powders',
-    image: '/Products/dried powders/Tomato powder.png',
+    image: '/Products/dried powders/Tomato powder.webp',
     packPrices: [p('100gm', 110), p('250gm', 249), p('500gm', 549), p('1000gm', 1025)],
   },
   {
@@ -167,7 +167,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Ginger Powder',
     localName: 'Ginger Powder',
     category: 'Powders',
-    image: '/Products/dried powders/ginger powder.png',
+    image: '/Products/dried powders/ginger powder.webp',
     packPrices: [p('100gm', 125), p('250gm', 249), p('500gm', 549), p('1000gm', 1025)],
   },
   {
@@ -175,7 +175,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Onion Powder',
     localName: 'Onion Powder',
     category: 'Powders',
-    image: '/Products/dried powders/Onion powder.png',
+    image: '/Products/dried powders/Onion powder.webp',
     packPrices: [p('100gm', 110), p('250gm', 249), p('500gm', 549), p('1000gm', 1025)],
   },
   {
@@ -183,7 +183,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Garlic Powder',
     localName: 'Garlic Powder',
     category: 'Powders',
-    image: '/Products/dried powders/garlic powder.png',
+    image: '/Products/dried powders/garlic powder.webp',
     packPrices: [p('100gm', 110), p('250gm', 249), p('500gm', 549), p('1000gm', 1025)],
   },
   {
@@ -191,7 +191,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Basil Powder',
     localName: 'Basil Powder',
     category: 'Powders',
-    image: '/Products/dried powders/Basil powder.png',
+    image: '/Products/dried powders/Basil powder.webp',
     packPrices: [p('100gm', 110), p('250gm', 249), p('500gm', 549), p('1000gm', 1025)],
   },
   {
@@ -199,7 +199,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Sweet Potato Powder',
     localName: 'Sweet Potato Powder',
     category: 'Powders',
-    image: '/Products/dried powders/sweeet potato.png',
+    image: '/Products/dried powders/sweeet potato.webp',
     packPrices: [p('100gm', 110), p('250gm', 249), p('500gm', 549), p('1000gm', 1025)],
   },
   {
@@ -207,7 +207,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Tamarind Powder',
     localName: 'Tamarind Powder',
     category: 'Powders',
-    image: '/Products/dried powders/Tamarind powder.png',
+    image: '/Products/dried powders/Tamarind powder.webp',
     packPrices: [p('100gm', 199), p('250gm', 299), p('500gm', 575), p('1000gm', 1100)],
   },
   {
@@ -215,7 +215,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Turmeric Powder',
     localName: 'Turmeric Powder',
     category: 'Powders',
-    image: '/Products/dried powders/turmeric powder.png',
+    image: '/Products/dried powders/turmeric powder.webp',
     badge: 'Popular',
     packPrices: [p('100gm', 110), p('250gm', 249), p('500gm', 549), p('1000gm', 1025)],
   },
@@ -224,7 +224,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Amla Powder',
     localName: 'Amla Powder',
     category: 'Powders',
-    image: '/Products/dried powders/01 product.png',
+    image: '/Products/dried powders/01 product.webp',
     packPrices: [p('100gm', 150), p('250gm', 249), p('500gm', 549), p('1000gm', 1025)],
   },
   {
@@ -232,7 +232,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Beetroot Powder',
     localName: 'Beetroot Powder',
     category: 'Powders',
-    image: '/Products/dried powders/beetroot powder.png',
+    image: '/Products/dried powders/beetroot powder.webp',
     badge: 'New',
     packPrices: [p('100gm', 175), p('250gm', 299), p('500gm', 575), p('1000gm', 1100)],
   },
@@ -241,7 +241,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Curry Leaf Powder',
     localName: 'Curry Leaf Powder',
     category: 'Powders',
-    image: '/Products/dried powders/curry leaf powder.png',
+    image: '/Products/dried powders/curry leaf powder.webp',
     packPrices: [p('100gm', 110), p('250gm', 249), p('500gm', 549), p('1000gm', 1025)],
   },
   {
@@ -249,7 +249,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Gahu Chik Powder',
     localName: 'Gahu Chik Powder',
     category: 'Powders',
-    image: '/Products/dried powders/gavhachya chikachi powder.png',
+    image: '/Products/dried powders/gavhachya chikachi powder.webp',
     packPrices: [],
   },
 
@@ -258,7 +258,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Indrayani Rice',
     localName: 'Indrayani Tandul',
     category: 'Grains',
-    image: '/Products/grains/indrayani tandul.png',
+    image: '/Products/grains/indrayani tandul.webp',
     packPrices: [p('1kg', 70), p('2kg', 140), p('5kg', 350)],
   },
   {
@@ -266,7 +266,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Unpolished Indrayani Rice',
     localName: 'Haatsadicha Indrayani Tandul',
     category: 'Grains',
-    image: '/Products/grains/unpolished indrayani tandul.png',
+    image: '/Products/grains/unpolished indrayani tandul.webp',
     packPrices: [p('1kg', 80), p('2kg', 160), p('5kg', 400)],
   },
   {
@@ -274,7 +274,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Maldandi Gawran Jowari',
     localName: 'Maldandi Jowari',
     category: 'Grains',
-    image: '/Products/grains/Maldandi Jowar.png',
+    image: '/Products/grains/Maldandi Jowar.webp',
     packPrices: [p('1kg', 70), p('2kg', 140), p('5kg', 350)],
   },
   {
@@ -282,7 +282,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Dagadi Jowari',
     localName: 'Dagadi Jowari',
     category: 'Grains',
-    image: '/Products/grains/Dagadi Jowar.png',
+    image: '/Products/grains/Dagadi Jowar.webp',
     packPrices: [p('1kg', 80), p('2kg', 160), p('5kg', 400)],
   },
   {
@@ -290,7 +290,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Lokwan Gahu',
     localName: 'Lokwan Gahu',
     category: 'Grains',
-    image: '/Products/grains/Lokwan gahu.png',
+    image: '/Products/grains/Lokwan gahu.webp',
     packPrices: [p('1kg', 45), p('2kg', 90), p('5kg', 225)],
   },
   {
@@ -298,7 +298,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Bajra',
     localName: 'Bajri',
     category: 'Grains',
-    image: '/Products/grains/Bajra.png',
+    image: '/Products/grains/Bajra.webp',
     packPrices: [p('1kg', 60), p('2kg', 120), p('5kg', 300)],
   },
   {
@@ -306,7 +306,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Ragi',
     localName: 'Nachni',
     category: 'Grains',
-    image: '/Products/grains/Nachani.png',
+    image: '/Products/grains/Nachani.webp',
     packPrices: [p('1kg', 75), p('2kg', 150), p('5kg', 375)],
   },
   {
@@ -314,7 +314,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Unpolished Red Rice',
     localName: 'Haatsadicha Lal Tandul',
     category: 'Grains',
-    image: '/Products/grains/Red Rice.png',
+    image: '/Products/grains/Red Rice.webp',
     packPrices: [p('1kg', 150), p('2kg', 300), p('5kg', 750)],
   },
 
@@ -323,7 +323,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Pivala Mung',
     localName: 'Gawran Pivale Moog',
     category: 'Pulses',
-    image: '/Products/grains/Pivla moong.png',
+    image: '/Products/grains/Pivla moong.webp',
     packPrices: [p('500gm', 125), p('1000gm', 250)],
   },
   {
@@ -331,7 +331,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Hirve Mung',
     localName: 'Gawran Hirve Moog',
     category: 'Pulses',
-    image: '/Products/grains/Hirve mug.png',
+    image: '/Products/grains/Hirve mug.webp',
     packPrices: [p('500gm', 75), p('1000gm', 150)],
   },
   {
@@ -339,7 +339,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Matki',
     localName: 'Gawran Matki',
     category: 'Pulses',
-    image: '/Products/grains/Matki.png',
+    image: '/Products/grains/Matki.webp',
     packPrices: [p('500gm', 125), p('1000gm', 250)],
   },
   {
@@ -347,7 +347,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Rajma',
     localName: 'Waghya Ghevda',
     category: 'Pulses',
-    image: '/Products/grains/RAJMA.png',
+    image: '/Products/grains/RAJMA.webp',
     packPrices: [p('500gm', 150), p('1000gm', 300)],
   },
   {
@@ -355,7 +355,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Chana Dal',
     localName: 'Gawran Harbhara Dal',
     category: 'Pulses',
-    image: '/Products/grains/Chana Dal.png',
+    image: '/Products/grains/Chana Dal.webp',
     packPrices: [p('500gm', 60), p('1000gm', 120)],
   },
   {
@@ -363,7 +363,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Moong Dal',
     localName: 'Gawran Moog Dal',
     category: 'Pulses',
-    image: '/Products/grains/MOONG DAL.png',
+    image: '/Products/grains/MOONG DAL.webp',
     packPrices: [],
   },
   {
@@ -371,7 +371,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Toor Dal',
     localName: 'Gawran Toor Dal',
     category: 'Pulses',
-    image: '/Products/grains/Toor Dal.png',
+    image: '/Products/grains/Toor Dal.webp',
     packPrices: [],
   },
   {
@@ -379,7 +379,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Harbhara',
     localName: 'Gawran Harbhara',
     category: 'Pulses',
-    image: '/Products/grains/Harbhara.png',
+    image: '/Products/grains/Harbhara.webp',
     packPrices: [p('500gm', 75), p('1000gm', 150)],
   },
   {
@@ -387,7 +387,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Masoor',
     localName: 'Gawran Masoor',
     category: 'Pulses',
-    image: '/Products/grains/Masoor.png',
+    image: '/Products/grains/Masoor.webp',
     packPrices: [p('500gm', 90), p('1000gm', 180)],
   },
   {
@@ -395,7 +395,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Urad Dal',
     localName: 'Gawran Udid Dal',
     category: 'Pulses',
-    image: '/Products/grains/Urad Dal.png',
+    image: '/Products/grains/Urad Dal.webp',
     packPrices: [p('500gm', 90), p('1000gm', 180)],
   },
   {
@@ -403,7 +403,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Kala Ghevda',
     localName: 'Gawran Kala Ghevda',
     category: 'Pulses',
-    image: '/Products/grains/Black Beans.png',
+    image: '/Products/grains/Black Beans.webp',
     packPrices: [p('500gm', 75), p('1000gm', 150)],
   },
   {
@@ -411,7 +411,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Kala Ghevda Dal',
     localName: 'Gawran Kala Ghevda Dal',
     category: 'Pulses',
-    image: '/Products/grains/Black Beans Dal.png',
+    image: '/Products/grains/Black Beans Dal.webp',
     packPrices: [p('500gm', 75), p('1000gm', 150)],
   },
   {
@@ -419,7 +419,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Hulga',
     localName: 'Gawran Hulge',
     category: 'Pulses',
-    image: '/Products/grains/Hulga.png',
+    image: '/Products/grains/Hulga.webp',
     packPrices: [p('500gm', 75), p('1000gm', 150)],
   },
   {
@@ -427,7 +427,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Gavran Dhane',
     localName: 'Gawran Dhane',
     category: 'Pulses',
-    image: '/Products/grains/dhane.png',
+    image: '/Products/grains/dhane.webp',
     packPrices: [p('500gm', 100), p('1000gm', 200)],
   },
   {
@@ -435,7 +435,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Kadve Waal',
     localName: 'Kadve Waal',
     category: 'Pulses',
-    image: '/Products/grains/Kadve waal.png',
+    image: '/Products/grains/Kadve waal.webp',
     packPrices: [p('500gm', 140), p('1000gm', 280)],
   },
   {
@@ -443,7 +443,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Lal Chavli',
     localName: 'Gawran Lal Chavli',
     category: 'Pulses',
-    image: '/Products/grains/lal chavli.png',
+    image: '/Products/grains/lal chavli.webp',
     packPrices: [p('500gm', 90), p('1000gm', 180)],
   },
 
@@ -452,7 +452,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Thalipeeth Bhajani',
     localName: 'Thalipeeth Bhajani',
     category: 'Atta',
-    image: '/Products/essentials/Thalipeeth Bhajni.png',
+    image: '/Products/essentials/Thalipeeth Bhajni.webp',
     packPrices: [p('500gm', 110), p('1000gm', 200)],
   },
 
@@ -461,7 +461,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Raw Forest Honey',
     localName: 'Madh',
     category: 'Essentials',
-    image: '/Products/essentials/Honey.png',
+    image: '/Products/essentials/Honey.webp',
     packPrices: [],
   },
   {
@@ -469,7 +469,7 @@ const productCatalog: ProductSeed[] = [
     name: 'A2 Gir Cow Ghee',
     localName: 'Toop',
     category: 'Essentials',
-    image: '/Products/essentials/Gir cow ghee.png',
+    image: '/Products/essentials/Gir cow ghee.webp',
     packPrices: [p('500gm', 1050), p('1000gm', 1800)],
   },
   {
@@ -477,7 +477,7 @@ const productCatalog: ProductSeed[] = [
     name: 'A2 Desi Cow Ghee',
     localName: 'Toop',
     category: 'Essentials',
-    image: '/Products/essentials/A2 Desi Cow ghee.png',
+    image: '/Products/essentials/A2 Desi Cow ghee.webp',
     packPrices: [p('500gm', 1150), p('1000gm', 2250)],
   },
   {
@@ -485,7 +485,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Gulkand',
     localName: 'Gulkand',
     category: 'Essentials',
-    image: '/Products/essentials/Gulkanda.png',
+    image: '/Products/essentials/Gulkanda.webp',
     packPrices: [p('250gm', 150), p('500gm', 325)],
   },
   {
@@ -500,7 +500,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Mix Dried Vegetables - Peri Peri',
     localName: 'Mix Dried Vegetables Peri Peri',
     category: 'Essentials',
-    image: '/Products/essentials/Mix Dried Vegetable Peri-peri.png',
+    image: '/Products/essentials/Mix Dried Vegetable Peri-peri.webp',
     packPrices: [p('150gm', 349), p('250gm', 549), p('500gm', 949), p('1000gm', 1749)],
   },
   {
@@ -508,7 +508,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Mix Dried Vegetables - Chaat',
     localName: 'Mix Dried Vegetables Chaat',
     category: 'Essentials',
-    image: '/Products/essentials/Mix Dried Vegetable Chaat Masala.png',
+    image: '/Products/essentials/Mix Dried Vegetable Chaat Masala.webp',
     packPrices: [p('150gm', 349), p('250gm', 549), p('500gm', 949), p('1000gm', 1749)],
   },
   {
@@ -516,7 +516,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Mix Dried Vegetables - Salted',
     localName: 'Mix Dried Vegetables Salted',
     category: 'Essentials',
-    image: '/Products/essentials/Mix Dried Vegetable Salted.png',
+    image: '/Products/essentials/Mix Dried Vegetable Salted.webp',
     packPrices: [p('150gm', 325), p('250gm', 525), p('500gm', 925), p('1000gm', 1699)],
   },
   {
@@ -524,7 +524,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Raw Mango Pickle',
     localName: 'Gawran Kairiche Madavyatle Lonache',
     category: 'Essentials',
-    image: '/Products/essentials/Raw Mango Pickle.png',
+    image: '/Products/essentials/Raw Mango Pickle.webp',
     packPrices: [p('250gm', 150)],
   },
   {
@@ -561,7 +561,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Kurdai',
     localName: 'Kurdai',
     category: 'Papad',
-    image: '/Products/essentials/Kurdai.png',
+    image: '/Products/essentials/Kurdai.webp',
     packPrices: [p('250gm', 80), p('500gm', 160), p('1000gm', 320)],
   },
   {
@@ -569,7 +569,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Tandalache Khicche',
     localName: 'Tandalache Khicche',
     category: 'Papad',
-    image: '/Products/essentials/Tandalache khicche.png',
+    image: '/Products/essentials/Tandalache khicche.webp',
     packPrices: [],
   },
   {
@@ -577,7 +577,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Garlic Papad',
     localName: 'Garlic Papad',
     category: 'Papad',
-    image: '/Products/essentials/Papad.png',
+    image: '/Products/essentials/Papad.webp',
     packPrices: [],
   },
   {
@@ -585,7 +585,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Nachni Papad',
     localName: 'Nachni Papad',
     category: 'Papad',
-    image: '/Products/essentials/Nachani Papad.png',
+    image: '/Products/essentials/Nachani Papad.webp',
     packPrices: [],
   },
   {
@@ -593,7 +593,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Sabudana Papadi',
     localName: 'Sabudana Papadi',
     category: 'Papad',
-    image: '/Products/essentials/sabudana papadi.png',
+    image: '/Products/essentials/sabudana papadi.webp',
     packPrices: [],
   },
   {
@@ -601,7 +601,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Vermicelli',
     localName: 'Shevai',
     category: 'Papad',
-    image: '/Products/essentials/shevai.png',
+    image: '/Products/essentials/shevai.webp',
     packPrices: [],
   },
   {
@@ -609,7 +609,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Sandge',
     localName: 'Sandge',
     category: 'Papad',
-    image: '/Products/essentials/sandge.png',
+    image: '/Products/essentials/sandge.webp',
     packPrices: [],
   },
 
@@ -618,7 +618,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Shengdana Chutney',
     localName: 'Shengdana Chutney',
     category: 'Chutney',
-    image: '/Products/essentials/shengdana chutni.png',
+    image: '/Products/essentials/shengdana chutni.webp',
     packPrices: [],
   },
   {
@@ -626,7 +626,7 @@ const productCatalog: ProductSeed[] = [
     name: 'Onion Garlic Chutney',
     localName: 'Kanda Lasun Chutney',
     category: 'Chutney',
-    image: '/Products/essentials/javs chatni.png',
+    image: '/Products/essentials/javs chatni.webp',
     packPrices: [],
   },
 ]
@@ -657,10 +657,10 @@ export const products: Product[] = productCatalog.map((item, index) => {
 })
 
 export const banners = [
-  '/Banners/Create_random_e_202601191245.jpeg',
-  '/Banners/Create_random_e_202601191245 (1).jpeg',
-  '/Banners/Create_random_e_202601191244 (2).jpeg',
-  '/Banners/Create_random_e_202601191243 (1).jpeg',
+  '/Banners/Create_random_e_202601191245.webp',
+  '/Banners/Create_random_e_202601191245 (1).webp',
+  '/Banners/Create_random_e_202601191244 (2).webp',
+  '/Banners/Create_random_e_202601191243 (1).webp',
 ]
 
 export const testimonials: Testimonial[] = [

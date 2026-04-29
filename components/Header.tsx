@@ -85,7 +85,7 @@ export default function Header() {
               <Link href="/" className="flex items-center gap-3">
                 <div className="relative w-12 h-12 lg:w-14 lg:h-14 rounded-full overflow-hidden border-2 border-[#c9a45c]/50 shadow-lg">
                   <Image
-                    src="/Logo.jpg"
+                    src="/Logo.webp"
                     alt="Annavedah Foods"
                     fill
                     className="object-cover"
@@ -204,7 +204,7 @@ export default function Header() {
           <div className="flex items-center justify-between p-4 border-b border-[#e8ddd0]">
             <Link href="/" className="flex items-center gap-3">
                <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-[#c9a45c]/50">
-                  <Image src="/Logo.jpg" alt="Annavedah Foods" fill className="object-cover" priority />
+                  <Image src="/Logo.webp" alt="Annavedah Foods" fill className="object-cover" priority />
                </div>
                <span className="text-lg font-bold text-[#8b1a1a] uppercase tracking-widest">Annavedah</span>
             </Link>
@@ -265,7 +265,7 @@ export default function Header() {
                 <div className="space-y-4">
                   {items.map((item, index) => (
                     <div key={index} className="flex gap-4 p-4 bg-[#f0e8dc]/50 rounded-xl">
-                      <div className="relative w-20 h-20 rounded-lg bg-[url('/product-bg.png')] bg-cover bg-center overflow-hidden shadow-inner">
+                      <div className="relative w-20 h-20 rounded-lg bg-[url('/product-bg.webp')] bg-cover bg-center overflow-hidden shadow-inner">
                         <Image src={item.product.image} alt={item.product.name} fill className="object-contain p-2 drop-shadow-md" />
                       </div>
                       <div className="flex-1">

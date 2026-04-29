@@ -44,7 +44,7 @@ export default function HeritagePage() {
 
         <div className="relative">
           <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-border shadow-2xl bg-white">
-            <Image src="/Logo.jpg" alt="Annavedah heritage" fill className="object-contain p-6" />
+            <Image src="/Logo.webp" alt="Annavedah heritage" fill className="object-contain p-6" />
           </div>
           <div className="absolute -left-8 -bottom-8 h-40 w-40 rounded-3xl border-4 border-accent/30" />
         </div>

@@ -28,7 +28,7 @@ export default function ProductDetailPage(props: ProductPageProps) {
   return (
     <div className="container mx-auto px-4 pt-32 lg:pt-40 pb-16 space-y-12">
       <div className="grid gap-10 md:grid-cols-2 md:items-center">
-        <div className="relative bg-[url('/product-bg.png')] bg-cover bg-center border border-border rounded-3xl shadow-xl overflow-hidden">
+        <div className="relative bg-[url('/product-bg.webp')] bg-cover bg-center border border-border rounded-3xl shadow-xl overflow-hidden">
           <div className="relative aspect-square">
             <Image src={product.image} alt={product.name} fill className="object-contain p-8 drop-shadow-2xl" />
           </div>

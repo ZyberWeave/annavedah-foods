@@ -286,7 +286,7 @@ function PLPProductCard({ product, index, add }: any) {
       }}
     >
       {/* Product Image */}
-      <div className="relative aspect-square overflow-hidden bg-[url('/product-bg.png')] bg-cover bg-center border-b border-[#e8ddd0] group-hover:border-[#c9a45c] transition-colors duration-300">
+      <div className="relative aspect-square overflow-hidden bg-[url('/product-bg.webp')] bg-cover bg-center border-b border-[#e8ddd0] group-hover:border-[#c9a45c] transition-colors duration-300">
         <Link href={`/products/${product.slug}`} className="block h-full w-full">
           <motion.div
             className="absolute inset-0"
@@ -448,7 +448,7 @@ export default function HomePage() {
         >
           {/* Mobile image — portrait (shown below md) */}
           <Image
-            src="/Products/hero_section mobile.jpeg"
+            src="/Products/hero_section mobile.webp"
             alt="Annavedah Foods - Dehydrated Vegetable Powders"
             fill
             className="object-cover object-top md:hidden"
@@ -456,7 +456,7 @@ export default function HomePage() {
           />
           {/* Tablet image — landscape tablet (shown md to lg) */}
           <Image
-            src="/Products/hero_section_tablet.jpeg"
+            src="/Products/hero_section_tablet.webp"
             alt="Annavedah Foods - Dehydrated Vegetable Powders"
             fill
             className="object-cover object-center hidden md:block lg:hidden"
@@ -464,7 +464,7 @@ export default function HomePage() {
           />
           {/* Desktop image — wide (shown lg and above) */}
           <Image
-            src="/Products/Hero_section.jpeg"
+            src="/Products/Hero_section.webp"
             alt="Annavedah Foods - Dehydrated Vegetable Powders"
             fill
             className="object-cover hidden lg:block"
@@ -916,7 +916,7 @@ export default function HomePage() {
                 transition={{ duration: 0.4 }}
               >
                 <Image
-                  src="/Logo.jpg"
+                  src="/Logo.webp"
                   alt="Annavedah Heritage"
                   fill
                   className="object-cover"

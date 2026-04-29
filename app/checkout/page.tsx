@@ -104,7 +104,7 @@ export default function CheckoutPage() {
         currency: order.currency,
         name: 'Annavedah Foods',
         description: 'Traditional Nutrition Products',
-        image: '/Logo.jpg',
+        image: '/Logo.webp',
         order_id: order.id,
         prefill: {
           name: `${form.firstName} ${form.lastName}`,
