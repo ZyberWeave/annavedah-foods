@@ -24,7 +24,7 @@ export function SiteFooter() {
         <div>
           <h4 className="text-lg font-semibold mb-3">Support</h4>
           <ul className="space-y-2 text-sm text-background/70">
-            <li>Shipping & Returns</li>
+            <li><Link href="/returns" className="hover:text-accent transition-colors">Shipping & Returns</Link></li>
             <li>Quality & Testing</li>
             <li>Wholesale Enquiries</li>
           </ul>
@@ -33,7 +33,7 @@ export function SiteFooter() {
         <div className="space-y-2 text-sm text-background/70">
           <h4 className="text-lg font-semibold mb-3">Contact</h4>
           <p>Maharashtra, India</p>
-          <p>+91 98765 43210</p>
+          <p>+91 97634 56100</p>
           <p>hello@annavedah.com</p>
           <div className="flex gap-3 pt-2">
             <a href="https://www.instagram.com/annavedah.foods?igsh=Zmo5YXA0bzRlbHRm&utm_source=qr" target="_blank" rel="noopener noreferrer" className="underline hover:text-accent">Instagram</a>
@@ -45,6 +45,11 @@ export function SiteFooter() {
       </div>
 
       <div className="mt-10 border-t border-background/20 pt-6 text-center text-sm text-background/60">
+        <div className="flex flex-wrap justify-center gap-4 mb-4">
+          <Link href="/privacy" className="hover:text-background transition-colors">Privacy Policy</Link>
+          <Link href="/terms" className="hover:text-background transition-colors">Terms & Conditions</Link>
+          <Link href="/returns" className="hover:text-background transition-colors">Cancellation & Refund Policy</Link>
+        </div>
         (c) 2026 Annavedah Foods. Designed and created by Zyberweave.
       </div>
     </footer>
