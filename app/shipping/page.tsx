@@ -86,7 +86,7 @@ export default function ShippingPage() {
                   </div>
                   <h3 className="font-bold text-lg">Cash on Delivery (COD)</h3>
                   <p className="text-[#6b5347] text-sm">
-                    Available at an additional charge applied by our logistics partners for handling.
+                    Available at an <strong>additional charge of ₹99</strong>. This fee is applied by our logistics partners for handling COD orders.
                   </p>
                 </div>
               </div>

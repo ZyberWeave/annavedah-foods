@@ -125,6 +125,7 @@ export default function ReturnsPage() {
                   <li>Refunds are applicable only for approved cases (damage, defect, wrong product) and can be returned within <strong>4 working days</strong> from the day of delivery.</li>
                   <li>Once approved, refunds will be processed within <strong>7–15 business days</strong>.</li>
                   <li>The amount will be credited to your original payment method.</li>
+                  <li><strong>Note on Charges:</strong> COD charges (₹99) and shipping charges are non-refundable once the product has been shipped. However, if the error is from our end (e.g., damaged or incorrect item), we will refund both the COD and shipping charges.</li>
                 </ul>
               </div>
             </section>
