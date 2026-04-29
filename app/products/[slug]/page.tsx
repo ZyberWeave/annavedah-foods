@@ -1,30 +1,36 @@
 'use client'
 
+import { use, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { products } from '@/lib/content'
 import { useCart } from '@/components/cart-context'
+import { ShoppingCart, Check } from 'lucide-react'
 
 type ProductPageProps = {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
-export default function ProductDetailPage({ params }: ProductPageProps) {
+export default function ProductDetailPage(props: ProductPageProps) {
+  const params = use(props.params)
   const product = products.find((item) => item.slug === params.slug)
   if (!product) {
     notFound()
   }
   const { add } = useCart()
-  const hasPrice = product.price > 0
+  
+  const [selectedPack, setSelectedPack] = useState(product.packPrices[0])
+  const currentPrice = selectedPack ? selectedPack.price : product.price
+  const hasPrice = currentPrice > 0
 
   return (
-    <div className="container mx-auto px-4 py-16 space-y-12">
+    <div className="container mx-auto px-4 pt-32 lg:pt-40 pb-16 space-y-12">
       <div className="grid gap-10 md:grid-cols-2 md:items-center">
-        <div className="relative bg-white border border-border rounded-3xl shadow-xl overflow-hidden">
+        <div className="relative bg-[url('/product-bg.png')] bg-cover bg-center border border-border rounded-3xl shadow-xl overflow-hidden">
           <div className="relative aspect-square">
-            <Image src={product.image} alt={product.name} fill className="object-contain p-6" />
+            <Image src={product.image} alt={product.name} fill className="object-contain p-8 drop-shadow-2xl" />
           </div>
         </div>
 
@@ -34,19 +40,35 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
           {product.localName !== product.name && <p className="text-sm text-muted-foreground">{product.localName}</p>}
           <p className="text-lg text-foreground/80">{product.description}</p>
           {hasPrice ? (
-            <div className="space-y-2">
+            <div className="space-y-4">
               <div className="flex items-baseline gap-3">
-                <span className="text-3xl font-bold text-primary">From Rs {product.price}</span>
-                {product.originalPrice > product.price && (
-                  <span className="text-sm text-muted-foreground">up to Rs {product.originalPrice}</span>
-                )}
+                <span className="text-3xl font-bold text-primary">Rs {currentPrice}</span>
               </div>
               {product.packPrices.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-3 pt-2">
                   {product.packPrices.map((pack) => (
-                    <span key={`${product.slug}-${pack.size}`} className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
-                      {pack.size}: Rs {pack.price}
-                    </span>
+                    <button
+                      key={`${product.slug}-${pack.size}`}
+                      onClick={() => setSelectedPack(pack)}
+                      className={`group relative flex flex-col items-center justify-center min-w-[80px] px-4 py-2.5 border-2 rounded-2xl transition-all duration-300 ${
+                        selectedPack?.size === pack.size 
+                          ? 'border-[#8b1a1a] bg-[#8b1a1a] text-white shadow-lg scale-105 ring-2 ring-[#8b1a1a] ring-offset-2 ring-offset-[#faf6f0]' 
+                          : 'border-[#e8ddd0] bg-white text-[#6b5347] hover:border-[#c9a45c] hover:shadow-md hover:-translate-y-0.5'
+                      }`}
+                    >
+                      <span className={`text-sm font-extrabold tracking-tight ${selectedPack?.size === pack.size ? 'text-white' : 'text-[#2d1b15]'}`}>
+                        {pack.size}
+                      </span>
+                      <span className={`text-xs font-bold mt-0.5 ${selectedPack?.size === pack.size ? 'text-white/90' : 'text-[#8b1a1a]'}`}>
+                        ₹{pack.price}
+                      </span>
+                      
+                      {selectedPack?.size === pack.size && (
+                        <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#c9a45c] rounded-full border-2 border-white shadow-sm flex items-center justify-center z-10">
+                          <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                        </div>
+                      )}
+                    </button>
                   ))}
                 </div>
               )}
@@ -67,12 +89,19 @@ export default function ProductDetailPage({ params }: ProductPageProps) {
             <h3 className="text-lg font-semibold text-foreground">Usage</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">{product.usage}</p>
           </div>
-          <Button asChild className="h-12 px-6 font-semibold w-fit">
-            <Link href="/contact">Talk to us</Link>
-          </Button>
-          <Button className="h-12 px-6 font-semibold w-fit" onClick={() => add(product.id)} disabled={!hasPrice}>
-            {hasPrice ? 'Add to cart' : 'Enquire for price'}
-          </Button>
+          <div className="flex gap-4 pt-4">
+            <Button asChild variant="outline" className="h-14 px-8 border-2 border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10 font-bold rounded-xl text-lg transition-all">
+              <Link href="/contact">Talk to us</Link>
+            </Button>
+            <Button 
+              className="h-14 px-8 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-bold rounded-xl text-lg transition-all shadow-lg hover:shadow-xl hover:-translate-y-1" 
+              onClick={() => add(product.id, selectedPack)} 
+              disabled={!hasPrice}
+            >
+              <ShoppingCart className="w-5 h-5 mr-2" />
+              {hasPrice ? 'Add to Cart' : 'Enquire for price'}
+            </Button>
+          </div>
         </div>
       </div>
 

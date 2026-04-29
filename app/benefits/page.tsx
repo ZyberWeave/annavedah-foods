@@ -58,7 +58,7 @@ const benefitColors = [
 
 export default function BenefitsPage() {
   return (
-    <div className="container mx-auto px-4 py-16 space-y-10">
+    <div className="container mx-auto px-4 pt-32 lg:pt-40 pb-16 space-y-10">
       <div className="space-y-4 text-center">
         <p className="text-sm font-semibold uppercase tracking-wide text-accent">Benefits</p>
         <h1 className="text-4xl font-bold text-primary md:text-5xl">Why families trust Annavedah</h1>

@@ -11,7 +11,7 @@ export default function CartPage() {
   const router = useRouter()
 
   return (
-    <div className="container mx-auto px-4 py-16 space-y-8">
+    <div className="container mx-auto px-4 pt-32 lg:pt-40 pb-16 space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-accent">Cart</p>
@@ -35,8 +35,8 @@ export default function CartPage() {
           <div className="space-y-4">
             {items.map(({ product, qty }) => (
               <div key={product.slug} className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 md:flex-row md:items-center">
-                <div className="relative h-28 w-28 rounded-xl bg-white border border-border/60 overflow-hidden">
-                  <Image src={product.image} alt={product.name} fill className="object-contain p-3" />
+                <div className="relative h-28 w-28 rounded-xl bg-[url('/product-bg.png')] bg-cover bg-center border border-border/60 overflow-hidden">
+                  <Image src={product.image} alt={product.name} fill className="object-contain p-3 drop-shadow-md" />
                 </div>
                 <div className="flex-1 space-y-1">
                   <h3 className="text-lg font-semibold text-foreground">{product.name}</h3>

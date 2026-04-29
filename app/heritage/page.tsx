@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function HeritagePage() {
   return (
-    <div className="container mx-auto px-4 py-16 space-y-12">
+    <div className="container mx-auto px-4 pt-32 lg:pt-40 pb-16 space-y-12">
       <div className="grid gap-10 md:grid-cols-2 md:items-center">
         <div className="space-y-4">
           <p className="text-sm font-semibold uppercase tracking-wide text-accent">Heritage</p>

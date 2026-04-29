@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { products, banners, testimonials, categories } from '@/lib/content'
-import { Search, Leaf, Heart, Star, Sparkles, ArrowRight, ShoppingCart, ChevronLeft, ChevronRight, Package, Users, Shield } from 'lucide-react'
+import { Search, Leaf, Heart, Star, Sparkles, ArrowRight, ShoppingCart, ChevronLeft, ChevronRight, Package, Users, Shield, Check } from 'lucide-react'
 import { useCart } from '@/components/cart-context'
 import { motion, useAnimation, useInView, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion'
 import CountUp from 'react-countup'
@@ -270,6 +270,141 @@ function AnimatedText({ text, className, delay = 0 }: { text: string; className?
   )
 }
 
+function PLPProductCard({ product, index, add }: any) {
+  const [selectedPack, setSelectedPack] = useState(product.packPrices[0])
+  const currentPrice = selectedPack ? selectedPack.price : product.price
+
+  return (
+    <motion.div
+      className="group bg-white rounded-3xl border-2 border-[#e8ddd0] overflow-hidden hover:border-[#c9a45c] transition-colors duration-300 flex flex-col h-full"
+      variants={staggerItem}
+      layout
+      whileHover={{ 
+        y: -10, 
+        boxShadow: "0 25px 50px rgba(0,0,0,0.15)",
+        transition: { duration: 0.3, ease: "easeOut" }
+      }}
+    >
+      {/* Product Image */}
+      <div className="relative aspect-square overflow-hidden bg-[url('/product-bg.png')] bg-cover bg-center border-b border-[#e8ddd0] group-hover:border-[#c9a45c] transition-colors duration-300">
+        <Link href={`/products/${product.slug}`} className="block h-full w-full">
+          <motion.div
+            className="absolute inset-0"
+            whileHover={{ scale: 1.1 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              className="object-contain p-6 drop-shadow-xl transition-all duration-500 group-hover:drop-shadow-2xl"
+            />
+          </motion.div>
+        </Link>
+        {product.badge && (
+          <motion.div 
+            className="absolute top-4 left-4 z-10"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.1 + 0.3 }}
+          >
+            <motion.span 
+              className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide inline-block ${
+                product.badge === 'Bestseller' ? 'bg-[#c9a45c] text-[#2d1b15]' :
+                product.badge === 'New' ? 'bg-[#8b1a1a] text-white' :
+                'bg-[#2d1b15] text-white'
+              }`}
+              animate={product.badge === 'New' ? { scale: [1, 1.1, 1] } : {}}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              {product.badge}
+            </motion.span>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Product Info */}
+      <motion.div 
+        className="p-6 space-y-4 flex-1 flex flex-col"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: index * 0.05 }}
+      >
+        <div>
+          <motion.span 
+            className="text-xs text-[#c9a45c] font-medium uppercase tracking-wide"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            {product.category}
+          </motion.span>
+          <Link href={`/products/${product.slug}`} className="block group-hover:text-[#8b1a1a] transition-colors">
+            <h3 className="text-2xl font-bold text-[#2d1b15] group-hover:text-[#8b1a1a]">{product.name}</h3>
+          </Link>
+          {product.nameHindi !== product.name && <p className="text-sm text-[#6b5347]">{product.nameHindi}</p>}
+        </div>
+        
+        <p className="text-[#6b5347] text-sm leading-relaxed flex-1">{product.description}</p>
+
+        {product.packPrices.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-2">
+            {product.packPrices.map((pack: any) => (
+              <button
+                key={`${product.slug}-${pack.size}`}
+                onClick={() => setSelectedPack(pack)}
+                className={`relative px-3 py-1.5 border-2 rounded-xl text-xs font-bold transition-all duration-300 ${
+                  selectedPack?.size === pack.size 
+                    ? 'border-[#8b1a1a] bg-[#8b1a1a]/5 text-[#8b1a1a] shadow-inner ring-1 ring-[#8b1a1a]' 
+                    : 'border-[#e8ddd0] bg-white text-[#6b5347] hover:border-[#c9a45c] hover:shadow-sm'
+                }`}
+              >
+                {pack.size}
+                {selectedPack?.size === pack.size && (
+                  <div className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#c9a45c] rounded-full border-2 border-white flex items-center justify-center z-10">
+                    <Check className="w-2.5 h-2.5 text-white" strokeWidth={4} />
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <motion.div
+          className="flex items-center justify-between pt-2"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          {currentPrice > 0 ? (
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-bold text-[#8b1a1a]">₹{currentPrice}</span>
+            </div>
+          ) : (
+            <span className="text-sm font-semibold text-amber-700 bg-amber-100 px-3 py-1 rounded-full">
+              Price on request
+            </span>
+          )}
+        </motion.div>
+        
+        <div className="flex gap-2 pt-4 mt-auto border-t border-[#e8ddd0]/50">
+          <Button asChild variant="outline" className="flex-1 h-12 border-2 border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10 font-semibold rounded-xl transition-all">
+            <Link href={`/products/${product.slug}`}>Details</Link>
+          </Button>
+          <Button 
+            className="flex-1 h-12 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-semibold rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
+            onClick={() => add(product.id, selectedPack)} 
+            disabled={currentPrice <= 0}
+          >
+            <ShoppingCart className="w-4 h-4 mr-1 md:mr-2" />
+            {currentPrice > 0 ? 'Add' : 'Enquire'}
+          </Button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState('')
@@ -305,7 +440,7 @@ export default function HomePage() {
       
 
       {/* Hero Section with Full Image and Parallax */}
-      <section className="relative min-h-screen pt-20 overflow-hidden">
+      <section className="relative min-h-screen pt-32 lg:pt-40 overflow-hidden">
         <motion.div 
           className="absolute inset-0"
           style={{ scale: heroScale, opacity: heroOpacity }}
@@ -700,152 +835,7 @@ export default function HomePage() {
                 layout
               >
                 {filteredProducts.map((product, index) => (
-                  <motion.div
-                    key={product.id}
-                    className="group bg-white rounded-3xl border-2 border-[#e8ddd0] overflow-hidden hover:border-[#c9a45c] transition-colors duration-300"
-                    variants={staggerItem}
-                    layout
-                    whileHover={{ 
-                      y: -10, 
-                      boxShadow: "0 25px 50px rgba(0,0,0,0.15)",
-                      transition: { duration: 0.3, ease: "easeOut" }
-                    }}
-                  >
-                    {/* Product Image */}
-                    <div className="relative aspect-square overflow-hidden">
-                      <motion.div
-                        className="absolute inset-0"
-                        whileHover={{ scale: 1.1 }}
-                        transition={{ duration: 0.6, ease: "easeOut" }}
-                      >
-                        <Image
-                          src={product.image}
-                          alt={product.name}
-                          fill
-                          className="object-contain"
-                        />
-                      </motion.div>
-                      
-                      {/* Badge with animation */}
-                      {product.badge && (
-                        <motion.div 
-                          className="absolute top-4 left-4 z-10"
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.1 + 0.3 }}
-                        >
-                          <motion.span 
-                            className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide inline-block ${
-                              product.badge === 'Bestseller' ? 'bg-[#c9a45c] text-[#2d1b15]' :
-                              product.badge === 'New' ? 'bg-[#8b1a1a] text-white' :
-                              'bg-[#2d1b15] text-white'
-                            }`}
-                            animate={product.badge === 'New' ? { 
-                              scale: [1, 1.1, 1],
-                            } : {}}
-                            transition={{ duration: 1.5, repeat: Infinity }}
-                          >
-                            {product.badge}
-                          </motion.span>
-                        </motion.div>
-                      )}
-
-                      {/* Quick Add Overlay with smooth animation */}
-                      <motion.div 
-                        className="absolute inset-0 bg-gradient-to-t from-[#8b1a1a]/90 via-transparent to-transparent flex items-end p-6"
-                        initial={{ opacity: 0 }}
-                        whileHover={{ opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <motion.div
-                          className="w-full"
-                          initial={{ y: 20, opacity: 0 }}
-                          whileHover={{ y: 0, opacity: 1 }}
-                          transition={{ duration: 0.3, delay: 0.1 }}
-                        >
-                          <Button
-                            onClick={() => add(product.id)}
-                            disabled={product.price <= 0}
-                            className="w-full bg-[#c9a45c] hover:bg-[#b8944d] text-[#2d1b15] h-12 rounded-xl font-semibold disabled:cursor-not-allowed disabled:opacity-70"
-                          >
-                            <ShoppingCart className="w-5 h-5 mr-2" />
-                            {product.price > 0 ? 'Add to Cart' : 'Price on Request'}
-                          </Button>
-                        </motion.div>
-                      </motion.div>
-                    </div>
-
-                    {/* Product Info */}
-                    <motion.div 
-                      className="p-6 space-y-4"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <div>
-                        <motion.span 
-                          className="text-xs text-[#c9a45c] font-medium uppercase tracking-wide"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: 0.2 }}
-                        >
-                          {product.category}
-                        </motion.span>
-                        <h3 className="text-2xl font-bold text-[#2d1b15]">{product.name}</h3>
-                        {product.nameHindi !== product.name && <p className="text-sm text-[#6b5347]">{product.nameHindi}</p>}
-                      </div>
-                      
-                      <p className="text-[#6b5347] text-sm leading-relaxed">{product.description}</p>
-
-                      {/* Benefits Tags with stagger */}
-                      <div className="flex flex-wrap gap-2">
-                        {product.benefits.map((benefit, i) => (
-                          <motion.span 
-                            key={i} 
-                            className="px-3 py-1 bg-[#f0e8dc] text-[#6b5347] text-xs rounded-full"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: i * 0.05 }}
-                            whileHover={{ scale: 1.05, backgroundColor: "#e8ddd0" }}
-                          >
-                            {benefit}
-                          </motion.span>
-                        ))}
-                      </div>
-
-                      {/* Price with animation */}
-                      <motion.div
-                        className="flex items-center justify-between pt-2"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                      >
-                        {product.price > 0 ? (
-                          <>
-                            <div className="flex items-baseline gap-2">
-                              <span className="text-3xl font-bold text-[#8b1a1a]">From ₹{product.price}</span>
-                              {product.originalPrice > product.price && (
-                                <span className="text-sm text-[#6b5347]">up to ₹{product.originalPrice}</span>
-                              )}
-                            </div>
-                            {product.originalPrice > product.price && (
-                              <motion.span
-                                className="text-sm font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full"
-                                animate={{ scale: [1, 1.05, 1] }}
-                                transition={{ duration: 2, repeat: Infinity }}
-                              >
-                                {Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
-                              </motion.span>
-                            )}
-                          </>
-                        ) : (
-                          <span className="text-sm font-semibold text-amber-700 bg-amber-100 px-3 py-1 rounded-full">
-                            Price on request
-                          </span>
-                        )}
-                      </motion.div>
-                    </motion.div>
-                  </motion.div>
+                  <PLPProductCard key={product.id} product={product} index={index} add={add} />
                 ))}
               </motion.div>
             )}

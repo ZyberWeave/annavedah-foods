@@ -37,7 +37,7 @@ export default function BlogPostPage({ params }: BlogPageProps) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-16 space-y-8">
+    <div className="container mx-auto px-4 pt-32 lg:pt-40 pb-16 space-y-8">
       <Link href="/blog" className="text-sm font-semibold text-primary hover:text-accent transition-colors">
         Back to blog
       </Link>

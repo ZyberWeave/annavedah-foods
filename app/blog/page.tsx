@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function BlogIndexPage() {
   return (
-    <div className="container mx-auto px-4 py-16 space-y-10">
+    <div className="container mx-auto px-4 pt-32 lg:pt-40 pb-16 space-y-10">
       <div className="space-y-3 text-center">
         <p className="text-sm font-semibold uppercase tracking-wide text-accent">Blog</p>
         <h1 className="text-4xl font-bold text-primary md:text-5xl">Ideas for everyday nourishment</h1>
