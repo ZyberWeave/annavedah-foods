@@ -23,7 +23,7 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [showCart, setShowCart] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { count, items, remove } = useCart()
+  const { count, items, remove, total } = useCart()
   const pathname = usePathname()
   const isHomePage = pathname === '/'
 
@@ -304,14 +304,16 @@ export default function Header() {
                         <Image src={item.product.image} alt={item.product.name} fill sizes="80px" className="object-contain p-2 drop-shadow-md" />
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-[#2d1b15]">{item.product.name}</h4>
+                        <h4 className="font-semibold text-[#2d1b15]">
+                          {item.product.name} {item.selectedPack && `(${item.selectedPack.size})`}
+                        </h4>
                         {item.product.nameHindi !== item.product.name && (
                           <p className="text-sm text-[#6b5347]">{item.product.nameHindi}</p>
                         )}
-                        <p className="text-[#8b1a1a] font-bold mt-1">₹{item.product.price} x {item.qty}</p>
+                        <p className="text-[#8b1a1a] font-bold mt-1">₹{item.selectedPack ? item.selectedPack.price : item.product.price} x {item.qty}</p>
                       </div>
                       <button
-                        onClick={() => remove(item.product.id)}
+                        onClick={() => remove(item.product.id, item.selectedPack?.size)}
                         className="p-2 hover:bg-red-50 rounded-full transition-colors h-fit"
                       >
                         <X className="w-4 h-4 text-red-500" />
@@ -326,7 +328,7 @@ export default function Header() {
               <div className="p-6 border-t border-[#e8ddd0] bg-white">
                 <div className="flex justify-between mb-4">
                   <span className="text-[#6b5347]">Subtotal</span>
-                  <span className="text-xl font-bold text-[#8b1a1a]">₹{items.reduce((sum, item) => sum + item.product.price * item.qty, 0)}</span>
+                  <span className="text-xl font-bold text-[#8b1a1a]">₹{total}</span>
                 </div>
                 <Link href="/cart" onClick={() => setShowCart(false)} className="w-full bg-[#8b1a1a] hover:bg-[#6d1414] text-white h-12 flex items-center justify-center text-lg rounded-xl transition-colors">
                   View Cart

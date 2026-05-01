@@ -33,24 +33,29 @@ export default function CartPage() {
       ) : (
         <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
           <div className="space-y-4">
-            {items.map(({ product, qty }) => (
-              <div key={product.slug} className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 md:flex-row md:items-center">
+            {items.map((item, idx) => {
+              const { product, qty } = item;
+              return (
+              <div key={`${product.slug}-${idx}`} className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 md:flex-row md:items-center">
                 <div className="relative h-28 w-28 rounded-xl bg-[url('/product-bg.png')] bg-cover bg-center border border-border/60 overflow-hidden">
                   <Image src={product.image} alt={product.name} fill sizes="112px" className="object-contain p-3 drop-shadow-md" />
                 </div>
                 <div className="flex-1 space-y-1">
-                  <h3 className="text-lg font-semibold text-foreground">{product.name}</h3>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {product.name} {item.selectedPack && `(${item.selectedPack.size})`}
+                  </h3>
                   <p className="text-sm text-muted-foreground">{product.category}</p>
-                  <p className="text-sm text-muted-foreground">Qty: {qty}</p>
+                  <p className="text-sm text-muted-foreground">Qty: {item.qty}</p>
                 </div>
                 <div className="flex items-center gap-4">
-                  <p className="text-lg font-bold text-primary">Rs {product.price * qty}</p>
-                  <Button variant="outline" size="sm" onClick={() => remove(product.id)}>
+                  <p className="text-lg font-bold text-primary">Rs {(item.selectedPack ? item.selectedPack.price : product.price) * item.qty}</p>
+                  <Button variant="outline" size="sm" onClick={() => remove(product.id, item.selectedPack?.size)}>
                     Remove
                   </Button>
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
 
           <div className="rounded-2xl border border-border bg-card p-6 space-y-4 shadow-sm">
@@ -59,7 +64,7 @@ export default function CartPage() {
               <span>Subtotal</span>
               <span>Rs {total}</span>
             </div>
-            <p className="text-xs text-muted-foreground">Shipping and taxes calculated at checkout.</p>
+            <p className="text-xs text-muted-foreground">Shipping, taxes, and COD charges calculated at checkout.</p>
             <Button className="w-full h-12 font-semibold" onClick={() => router.push('/checkout')}>
               Proceed to Checkout →
             </Button>

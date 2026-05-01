@@ -9,6 +9,7 @@ import Link from 'next/link';
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState<any[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -19,6 +20,13 @@ export default function DashboardPage() {
           router.push('/login');
         } else {
           setUser(data.user);
+          // Fetch orders
+          fetch('/api/orders')
+            .then(res => res.json())
+            .then(orderData => {
+              if (orderData.orders) setOrders(orderData.orders);
+            })
+            .catch(console.error);
         }
       })
       .catch(() => router.push('/login'))
@@ -86,14 +94,47 @@ export default function DashboardPage() {
           <div className="md:col-span-2 rounded-3xl border border-[#e8ddd0] bg-white p-8 shadow-sm">
             <h3 className="text-xl font-bold text-[#2d1b15] mb-6">Recent Orders</h3>
             
-            <div className="text-center py-12 border-2 border-dashed border-[#e8ddd0] rounded-2xl bg-[#faf6f0]">
-              <Package className="w-12 h-12 text-[#c9a45c]/50 mx-auto mb-4" />
-              <p className="text-lg font-medium text-[#2d1b15]">No orders yet</p>
-              <p className="text-sm text-[#6b5347] mb-6">When you place an order, it will appear here.</p>
-              <Button onClick={() => router.push('/products')} className="bg-[#8b1a1a] hover:bg-[#6d1414] text-white">
-                Start Shopping
-              </Button>
-            </div>
+            {orders.length === 0 ? (
+              <div className="text-center py-12 border-2 border-dashed border-[#e8ddd0] rounded-2xl bg-[#faf6f0]">
+                <Package className="w-12 h-12 text-[#c9a45c]/50 mx-auto mb-4" />
+                <p className="text-lg font-medium text-[#2d1b15]">No orders yet</p>
+                <p className="text-sm text-[#6b5347] mb-6">When you place an order, it will appear here.</p>
+                <Button onClick={() => router.push('/products')} className="bg-[#8b1a1a] hover:bg-[#6d1414] text-white">
+                  Start Shopping
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {orders.map((order) => {
+                  let parsedItems = [];
+                  try { parsedItems = JSON.parse(order.items); } catch(e){}
+                  
+                  return (
+                    <div key={order.id} className="border border-[#e8ddd0] rounded-2xl p-4 bg-[#faf6f0]">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <p className="text-sm font-semibold text-[#8b1a1a]">Order #{order.orderId}</p>
+                          <p className="text-xs text-[#6b5347]">{new Date(order.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-[#2d1b15]">Rs {order.total}</p>
+                          <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-[10px] font-bold uppercase tracking-wider">
+                            {order.paymentId === 'COD' ? 'COD' : 'Paid'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="pt-3 border-t border-[#e8ddd0]/50">
+                        <ul className="text-xs text-[#6b5347] space-y-1">
+                          {parsedItems.map((item: any, i: number) => (
+                            <li key={i}>{item.qty}x {item.name || 'Product'}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>

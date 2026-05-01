@@ -39,6 +39,10 @@ export default function CheckoutPage() {
     address: '', city: '', state: '', pincode: '',
   })
   const [errors, setErrors] = useState<Partial<FormData>>({})
+  const [paymentMethod, setPaymentMethod] = useState<'Prepaid' | 'COD'>('Prepaid')
+
+  const codCharge = paymentMethod === 'COD' ? 99 : 0
+  const finalTotal = total + codCharge
 
   const [isAuthChecking, setIsAuthChecking] = useState(true)
 
@@ -70,14 +74,6 @@ export default function CheckoutPage() {
       });
   }, [router]);
 
-  if (isAuthChecking && step !== 'success') {
-    return (
-      <div className="min-h-screen pt-[120px] lg:pt-[190px] pb-16 flex items-center justify-center bg-[#faf6f0]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#c9a45c]" />
-      </div>
-    );
-  }
-
   // Load Razorpay SDK
   useEffect(() => {
     const script = document.createElement('script')
@@ -86,6 +82,37 @@ export default function CheckoutPage() {
     document.body.appendChild(script)
     return () => { document.body.removeChild(script) }
   }, [])
+
+  // Abandoned cart capture
+  useEffect(() => {
+    if (form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/) && items.length > 0 && step !== 'success') {
+      const timer = setTimeout(() => {
+        fetch('/api/abandoned-cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: form.email,
+            phone: form.phone,
+            name: `${form.firstName} ${form.lastName}`.trim(),
+            items: items.map(i => ({ 
+              name: `${i.product.name}${i.selectedPack ? ` (${i.selectedPack.size})` : ''}`, 
+              qty: i.qty, 
+              price: i.selectedPack ? i.selectedPack.price : i.product.price 
+            }))
+          })
+        }).catch(console.error)
+      }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [form.email, form.phone, form.firstName, form.lastName, items, step])
+
+  if (isAuthChecking && step !== 'success') {
+    return (
+      <div className="min-h-screen pt-[120px] lg:pt-[190px] pb-16 flex items-center justify-center bg-[#faf6f0]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#c9a45c]" />
+      </div>
+    );
+  }
 
   function set(field: keyof FormData, value: string) {
     setForm(f => ({ ...f, [field]: value }))
@@ -113,7 +140,8 @@ export default function CheckoutPage() {
     if (!form.address.trim()) errs.address = 'Required'
     if (!form.city.trim()) errs.city = 'Required'
     if (!form.state.trim()) errs.state = 'Required'
-    if (!form.pincode.match(/^\d{6}$/)) errs.pincode = 'Invalid pincode'
+    // TODO: Add pincode validation back in the future when shiprocket is setting up
+    // if (!form.pincode.match(/^\d{6}$/)) errs.pincode = 'Invalid pincode'
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -122,11 +150,38 @@ export default function CheckoutPage() {
     if (!validate()) return
     setLoading(true)
     try {
+      if (paymentMethod === 'COD') {
+        const generatedOrderId = `COD_${Date.now()}`
+        
+        // Create Shiprocket order for COD directly
+        await fetch('/api/shiprocket/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: generatedOrderId,
+            paymentId: 'COD',
+            customer: form,
+            items: items.map(i => ({ 
+              name: `${i.product.name}${i.selectedPack ? ` (${i.selectedPack.size})` : ''}`, 
+              qty: i.qty, 
+              price: i.selectedPack ? i.selectedPack.price : i.product.price 
+            })),
+            total: finalTotal,
+            paymentMethod: 'COD',
+          }),
+        })
+
+        setOrderId(generatedOrderId)
+        items.forEach(i => remove(i.product.id, i.selectedPack?.size))
+        setStep('success')
+        return;
+      }
+
       // 1. Create Razorpay order
       const orderRes = await fetch('/api/razorpay/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: total * 100, receipt: `receipt_${Date.now()}` }),
+        body: JSON.stringify({ amount: finalTotal * 100, receipt: `receipt_${Date.now()}` }),
       })
       const order = await orderRes.json()
       if (!order.id) throw new Error('Could not create payment order')
@@ -158,8 +213,12 @@ export default function CheckoutPage() {
             body: JSON.stringify({ 
               ...response,
               customer: form,
-              items: items.map(i => ({ name: i.product.name, qty: i.qty, price: i.product.price })),
-              total,
+              items: items.map(i => ({ 
+                name: `${i.product.name}${i.selectedPack ? ` (${i.selectedPack.size})` : ''}`, 
+                qty: i.qty, 
+                price: i.selectedPack ? i.selectedPack.price : i.product.price 
+              })),
+              total: finalTotal,
               orderId: order.id
             }),
           })
@@ -174,14 +233,19 @@ export default function CheckoutPage() {
               orderId: order.id,
               paymentId: response.razorpay_payment_id,
               customer: form,
-              items: items.map(i => ({ name: i.product.name, qty: i.qty, price: i.product.price })),
-              total,
+              items: items.map(i => ({ 
+                name: `${i.product.name}${i.selectedPack ? ` (${i.selectedPack.size})` : ''}`, 
+                qty: i.qty, 
+                price: i.selectedPack ? i.selectedPack.price : i.product.price 
+              })),
+              total: finalTotal,
+              paymentMethod: 'Prepaid',
             }),
           })
 
           setOrderId(order.id)
           // Clear cart items
-          items.forEach(i => remove(i.product.id))
+          items.forEach(i => remove(i.product.id, i.selectedPack?.size))
           setStep('success')
         },
         modal: { ondismiss: () => setLoading(false) },
@@ -298,6 +362,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
+              {/* TODO: Add Pincode field back in the future when Shiprocket is setting up
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Pincode *</label>
                 <div className="relative">
@@ -318,6 +383,7 @@ export default function CheckoutPage() {
                 </div>
                 {errors.pincode && <p className="text-red-500 text-xs mt-1">{errors.pincode}</p>}
               </div>
+              */}
             </div>
 
             {/* Trust badges */}
@@ -341,32 +407,66 @@ export default function CheckoutPage() {
               <h2 className="text-lg font-semibold text-foreground">Order Summary</h2>
 
               <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
-                {items.map(({ product, qty }) => (
-                  <div key={product.slug} className="flex items-center gap-3">
+                {items.map((item, idx) => {
+                  const { product, qty } = item;
+                  return (
+                  <div key={`${product.slug}-${idx}`} className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-lg border border-border bg-white flex-shrink-0 overflow-hidden">
                       <Image src={product.image} alt={product.name} width={48} height={48} className="w-full h-full object-contain p-1" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{product.name}</p>
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {product.name} {item.selectedPack && `(${item.selectedPack.size})`}
+                      </p>
                       <p className="text-xs text-muted-foreground">Qty: {qty}</p>
                     </div>
-                    <p className="text-sm font-semibold text-foreground">₹{product.price * qty}</p>
+                    <p className="text-sm font-semibold text-foreground">₹{(item.selectedPack ? item.selectedPack.price : product.price) * qty}</p>
                   </div>
-                ))}
+                  )
+                })}
               </div>
 
-              <div className="border-t border-border pt-4 space-y-2">
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Subtotal</span>
-                  <span>₹{total}</span>
+              <div className="border-t border-border pt-4 space-y-4">
+                
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-foreground">Payment Method</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('Prepaid')}
+                      className={`p-3 rounded-xl border text-sm font-medium transition-all ${paymentMethod === 'Prepaid' ? 'border-[#c9a45c] bg-[#c9a45c]/10 text-[#c9a45c]' : 'border-border bg-card text-muted-foreground'}`}
+                    >
+                      Online Payment
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('COD')}
+                      className={`p-3 rounded-xl border text-sm font-medium transition-all ${paymentMethod === 'COD' ? 'border-[#c9a45c] bg-[#c9a45c]/10 text-[#c9a45c]' : 'border-border bg-card text-muted-foreground'}`}
+                    >
+                      Cash on Delivery
+                    </button>
+                  </div>
                 </div>
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>Shipping</span>
-                  <span className="text-green-600 font-medium">Free</span>
-                </div>
-                <div className="flex justify-between text-base font-bold text-foreground border-t border-border pt-2">
-                  <span>Total</span>
-                  <span>₹{total}</span>
+
+                <div className="space-y-2 border-t border-border pt-4">
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Subtotal</span>
+                    <span>₹{total}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Shipping</span>
+                    <span className="text-green-600 font-medium">Free</span>
+                  </div>
+                  {paymentMethod === 'COD' && (
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>COD Charge</span>
+                      <span>₹99</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-base font-bold text-foreground border-t border-border pt-2">
+                    <span>Total</span>
+                    <span>₹{finalTotal}</span>
+                  </div>
                 </div>
               </div>
 
@@ -375,14 +475,14 @@ export default function CheckoutPage() {
                 className="w-full h-12 font-semibold text-base"
                 style={{ background: '#c9a45c', color: '#2d1b15' }}
                 onClick={handlePayment}
-                disabled={loading || serviceability === 'unavailable'}
+                disabled={loading} // Temporarily removed serviceability check while pincode is disabled
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
                     <Loader2 className="w-4 h-4 animate-spin" /> Processing…
                   </span>
                 ) : (
-                  `Pay ₹${total} Securely`
+                  paymentMethod === 'COD' ? `Place Order • ₹${finalTotal}` : `Pay ₹${finalTotal} Securely`
                 )}
               </Button>
 
