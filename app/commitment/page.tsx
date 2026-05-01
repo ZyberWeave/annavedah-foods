@@ -9,7 +9,7 @@ export const metadata = {
 
 export default function DonationCommitmentPage() {
   return (
-    <div className="bg-[#faf6f0] min-h-screen pb-20 pt-28">
+    <div className="bg-[#faf6f0] min-h-screen pb-20 pt-[120px] lg:pt-[190px]">
       {/* Hero Section */}
       <section className="relative overflow-hidden mb-16">
         <div className="absolute inset-0 bg-[#c9a45c]/10" />
@@ -111,14 +111,9 @@ export default function DonationCommitmentPage() {
                 <strong className="text-[#8b1a1a]">And together, ordinary purchases can create extraordinary care.</strong>
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/products" className="bg-[#8b1a1a] hover:bg-[#6d1414] text-white px-8 py-4 rounded-xl font-bold text-lg transition-colors shadow-lg shadow-[#8b1a1a]/20">
-                  Shop Products
-                </Link>
-                <a href="/Our%20Donation%20Commitment%20Annavedah%20Foods.pdf" target="_blank" className="bg-white border-2 border-[#8b1a1a] text-[#8b1a1a] hover:bg-[#8b1a1a]/5 px-8 py-4 rounded-xl font-bold text-lg transition-colors flex items-center justify-center gap-2">
-                  Download PDF
-                </a>
-              </div>
+              <Link href="/products" className="inline-block bg-[#8b1a1a] hover:bg-[#6d1414] text-white px-8 py-4 rounded-xl font-bold text-lg transition-colors shadow-lg shadow-[#8b1a1a]/20">
+                Shop Products
+              </Link>
             </div>
 
           </div>

@@ -657,10 +657,41 @@ export const products: Product[] = productCatalog.map((item, index) => {
 })
 
 export const banners = [
-  '/Banners/Create_random_e_202601191245.webp',
-  '/Banners/Create_random_e_202601191245 (1).webp',
-  '/Banners/Create_random_e_202601191244 (2).webp',
-  '/Banners/Create_random_e_202601191243 (1).webp',
+  {
+    desktop: '/Banners/Atta.jpeg',
+    tablet: '/Banners/Atta_tablet.jpeg',
+    mobile: '/Banners/Atta_mobile.jpeg',
+  },
+  {
+    desktop: '/Banners/Chutney.jpeg',
+    tablet: '/Banners/Chutney_tablet.jpeg',
+    mobile: '/Banners/Chutney_mobile.jpeg',
+  },
+  {
+    desktop: '/Banners/Essentials.jpeg',
+    tablet: '/Banners/Essentials_tablet.jpeg',
+    mobile: '/Banners/Essentials_mobile.jpeg',
+  },
+  {
+    desktop: '/Banners/Grains.jpeg',
+    tablet: '/Banners/grain_tablet.jpeg',
+    mobile: '/Banners/grain_mobile.jpeg',
+  },
+  {
+    desktop: '/Banners/Papad.jpeg',
+    tablet: '/Banners/papad_tablet.jpeg',
+    mobile: '/Banners/papad_mobile.jpeg',
+  },
+  {
+    desktop: '/Banners/Powders.jpeg',
+    tablet: '/Banners/Powders_tablet.jpeg',
+    mobile: '/Banners/Powders_mobile.jpeg',
+  },
+  {
+    desktop: '/Banners/pulses.jpeg',
+    tablet: '/Banners/pulses_tablet.jpeg',
+    mobile: '/Banners/pulses _mobile.jpeg',
+  },
 ]
 
 export const testimonials: Testimonial[] = [

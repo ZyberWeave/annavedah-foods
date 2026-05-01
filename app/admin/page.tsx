@@ -1,309 +1,219 @@
-"use client"
+'use client';
 
-import React, { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { ArrowUpRight, ArrowDownRight, TrendingUp, Users, Package, IndianRupee, MoreVertical, Search, Filter } from 'lucide-react'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts'
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Loader2, Users, ShoppingBag, TrendingUp, LogOut, ShieldCheck, Box } from 'lucide-react';
 
-const revenueData = [
-  { name: 'Mon', total: 12500 },
-  { name: 'Tue', total: 15200 },
-  { name: 'Wed', total: 14800 },
-  { name: 'Thu', total: 18400 },
-  { name: 'Fri', total: 22500 },
-  { name: 'Sat', total: 28900 },
-  { name: 'Sun', total: 24100 },
-]
+export default function AdminDashboardPage() {
+  const [user, setUser] = useState<any>(null);
+  const [refunds, setRefunds] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-const salesByCategory = [
-  { name: 'Powders', value: 45000 },
-  { name: 'Grains', value: 28000 },
-  { name: 'Blends', value: 35000 },
-  { name: 'Oils', value: 15000 },
-]
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.user || data.user.role !== 'admin') {
+          router.push('/login');
+        } else {
+          setUser(data.user);
+          // Fetch refunds for admin
+          fetch('/api/admin/refunds')
+            .then(res => res.json())
+            .then(data => {
+              if (data.refunds) setRefunds(data.refunds);
+            });
+        }
+      })
+      .catch(() => router.push('/login'))
+      .finally(() => setLoading(false));
+  }, [router]);
 
-const recentOrders = [
-  { id: '#ORD-7231', customer: 'Rohidas Sawant', product: 'Premium Desi Ghee (1L)', date: '2 mins ago', amount: '₹1,250', status: 'Processing' },
-  { id: '#ORD-7230', customer: 'Amit Patel', product: 'Pure Turmeric Powder', date: '1 hour ago', amount: '₹450', status: 'Shipped' },
-  { id: '#ORD-7229', customer: 'Priya Sharma', product: 'A2 Cow Milk (Monthly)', date: '3 hours ago', amount: '₹2,800', status: 'Delivered' },
-  { id: '#ORD-7228', customer: 'Sanjay Kumar', product: 'Cold Pressed Mustard Oil', date: '5 hours ago', amount: '₹320', status: 'Delivered' },
-  { id: '#ORD-7227', customer: 'Neha Singh', product: 'Himalayan Pink Salt', date: '1 day ago', amount: '₹150', status: 'Delivered' },
-  { id: '#ORD-7226', customer: 'Vikram Joshi', product: 'Moringa Leaf Powder', date: '1 day ago', amount: '₹399', status: 'Processing' },
-]
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/login';
+  };
 
-export default function AdminDashboard() {
-  const [timeframe, setTimeframe] = useState('7days')
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-32 pb-16 flex items-center justify-center bg-[#faf6f0]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#c9a45c]" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 animate-fade-in-up pb-10">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-card p-6 rounded-2xl border border-border shadow-sm">
-        <div>
-          <h1 className="text-2xl font-serif font-bold text-primary tracking-tight">Dashboard Overview</h1>
-          <p className="text-muted-foreground text-sm mt-1">Here's what's happening with your store today.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <select 
-            value={timeframe} 
-            onChange={(e) => setTimeframe(e.target.value)}
-            className="text-sm bg-muted/50 border border-border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/20 text-foreground transition-all"
-          >
-            <option value="today">Today</option>
-            <option value="7days">Last 7 Days</option>
-            <option value="30days">Last 30 Days</option>
-            <option value="year">This Year</option>
-          </select>
-          <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm">
-            Download Report
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard 
-          title="Total Revenue" 
-          value="₹1,36,400" 
-          icon={IndianRupee} 
-          trend="+12.5%" 
-          trendUp={true} 
-          desc="vs previous 7 days" 
-          delay="delay-100"
-        />
-        <StatCard 
-          title="Total Orders" 
-          value="1,240" 
-          icon={Package} 
-          trend="+8.2%" 
-          trendUp={true} 
-          desc="vs previous 7 days" 
-          delay="delay-200"
-        />
-        <StatCard 
-          title="Active Customers" 
-          value="342" 
-          icon={Users} 
-          trend="-2.4%" 
-          trendUp={false} 
-          desc="vs previous 7 days" 
-          delay="delay-300"
-        />
-        <StatCard 
-          title="Conversion Rate" 
-          value="3.2%" 
-          icon={TrendingUp} 
-          trend="+1.1%" 
-          trendUp={true} 
-          desc="vs previous 7 days" 
-          delay="delay-400"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Revenue Chart */}
-        <Card className="lg:col-span-2 border-border shadow-sm rounded-2xl overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 bg-card">
-            <div className="space-y-1">
-              <CardTitle className="text-lg font-serif font-bold">Revenue Trends</CardTitle>
-              <CardDescription>Daily revenue for the last 7 days</CardDescription>
+    <div className="min-h-screen pt-[120px] lg:pt-[190px] pb-16 bg-[#faf6f0]">
+      <div className="container mx-auto px-4 max-w-7xl">
+        <div className="flex items-center justify-between mb-8 bg-white p-6 rounded-3xl border border-[#e8ddd0] shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-[#8b1a1a]/10 rounded-xl flex items-center justify-center">
+              <ShieldCheck className="w-6 h-6 text-[#8b1a1a]" />
             </div>
-          </CardHeader>
-          <CardContent className="p-6 bg-card">
-            <div className="h-[320px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="oklch(0.35 0.15 25)" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="oklch(0.35 0.15 25)" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis 
-                    dataKey="name" 
-                    stroke="currentColor" 
-                    fontSize={12} 
-                    tickLine={false} 
-                    axisLine={false} 
-                    className="text-muted-foreground font-medium"
-                    dy={10}
-                  />
-                  <YAxis 
-                    stroke="currentColor" 
-                    fontSize={12} 
-                    tickLine={false} 
-                    axisLine={false} 
-                    tickFormatter={(value) => `₹${value/1000}k`}
-                    className="text-muted-foreground font-medium"
-                    dx={-10}
-                  />
-                  <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="oklch(0.9 0.02 60 / 0.5)" className="dark:stroke-neutral-800" />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '12px', border: '1px solid oklch(0.9 0.02 60)', backgroundColor: 'var(--card)', color: 'var(--foreground)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                    itemStyle={{ color: 'var(--primary)', fontWeight: 600 }}
-                    labelStyle={{ color: 'var(--muted-foreground)', marginBottom: '4px' }}
-                    formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Revenue']}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="total" 
-                    stroke="oklch(0.35 0.15 25)" 
-                    strokeWidth={3}
-                    fillOpacity={1} 
-                    fill="url(#colorTotal)" 
-                    activeDot={{ r: 6, fill: "oklch(0.35 0.15 25)", stroke: "var(--background)", strokeWidth: 3 }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div>
+              <h1 className="text-2xl font-bold text-[#2d1b15]">Admin Portal</h1>
+              <p className="text-sm text-[#6b5347]">Manage store, orders, and users securely.</p>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Sales by Category */}
-        <Card className="lg:col-span-1 border-border shadow-sm rounded-2xl overflow-hidden">
-          <CardHeader className="bg-card">
-            <CardTitle className="text-lg font-serif font-bold">Sales by Category</CardTitle>
-            <CardDescription>Revenue breakdown</CardDescription>
-          </CardHeader>
-          <CardContent className="p-6 pt-0 bg-card">
-            <div className="h-[240px] w-full mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={salesByCategory} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                  <XAxis type="number" hide />
-                  <YAxis 
-                    dataKey="name" 
-                    type="category" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    fontSize={13}
-                    className="text-foreground font-medium"
-                    width={80}
-                  />
-                  <Tooltip 
-                    cursor={{fill: 'oklch(0.92 0.02 60 / 0.5)'}}
-                    contentStyle={{ borderRadius: '8px', border: 'none', backgroundColor: 'var(--popover)', color: 'var(--popover-foreground)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                    formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Sales']}
-                  />
-                  <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24}>
-                    {salesByCategory.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={`oklch(${0.35 + index*0.1} ${0.15 - index*0.02} 25)`} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-6 space-y-3">
-              {salesByCategory.map((cat, i) => (
-                <div key={i} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full" style={{ backgroundColor: `oklch(${0.35 + i*0.1} ${0.15 - i*0.02} 25)` }}></span>
-                    <span className="font-medium text-muted-foreground">{cat.name}</span>
-                  </div>
-                  <span className="font-bold text-foreground">₹{cat.value.toLocaleString()}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Orders */}
-      <Card className="border-border shadow-sm rounded-2xl overflow-hidden">
-        <div className="p-6 border-b border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <CardTitle className="text-lg font-serif font-bold">Recent Orders</CardTitle>
-            <CardDescription>Latest transactions needing attention</CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input 
-                type="text" 
-                placeholder="Search orders..." 
-                className="pl-9 pr-4 py-2 bg-muted/50 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 w-[200px] transition-all"
-              />
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:block text-right">
+              <p className="text-sm font-bold text-[#2d1b15]">{user?.name}</p>
+              <p className="text-xs text-[#c9a45c] uppercase tracking-wider font-semibold">Administrator</p>
             </div>
-            <Button variant="outline" size="icon" className="shrink-0 bg-background">
-              <Filter className="w-4 h-4" />
+            <Button onClick={handleLogout} variant="outline" className="border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10">
+              <LogOut className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Log Out</span>
             </Button>
           </div>
         </div>
-        <div className="overflow-x-auto bg-card">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs text-muted-foreground uppercase bg-muted/30">
-              <tr>
-                <th className="px-6 py-4 font-medium">Order ID</th>
-                <th className="px-6 py-4 font-medium">Customer</th>
-                <th className="px-6 py-4 font-medium">Product</th>
-                <th className="px-6 py-4 font-medium">Date</th>
-                <th className="px-6 py-4 font-medium text-right">Amount</th>
-                <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {recentOrders.map((order, i) => (
-                <tr key={i} className="hover:bg-muted/30 transition-colors group">
-                  <td className="px-6 py-4 font-medium text-primary">{order.id}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center text-secondary-foreground font-bold text-xs">
-                        {order.customer.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <span className="font-medium text-foreground">{order.customer}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-muted-foreground max-w-[200px] truncate">{order.product}</td>
-                  <td className="px-6 py-4 text-muted-foreground whitespace-nowrap">{order.date}</td>
-                  <td className="px-6 py-4 font-semibold text-foreground text-right">{order.amount}</td>
-                  <td className="px-6 py-4">
-                    <Badge variant="outline" className={`border-0 font-medium ${
-                      order.status === 'Delivered' ? 'bg-green-500/15 text-green-700 dark:text-green-400' : 
-                      order.status === 'Processing' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400' : 
-                      'bg-blue-500/15 text-blue-700 dark:text-blue-400'
-                    }`}>
-                      {order.status}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                      View
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="p-4 border-t border-border bg-muted/10 flex justify-center">
-          <Button variant="link" className="text-primary font-medium">View All Orders <ArrowUpRight className="w-4 h-4 ml-1" /></Button>
-        </div>
-      </Card>
-    </div>
-  )
-}
 
-function StatCard({ title, value, icon: Icon, trend, trendUp, desc, delay }: any) {
-  return (
-    <Card className={`border-border shadow-sm hover:shadow-md transition-all hover:-translate-y-1 bg-card rounded-2xl overflow-hidden animate-fade-in-up ${delay}`}>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <div className="p-2.5 bg-primary/10 rounded-xl text-primary border border-primary/20 shadow-sm">
-            <Icon className="w-5 h-5" />
+        {/* Stats Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {[
+            { title: 'Total Revenue', value: '₹0.00', icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-100' },
+            { title: 'Active Orders', value: '0', icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-100' },
+            { title: 'Total Users', value: '1', icon: Users, color: 'text-purple-600', bg: 'bg-purple-100' },
+            { title: 'Products', value: '42', icon: Box, color: 'text-amber-600', bg: 'bg-amber-100' },
+          ].map((stat, i) => (
+            <div key={i} className="bg-white p-6 rounded-3xl border border-[#e8ddd0] shadow-sm flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-full ${stat.bg} flex items-center justify-center`}>
+                <stat.icon className={`w-6 h-6 ${stat.color}`} />
+              </div>
+              <div>
+                <p className="text-sm text-[#6b5347] font-medium">{stat.title}</p>
+                <p className="text-2xl font-bold text-[#2d1b15]">{stat.value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            {/* Recent Orders Table */}
+            <div className="bg-white rounded-3xl border border-[#e8ddd0] shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-[#e8ddd0] flex justify-between items-center">
+                <h2 className="text-lg font-bold text-[#2d1b15]">Recent Orders</h2>
+                <Button variant="ghost" className="text-[#8b1a1a] hover:bg-[#faf6f0]">View All</Button>
+              </div>
+              <div className="p-12 text-center text-[#6b5347]">
+                <ShoppingBag className="w-12 h-12 text-[#e8ddd0] mx-auto mb-4" />
+                <p>No recent orders found.</p>
+              </div>
+            </div>
+
+            {/* Refund Requests Table */}
+            <div className="bg-white rounded-3xl border border-[#e8ddd0] shadow-sm overflow-hidden">
+              <div className="p-6 border-b border-[#e8ddd0]">
+                <h2 className="text-lg font-bold text-[#2d1b15]">Refund Requests</h2>
+              </div>
+              {refunds.length === 0 ? (
+                <div className="p-12 text-center text-[#6b5347]">
+                  <p>No refund requests.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-[#e8ddd0]">
+                  {refunds.map((refund) => (
+                    <div key={refund.id} className="p-6 flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-bold text-[#2d1b15]">{refund.user.name}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-semibold uppercase ${refund.status === 'approved' ? 'bg-green-100 text-green-800' : refund.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'}`}>
+                            {refund.status}
+                          </span>
+                        </div>
+                        <p className="text-sm text-[#6b5347] mb-1">Order: {refund.orderId}</p>
+                        <p className="text-sm text-[#2d1b15]">{refund.reason}</p>
+                        <p className="text-xs text-[#c9a45c] mt-1">{new Date(refund.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <div className="flex items-center gap-4 flex-shrink-0">
+                        {refund.imageUrl && (
+                          <a href={refund.imageUrl} target="_blank" rel="noreferrer" className="flex-shrink-0">
+                            <img src={refund.imageUrl} alt="Refund proof" className="h-16 w-16 object-cover rounded-lg border border-[#e8ddd0]" />
+                          </a>
+                        )}
+                        {refund.status === 'pending' && (
+                          <div className="flex flex-col gap-2">
+                            <Button 
+                              size="sm" 
+                              onClick={async () => {
+                                const res = await fetch('/api/admin/refunds/' + refund.id, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ status: 'approved' })
+                                });
+                                if (res.ok) {
+                                  setRefunds(prev => prev.map(r => r.id === refund.id ? { ...r, status: 'approved' } : r));
+                                }
+                              }}
+                              className="bg-green-600 hover:bg-green-700 text-white h-8 text-xs"
+                            >
+                              Approve
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={async () => {
+                                const res = await fetch('/api/admin/refunds/' + refund.id, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ status: 'rejected' })
+                                });
+                                if (res.ok) {
+                                  setRefunds(prev => prev.map(r => r.id === refund.id ? { ...r, status: 'rejected' } : r));
+                                }
+                              }}
+                              className="border-red-200 text-red-600 hover:bg-red-50 h-8 text-xs"
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Actions / System Status */}
+          <div className="space-y-8">
+            <div className="bg-white rounded-3xl border border-[#e8ddd0] shadow-sm p-6">
+              <h2 className="text-lg font-bold text-[#2d1b15] mb-4">Quick Actions</h2>
+              <div className="space-y-3">
+                <Button className="w-full justify-start bg-[#faf6f0] text-[#2d1b15] hover:bg-[#e8ddd0] border border-[#e8ddd0]">
+                  <Box className="w-4 h-4 mr-3 text-[#c9a45c]" /> Add New Product
+                </Button>
+                <Button className="w-full justify-start bg-[#faf6f0] text-[#2d1b15] hover:bg-[#e8ddd0] border border-[#e8ddd0]">
+                  <ShoppingBag className="w-4 h-4 mr-3 text-[#c9a45c]" /> Manage Orders
+                </Button>
+                <Button className="w-full justify-start bg-[#faf6f0] text-[#2d1b15] hover:bg-[#e8ddd0] border border-[#e8ddd0]">
+                  <Users className="w-4 h-4 mr-3 text-[#c9a45c]" /> View Customers
+                </Button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-[#e8ddd0] shadow-sm p-6">
+              <h2 className="text-lg font-bold text-[#2d1b15] mb-4">System Status</h2>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-[#6b5347]">Database</span>
+                  <span className="flex items-center text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full"><div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div> Connected</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-[#6b5347]">Payment Gateway</span>
+                  <span className="flex items-center text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full"><div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div> Active</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-[#6b5347]">Shipping Partner</span>
+                  <span className="flex items-center text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full"><div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div> Active</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div>
-          <h3 className="text-3xl font-bold text-foreground font-serif tracking-tight">{value}</h3>
-          <div className="flex items-center mt-2">
-            <Badge variant="outline" className={`px-1.5 py-0 border-0 ${trendUp ? 'bg-green-500/15 text-green-700 dark:text-green-400' : 'bg-destructive/15 text-destructive dark:text-red-400'}`}>
-              {trendUp ? <ArrowUpRight className="w-3 h-3 mr-0.5" /> : <ArrowDownRight className="w-3 h-3 mr-0.5" />}
-              {trend}
-            </Badge>
-            <span className="text-muted-foreground ml-2 text-xs font-medium">{desc}</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
+      </div>
+    </div>
+  );
 }

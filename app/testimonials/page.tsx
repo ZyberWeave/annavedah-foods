@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function TestimonialsPage() {
   return (
-    <div className="container mx-auto px-4 pt-32 lg:pt-40 pb-16 space-y-10">
+    <div className="container mx-auto px-4 pt-[120px] lg:pt-[190px] pb-16 space-y-10">
       <div className="space-y-3 text-center">
         <p className="text-sm font-semibold uppercase tracking-wide text-accent">Testimonials</p>
         <h1 className="text-4xl font-bold text-primary md:text-5xl">Trusted by families across India</h1>

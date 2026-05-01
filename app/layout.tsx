@@ -48,7 +48,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className="antialiased overflow-x-hidden"
+        className="antialiased"
         style={{ fontFamily: "'Outfit', 'Cormorant Garamond', Georgia, serif" }}
       >
         <CartProvider>
@@ -72,6 +72,7 @@ export default function RootLayout({
                       src="/Logo.webp"
                       alt="Annavedah Foods"
                       fill
+                      sizes="56px"
                       className="object-cover"
                     />
                   </div>

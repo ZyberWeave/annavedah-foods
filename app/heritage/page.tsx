@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function HeritagePage() {
   return (
-    <div className="container mx-auto px-4 pt-32 lg:pt-40 pb-16 space-y-12">
+    <div className="container mx-auto px-4 pt-[120px] lg:pt-[190px] pb-16 space-y-12">
       <div className="grid gap-10 md:grid-cols-2 md:items-center">
         <div className="space-y-4">
           <p className="text-sm font-semibold uppercase tracking-wide text-accent">Heritage</p>
@@ -44,7 +44,7 @@ export default function HeritagePage() {
 
         <div className="relative">
           <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-border shadow-2xl bg-white">
-            <Image src="/Logo.webp" alt="Annavedah heritage" fill className="object-contain p-6" />
+            <Image src="/Logo.webp" alt="Annavedah heritage" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-contain p-6" />
           </div>
           <div className="absolute -left-8 -bottom-8 h-40 w-40 rounded-3xl border-4 border-accent/30" />
         </div>

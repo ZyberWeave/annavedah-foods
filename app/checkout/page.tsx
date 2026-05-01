@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/components/cart-context'
 import { Button } from '@/components/ui/button'
+import Image from 'next/image'
 import { CheckCircle2, Loader2, MapPin, ShieldCheck, Truck } from 'lucide-react'
 
 declare global {
@@ -39,10 +40,43 @@ export default function CheckoutPage() {
   })
   const [errors, setErrors] = useState<Partial<FormData>>({})
 
+  const [isAuthChecking, setIsAuthChecking] = useState(true)
+
   // Redirect if cart is empty
   useEffect(() => {
-    if (items.length === 0 && step !== 'success') router.push('/cart')
-  }, [items, step, router])
+    if (!isAuthChecking && items.length === 0 && step !== 'success') router.push('/cart')
+  }, [items, step, router, isAuthChecking])
+
+  // Auth check
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.user) {
+          router.push('/login?redirect=/checkout');
+        } else {
+          // Pre-fill form if user is logged in
+          setForm(f => ({
+            ...f,
+            firstName: data.user.name?.split(' ')[0] || '',
+            lastName: data.user.name?.split(' ').slice(1).join(' ') || '',
+            email: data.user.email || '',
+          }));
+          setIsAuthChecking(false);
+        }
+      })
+      .catch(() => {
+        router.push('/login?redirect=/checkout');
+      });
+  }, [router]);
+
+  if (isAuthChecking && step !== 'success') {
+    return (
+      <div className="min-h-screen pt-[120px] lg:pt-[190px] pb-16 flex items-center justify-center bg-[#faf6f0]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#c9a45c]" />
+      </div>
+    );
+  }
 
   // Load Razorpay SDK
   useEffect(() => {
@@ -121,7 +155,13 @@ export default function CheckoutPage() {
           const verifyRes = await fetch('/api/razorpay/verify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(response),
+            body: JSON.stringify({ 
+              ...response,
+              customer: form,
+              items: items.map(i => ({ name: i.product.name, qty: i.qty, price: i.product.price })),
+              total,
+              orderId: order.id
+            }),
           })
           const verify = await verifyRes.json()
           if (!verify.verified) throw new Error('Payment verification failed')
@@ -190,7 +230,7 @@ export default function CheckoutPage() {
   const states = ['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Delhi','Jammu & Kashmir','Ladakh']
 
   return (
-    <div className="min-h-screen py-12 px-4" style={{ background: 'var(--background)' }}>
+    <div className="min-h-screen pt-[120px] lg:pt-[190px] pb-12 px-4" style={{ background: 'var(--background)' }}>
       <div className="max-w-5xl mx-auto">
 
         {/* Header */}
@@ -304,8 +344,7 @@ export default function CheckoutPage() {
                 {items.map(({ product, qty }) => (
                   <div key={product.slug} className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-lg border border-border bg-white flex-shrink-0 overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={product.image} alt={product.name} className="w-full h-full object-contain p-1" />
+                      <Image src={product.image} alt={product.name} width={48} height={48} className="w-full h-full object-contain p-1" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{product.name}</p>

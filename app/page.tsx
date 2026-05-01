@@ -5,8 +5,16 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { products, banners, testimonials, categories } from '@/lib/content'
-import { Search, Leaf, Heart, Star, Sparkles, ArrowRight, ShoppingCart, ChevronLeft, ChevronRight, Package, Users, Shield, Check } from 'lucide-react'
+import { Search, Leaf, Heart, Star, ShoppingCart, ChevronLeft, ChevronRight, Package, Users, Shield, Check, Sparkles } from 'lucide-react'
 import { useCart } from '@/components/cart-context'
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
+import AutoScroll from 'embla-carousel-auto-scroll'
 import { motion, useAnimation, useInView, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion'
 import CountUp from 'react-countup'
 
@@ -297,6 +305,7 @@ function PLPProductCard({ product, index, add }: any) {
               src={product.image}
               alt={product.name}
               fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-contain p-6 drop-shadow-xl transition-all duration-500 group-hover:drop-shadow-2xl"
             />
           </motion.div>
@@ -413,9 +422,7 @@ export default function HomePage() {
   
   // Scroll progress for hero parallax
   const { scrollY } = useScroll()
-  const heroOpacity = useTransform(scrollY, [0, 500], [1, 0])
   const heroScale = useTransform(scrollY, [0, 500], [1, 1.1])
-  const heroY = useTransform(scrollY, [0, 500], [0, 150])
 
   // Auto-rotate banners with smooth animation
   useEffect(() => {
@@ -436,17 +443,16 @@ export default function HomePage() {
   const prevBanner = () => setCurrentBanner((prev) => (prev - 1 + banners.length) % banners.length)
 
   return (
-    <div className="min-h-screen bg-[#faf6f0] text-[#2d1b15]">
+    <div className="min-h-screen bg-[#faf6f0] text-[#2d1b15] pt-[116px] lg:pt-[172px]">
       
 
-      {/* Hero Section with Full Image and Parallax */}
-      {/* h-screen = exactly one viewport — no overflow scroll */}
-      <section className="relative h-screen overflow-hidden">
-        <motion.div 
-          className="absolute inset-0"
-          style={{ scale: heroScale, opacity: heroOpacity }}
-        >
-          {/* Mobile image — portrait (shown below md) */}
+      {/* Hero Section - Full image, no text, sits below fixed navbar */}
+      {/* Mobile: 36px bar + 80px header = 116px; Desktop: 36px + 80px + 56px nav = 172px */}
+      <section
+        className="relative h-[calc(100vh-116px)] lg:h-[calc(100vh-172px)]"
+      >
+        <div className="absolute inset-0">
+          {/* Mobile image */}
           <Image
             src="/Products/hero_section mobile.webp"
             alt="Annavedah Foods - Dehydrated Vegetable Powders"
@@ -454,152 +460,23 @@ export default function HomePage() {
             className="object-cover object-top md:hidden"
             priority
           />
-          {/* Tablet image — landscape tablet (shown md to lg) */}
+          {/* Tablet image */}
           <Image
             src="/Products/hero_section_tablet.webp"
             alt="Annavedah Foods - Dehydrated Vegetable Powders"
             fill
-            className="object-cover object-center hidden md:block lg:hidden"
+            className="object-cover object-top hidden md:block lg:hidden"
             priority
           />
-          {/* Desktop image — wide (shown lg and above) */}
+          {/* Desktop image */}
           <Image
             src="/Products/Hero_section.webp"
             alt="Annavedah Foods - Dehydrated Vegetable Powders"
             fill
-            className="object-cover hidden lg:block"
+            className="object-cover object-top hidden lg:block"
             priority
           />
-          {/* Gradient overlay — stronger on mobile for text legibility over portrait image */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/50 md:bg-gradient-to-r md:from-black/55 md:via-black/25 md:to-transparent" />
-        </motion.div>
-        
-        {/* pt offsets the fixed header: 80px mobile/tablet, 136px desktop */}
-        <motion.div 
-          className="relative z-10 h-full flex items-center pt-20 md:pt-20 lg:pt-[136px]"
-          style={{ y: heroY }}
-        >
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <motion.div
-            className="max-w-sm sm:max-w-lg md:max-w-2xl lg:max-w-xl"
-            initial="initial"
-            animate="animate"
-            variants={staggerContainer}
-          >
-            <motion.div
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#c9a45c] rounded-full text-[#2d1b15] text-sm font-medium mb-6"
-              variants={scaleIn}
-              whileHover={{ scale: 1.05, boxShadow: "0 10px 30px rgba(201, 164, 92, 0.4)" }}
-            >
-              <motion.div
-                animate={{ rotate: [0, 360] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-              >
-                <Sparkles className="w-4 h-4" />
-              </motion.div>
-              <span>Pure & Farm-Sourced</span>
-            </motion.div>
-
-            <motion.h1
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-4 md:mb-6 text-white drop-shadow-lg"
-              variants={fadeInUp}
-            >
-              <motion.span 
-                className="text-[#c9a45c] inline-block"
-                animate={{ 
-                  textShadow: [
-                    "0 0 20px rgba(201, 164, 92, 0.3)",
-                    "0 0 40px rgba(201, 164, 92, 0.6)",
-                    "0 0 20px rgba(201, 164, 92, 0.3)"
-                  ]
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                Traditional
-              </motion.span>
-              <br />
-              <AnimatedText text="Nutrition for" delay={0.3} />
-              <br />
-              <AnimatedText text="Modern Living" delay={0.6} />
-            </motion.h1>
-
-            <motion.p
-              className="text-base sm:text-lg md:text-xl text-white/90 max-w-xs sm:max-w-md md:max-w-xl leading-relaxed mb-6 md:mb-8 drop-shadow"
-              variants={fadeInUp}
-              transition={{ delay: 0.5 }}
-            >
-              Experience the purity of farm-sourced heritage grains, pulses, and
-              premium dehydrated powders, delivered directly with no middleman.
-            </motion.p>
-
-            <motion.div
-              className="flex flex-wrap gap-4"
-              variants={fadeInUp}
-              transition={{ delay: 0.7 }}
-            >
-              <MagneticButton
-                className="bg-[#c9a45c] hover:bg-[#b8944d] text-[#2d1b15] h-14 px-8 text-lg font-semibold rounded-xl shadow-lg flex items-center gap-2 cursor-pointer"
-                onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}
-              >
-                Shop Now
-                <motion.div
-                  animate={{ x: [0, 5, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                  <ArrowRight className="w-5 h-5" />
-                </motion.div>
-              </MagneticButton>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button
-                  variant="outline"
-                  className="border-2 border-white text-white hover:bg-white/20 bg-white/10 backdrop-blur h-14 px-8 text-lg font-semibold rounded-xl"
-                  onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
-                >
-                  Learn More
-                </Button>
-              </motion.div>
-            </motion.div>
-          </motion.div>
-          </div>
-        </motion.div>
-
-        {/* Animated Scroll indicator */}
-        <motion.div 
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.5, duration: 0.8 }}
-        >
-          <motion.div 
-            className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center pt-2"
-            animate={{ y: [0, 5, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            <motion.div 
-              className="w-1.5 h-3 bg-white/80 rounded-full"
-              animate={{ y: [0, 8, 0], opacity: [1, 0.5, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            />
-          </motion.div>
-        </motion.div>
-
-        {/* Floating decorative elements */}
-        <motion.div
-          className="absolute top-1/4 right-10 w-20 h-20 rounded-full bg-[#c9a45c]/20 blur-xl hidden lg:block"
-          variants={floatingAnimation}
-          animate="animate"
-        />
-        <motion.div
-          className="absolute bottom-1/4 right-1/4 w-32 h-32 rounded-full bg-[#8b1a1a]/10 blur-2xl hidden lg:block"
-          animate={{ 
-            y: [0, 20, 0],
-            scale: [1, 1.1, 1]
-          }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        />
+        </div>
       </section>
 
       {/* Stats Section with CountUp */}
@@ -688,14 +565,32 @@ export default function HomePage() {
               }}
               className="w-full"
             >
-              <Image
-                src={banners[currentBanner]}
-                alt="Annavedah Promotional Banner"
-                width={1920}
-                height={1080}
-                className="w-full h-auto object-contain"
-                priority
-              />
+              <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1]">
+                {/* Mobile image */}
+                <Image
+                  src={banners[currentBanner].mobile}
+                  alt="Annavedah Promotional Banner"
+                  fill
+                  className="object-cover md:hidden"
+                  priority
+                />
+                {/* Tablet image */}
+                <Image
+                  src={banners[currentBanner].tablet}
+                  alt="Annavedah Promotional Banner"
+                  fill
+                  className="object-cover hidden md:block lg:hidden"
+                  priority
+                />
+                {/* Desktop image */}
+                <Image
+                  src={banners[currentBanner].desktop}
+                  alt="Annavedah Promotional Banner"
+                  fill
+                  className="object-cover hidden lg:block"
+                  priority
+                />
+              </div>
             </motion.div>
           </AnimatePresence>
 
@@ -848,18 +743,34 @@ export default function HomePage() {
                 <p className="text-xl text-[#6b5347]">No products found matching your search.</p>
               </motion.div>
             ) : (
-              <motion.div
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-                initial="initial"
-                animate="animate"
-                variants={staggerContainer}
-                key="results"
-                layout
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+                plugins={[
+                  AutoScroll({
+                    speed: 1.5,
+                    stopOnInteraction: false,
+                    stopOnMouseEnter: true,
+                  })
+                ]}
+                className="w-full max-w-full relative px-4 sm:px-12"
               >
-                {filteredProducts.map((product, index) => (
-                  <PLPProductCard key={product.id} product={product} index={index} add={add} />
-                ))}
-              </motion.div>
+                <CarouselContent>
+                  {filteredProducts.map((product, index) => (
+                    <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/3 p-4">
+                      <div className="h-full">
+                        <PLPProductCard product={product} index={index} add={add} />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <div className="hidden sm:block">
+                  <CarouselPrevious className="border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10 -left-4 bg-white/80 backdrop-blur-sm" />
+                  <CarouselNext className="border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10 -right-4 bg-white/80 backdrop-blur-sm" />
+                </div>
+              </Carousel>
             )}
           </AnimatePresence>
         </div>
@@ -1137,102 +1048,7 @@ export default function HomePage() {
         </div>
       </motion.section>
 
-      {/* Testimonials Section with enhanced animations */}
-      <motion.section
-        className="py-24 bg-[#f0e8dc] relative overflow-hidden"
-        initial="initial"
-        whileInView="animate"
-        viewport={{ once: true, margin: "-50px" }}
-        variants={staggerContainer}
-      >
-        <div className="container mx-auto px-4">
-          <motion.div
-            className="text-center mb-16"
-            variants={fadeInUp}
-          >
-            <motion.span
-              className="inline-block px-4 py-1 bg-[#8b1a1a]/10 text-[#8b1a1a] rounded-full text-sm font-medium mb-4"
-              variants={scaleIn}
-            >
-              Testimonials
-            </motion.span>
-            <motion.h2
-              className="text-4xl md:text-5xl font-bold text-[#8b1a1a] mb-4"
-              variants={fadeInUp}
-            >
-              Loved by Families
-            </motion.h2>
-          </motion.div>
 
-          <motion.div
-            className="grid md:grid-cols-3 gap-8"
-            variants={staggerContainer}
-          >
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={index}
-                className="p-8 bg-white rounded-3xl shadow-lg border-2 border-transparent hover:border-[#c9a45c] transition-all"
-                variants={staggerItem}
-                whileHover={{ 
-                  y: -8, 
-                  scale: 1.02,
-                  boxShadow: "0 25px 50px rgba(0,0,0,0.15)"
-                }}
-                transition={{ duration: 0.3 }}
-              >
-                <motion.div 
-                  className="flex gap-1 mb-4"
-                  initial="initial"
-                  animate="animate"
-                  variants={{
-                    initial: {},
-                    animate: {
-                      transition: { staggerChildren: 0.1, delayChildren: index * 0.2 }
-                    }
-                  }}
-                >
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      variants={{
-                        initial: { opacity: 0, scale: 0, rotate: -180 },
-                        animate: { 
-                          opacity: 1, 
-                          scale: 1, 
-                          rotate: 0,
-                          transition: { type: "spring", stiffness: 200 }
-                        }
-                      }}
-                    >
-                      <Star className="w-5 h-5 fill-[#c9a45c] text-[#c9a45c]" />
-                    </motion.div>
-                  ))}
-                </motion.div>
-                <p className="text-[#6b5347] leading-relaxed mb-6 italic">
-                  &ldquo;{testimonial.text}&rdquo;
-                </p>
-                <motion.div 
-                  className="flex items-center gap-3"
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 + index * 0.1 }}
-                >
-                  <motion.div 
-                    className="w-12 h-12 rounded-full bg-gradient-to-br from-[#c9a45c] to-[#8b1a1a] flex items-center justify-center text-white font-bold"
-                    whileHover={{ scale: 1.1, rotate: 10 }}
-                  >
-                    {testimonial.name.charAt(0)}
-                  </motion.div>
-                  <div>
-                    <h4 className="font-bold text-[#2d1b15]">{testimonial.name}</h4>
-                    <p className="text-sm text-[#6b5347]">{testimonial.location}</p>
-                  </div>
-                </motion.div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </motion.section>
 
       {/* Newsletter Section with enhanced animations */}
       <motion.section

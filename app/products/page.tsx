@@ -20,6 +20,7 @@ function PLPProductCard({ product, add }: any) {
             src={product.image}
             alt={product.name}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-contain p-6 transition-all duration-500 group-hover:scale-105 drop-shadow-xl group-hover:drop-shadow-2xl"
           />
         </Link>
@@ -114,7 +115,7 @@ export default function ProductsPage() {
   }, [selectedCategory, searchQuery])
 
   return (
-    <div className="container mx-auto px-4 pt-32 lg:pt-40 pb-16 space-y-12">
+    <div className="container mx-auto px-4 pt-[120px] lg:pt-[190px] pb-16 space-y-12">
       <div className="space-y-4 text-center">
         <p className="text-sm font-semibold uppercase tracking-wide text-accent">Products</p>
         <h1 className="text-4xl font-bold text-primary md:text-5xl">Discover our full range</h1>
@@ -125,7 +126,7 @@ export default function ProductsPage() {
 
       <div className="flex flex-col lg:flex-row gap-12">
         {/* Left Side Filters */}
-        <div className="lg:w-1/4 space-y-8 flex-shrink-0">
+        <div className="lg:w-1/4 space-y-8 flex-shrink-0 lg:sticky lg:top-48 lg:self-start lg:h-fit z-10">
           <div>
             <h3 className="text-xl font-bold text-[#2d1b15] mb-4">Search</h3>
             <div className="relative">

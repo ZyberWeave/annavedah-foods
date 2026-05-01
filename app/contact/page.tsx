@@ -12,7 +12,7 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 pt-32 lg:pt-40 pb-16 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] md:items-start">
+    <div className="container mx-auto px-4 pt-[120px] lg:pt-[190px] pb-16 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] md:items-start">
       <div className="space-y-4">
         <p className="text-sm font-semibold uppercase tracking-wide text-accent">Contact</p>
         <h1 className="text-4xl font-bold text-primary md:text-5xl">Let's talk about your nutrition goals.</h1>

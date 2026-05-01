@@ -27,6 +27,8 @@ export default function Header() {
   const pathname = usePathname()
   const isHomePage = pathname === '/'
 
+  const [user, setUser] = useState<any>(null)
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50)
@@ -35,13 +37,51 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user) {
+          setUser(data.user)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    setUser(null)
+    window.location.href = '/'
+  }
+
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 flex flex-col ${
-        isScrolled || !isHomePage
-          ? 'bg-[#faf6f0]/95 backdrop-blur-lg shadow-lg'
-          : 'bg-transparent'
-      }`}>
+      {/* Top Announcement Bar */}
+      <div className="fixed top-0 left-0 right-0 z-[60] bg-[#8b1a1a] text-white">
+        <div className="container mx-auto px-4 h-9 flex items-center justify-between text-[10px] tracking-widest uppercase font-semibold">
+          {/* Marathi Tagline */}
+          <span className="hidden sm:block text-[#f5e6c8] font-medium tracking-[0.18em]">
+            सात्त्विक&nbsp;|&nbsp;पौष्टिक&nbsp;|&nbsp;परिपूर्ण&nbsp;|&nbsp;प्राकृतिक
+          </span>
+          <span className="sm:hidden text-[#f5e6c8] font-medium tracking-[0.12em] text-[9px]">
+            सात्त्विक · पौष्टिक · परिपूर्ण · प्राकृतिक
+          </span>
+          {/* Phone Number */}
+          <a
+            href="tel:+919763456100"
+            className="flex items-center gap-1.5 text-[#f5e6c8] hover:text-white transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/>
+            </svg>
+            +91 97634 56100
+          </a>
+        </div>
+      </div>
+
+      <header 
+        className="fixed top-9 left-0 right-0 z-50 transition-all duration-500 flex flex-col bg-[#faf6f0]/95 backdrop-blur-lg shadow-lg"
+      >
         
         {/* Top Tier: Utilities, Logo, Actions */}
         <div className="container mx-auto px-4">
@@ -51,29 +91,23 @@ export default function Header() {
             <div className="flex-1 flex items-center justify-start gap-6">
               {/* Mobile Hamburger */}
               <button
-                className={`lg:hidden p-2 -ml-2 rounded-full transition-colors ${
-                  isScrolled || !isHomePage ? 'hover:bg-[#8b1a1a]/10' : 'hover:bg-black/20'
-                }`}
+                className="lg:hidden p-2 -ml-2 rounded-full transition-colors hover:bg-[#8b1a1a]/10"
                 onClick={() => setMobileMenuOpen(true)}
               >
-                <Menu className={`w-6 h-6 ${isScrolled || !isHomePage ? 'text-[#8b1a1a]' : 'text-white'}`} />
+                <Menu className="w-6 h-6 text-[#8b1a1a]" />
               </button>
 
               {/* Desktop Secondary Links */}
               <div className="hidden lg:flex items-center gap-8 text-[10px] font-bold tracking-[0.15em] uppercase">
                 <Link 
                   href="/heritage" 
-                  className={`transition-colors duration-300 hover:text-[#c9a45c] ${
-                    isScrolled || !isHomePage ? 'text-[#2d1b15]' : 'text-white'
-                  }`}
+                  className="transition-colors duration-300 hover:text-[#c9a45c] text-[#2d1b15]"
                 >
                   Heritage
                 </Link>
                 <Link 
                   href="/contact" 
-                  className={`transition-colors duration-300 hover:text-[#c9a45c] ${
-                    isScrolled || !isHomePage ? 'text-[#2d1b15]' : 'text-white'
-                  }`}
+                  className="transition-colors duration-300 hover:text-[#c9a45c] text-[#2d1b15]"
                 >
                   Contact Us
                 </Link>
@@ -88,14 +122,13 @@ export default function Header() {
                     src="/Logo.webp"
                     alt="Annavedah Foods"
                     fill
+                    sizes="56px"
                     className="object-cover"
                     priority
                   />
                 </div>
                 <div className="hidden sm:block text-center">
-                  <h1 className={`text-xl lg:text-2xl font-bold tracking-widest uppercase ${
-                    isScrolled || !isHomePage ? 'text-[#8b1a1a]' : 'text-white'
-                  }`}>
+                  <h1 className="text-xl lg:text-2xl font-bold tracking-widest uppercase text-[#8b1a1a]">
                     Annavedah
                   </h1>
                 </div>
@@ -110,58 +143,44 @@ export default function Header() {
                 <input 
                   type="text" 
                   placeholder="SEARCH" 
-                  className={`w-32 xl:w-48 pl-10 pr-4 py-2 rounded-full border text-[10px] font-bold tracking-[0.1em] uppercase transition-all duration-300 focus:outline-none focus:w-64 ${
-                    isScrolled || !isHomePage 
-                      ? 'bg-transparent border-[#e8ddd0] text-[#2d1b15] focus:border-[#c9a45c]' 
-                      : 'bg-white/10 border-white/30 text-white placeholder-white/80 focus:bg-white/20 focus:border-white/60'
-                  }`}
+                  className="w-32 xl:w-48 pl-10 pr-4 py-2 rounded-full border text-[10px] font-bold tracking-[0.1em] uppercase transition-all duration-300 focus:outline-none focus:w-64 bg-transparent border-[#e8ddd0] text-[#2d1b15] focus:border-[#c9a45c]"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       window.location.href = `/products?search=${e.currentTarget.value}`
                     }
                   }}
                 />
-                <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 ${
-                  isScrolled || !isHomePage ? 'text-[#2d1b15]' : 'text-white'
-                }`} />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2d1b15]" />
               </div>
 
               {/* Mobile Search Icon */}
               <Link
                 href="/products"
-                className={`lg:hidden relative p-2 rounded-full transition-colors ${
-                  isScrolled || !isHomePage ? 'hover:bg-[#8b1a1a]/10' : 'hover:bg-black/20'
-                }`}
+                className="lg:hidden relative p-2 rounded-full transition-colors hover:bg-[#8b1a1a]/10"
               >
-                <Search className={`w-5 h-5 ${isScrolled || !isHomePage ? 'text-[#8b1a1a]' : 'text-white'}`} />
+                <Search className="w-5 h-5 text-[#8b1a1a]" />
               </Link>
 
               {/* Desktop User */}
               <Link
-                href="/login"
-                className={`hidden lg:flex items-center gap-2 p-2 rounded-full transition-colors hover:text-[#c9a45c] ${
-                  isScrolled || !isHomePage ? 'text-[#2d1b15]' : 'text-white'
-                }`}
+                href={user ? (user.role === 'admin' ? '/admin' : '/dashboard') : '/login'}
+                className="hidden lg:flex items-center gap-2 p-2 rounded-full transition-colors hover:text-[#c9a45c] text-[#2d1b15]"
               >
                 <User className="w-5 h-5" />
               </Link>
 
               {/* Mobile User */}
               <Link
-                href="/login"
-                className={`lg:hidden relative p-2 rounded-full transition-colors ${
-                  isScrolled || !isHomePage ? 'hover:bg-[#8b1a1a]/10' : 'hover:bg-black/20'
-                }`}
+                href={user ? (user.role === 'admin' ? '/admin' : '/dashboard') : '/login'}
+                className="lg:hidden relative p-2 rounded-full transition-colors hover:bg-[#8b1a1a]/10"
               >
-                <User className={`w-5 h-5 ${isScrolled || !isHomePage ? 'text-[#8b1a1a]' : 'text-white'}`} />
+                <User className="w-5 h-5 text-[#8b1a1a]" />
               </Link>
 
               {/* Cart */}
               <button
                 onClick={() => setShowCart(!showCart)}
-                className={`relative p-2 rounded-full transition-colors hover:text-[#c9a45c] ${
-                  isScrolled || !isHomePage ? 'text-[#2d1b15]' : 'text-white'
-                } ${isScrolled || !isHomePage ? 'hover:bg-[#8b1a1a]/10' : 'hover:bg-black/20 lg:hover:bg-transparent'}`}
+                className="relative p-2 rounded-full transition-colors hover:text-[#c9a45c] text-[#2d1b15] hover:bg-[#8b1a1a]/10"
               >
                 <ShoppingCart className="w-5 h-5 lg:w-5 lg:h-5" />
                 {count > 0 && (
@@ -176,18 +195,14 @@ export default function Header() {
         </div>
 
         {/* Bottom Tier: Main Navigation (Desktop Only) */}
-        <div className={`hidden lg:block border-t transition-colors duration-500 ${
-          isScrolled || !isHomePage ? 'border-[#e8ddd0]' : 'border-white/20'
-        }`}>
+        <div className="hidden lg:block border-t border-[#e8ddd0] transition-colors duration-500">
           <div className="container mx-auto px-4">
             <nav className="flex justify-center items-center h-14 gap-12 text-[11px] font-bold tracking-[0.2em] uppercase">
               {navItems.filter(item => !['Heritage', 'Contact', 'Cart'].includes(item.label)).map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`relative py-2 transition-colors duration-300 hover:text-[#c9a45c] group ${
-                    isScrolled || !isHomePage ? 'text-[#2d1b15]' : 'text-white'
-                  }`}
+                  className="relative py-2 transition-colors duration-300 hover:text-[#c9a45c] group text-[#2d1b15]"
                 >
                   {item.label}
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#c9a45c] transition-all duration-300 group-hover:w-full"></span>
@@ -204,7 +219,7 @@ export default function Header() {
           <div className="flex items-center justify-between p-4 border-b border-[#e8ddd0]">
             <Link href="/" className="flex items-center gap-3">
                <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-[#c9a45c]/50">
-                  <Image src="/Logo.webp" alt="Annavedah Foods" fill className="object-cover" priority />
+                  <Image src="/Logo.webp" alt="Annavedah Foods" fill sizes="40px" className="object-cover" priority />
                </div>
                <span className="text-lg font-bold text-[#8b1a1a] uppercase tracking-widest">Annavedah</span>
             </Link>
@@ -225,20 +240,40 @@ export default function Header() {
             ))}
             
             <div className="h-px bg-[#e8ddd0] my-4"></div>
-            <Link
-              href="/login"
-              className="py-4 px-4 text-[#2d1b15] text-lg font-bold uppercase tracking-wider hover:text-[#8b1a1a] hover:bg-[#c9a45c]/10 rounded-xl transition-all"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Log In
-            </Link>
-            <Link
-              href="/register"
-              className="py-4 px-4 text-[#2d1b15] text-lg font-bold uppercase tracking-wider hover:text-[#8b1a1a] hover:bg-[#c9a45c]/10 rounded-xl transition-all"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Sign Up
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href={user.role === 'admin' ? '/admin' : '/dashboard'}
+                  className="py-4 px-4 text-[#2d1b15] text-lg font-bold uppercase tracking-wider hover:text-[#8b1a1a] hover:bg-[#c9a45c]/10 rounded-xl transition-all"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {user.role === 'admin' ? 'Admin Portal' : 'Dashboard'}
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="text-left py-4 px-4 text-[#2d1b15] text-lg font-bold uppercase tracking-wider hover:text-[#8b1a1a] hover:bg-[#c9a45c]/10 rounded-xl transition-all"
+                >
+                  Log Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="py-4 px-4 text-[#2d1b15] text-lg font-bold uppercase tracking-wider hover:text-[#8b1a1a] hover:bg-[#c9a45c]/10 rounded-xl transition-all"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/register"
+                  className="py-4 px-4 text-[#2d1b15] text-lg font-bold uppercase tracking-wider hover:text-[#8b1a1a] hover:bg-[#c9a45c]/10 rounded-xl transition-all"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       )}
@@ -266,7 +301,7 @@ export default function Header() {
                   {items.map((item, index) => (
                     <div key={index} className="flex gap-4 p-4 bg-[#f0e8dc]/50 rounded-xl">
                       <div className="relative w-20 h-20 rounded-lg bg-[url('/product-bg.webp')] bg-cover bg-center overflow-hidden shadow-inner">
-                        <Image src={item.product.image} alt={item.product.name} fill className="object-contain p-2 drop-shadow-md" />
+                        <Image src={item.product.image} alt={item.product.name} fill sizes="80px" className="object-contain p-2 drop-shadow-md" />
                       </div>
                       <div className="flex-1">
                         <h4 className="font-semibold text-[#2d1b15]">{item.product.name}</h4>
