@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronDown } from 'lucide-react'
@@ -9,6 +10,8 @@ import { categories, products, banners } from '@/lib/content'
 export default function MegaMenu() {
   const [open, setOpen] = useState(false)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pathname = usePathname()
+  const isActive = pathname === '/products' || pathname.startsWith('/products/')
 
   useEffect(() => {
     return () => {
@@ -31,11 +34,11 @@ export default function MegaMenu() {
     <div className="relative" onMouseEnter={enter} onMouseLeave={leave}>
       <Link
         href="/products"
-        className="relative py-2 transition-colors duration-300 hover:text-[#c9a45c] group text-[#2d1b15] inline-flex items-center gap-1"
+        className={`relative py-2 transition-colors duration-300 hover:text-[#c9a45c] group inline-flex items-center gap-1 ${isActive ? 'text-[#c9a45c]' : 'text-[#2d1b15]'}`}
       >
         Products
         <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
-        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#c9a45c] transition-all duration-300 group-hover:w-full" />
+        <span className={`absolute bottom-0 left-0 h-0.5 bg-[#c9a45c] transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`} />
       </Link>
 
       <div

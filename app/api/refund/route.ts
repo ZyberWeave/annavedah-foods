@@ -91,7 +91,7 @@ export async function POST(req: Request) {
             '<p style="color: #2d1b15; line-height: 1.6; background-color: #fffbeb; padding: 16px; border-radius: 8px;">' + reason + '</p>' +
             attachmentHtml +
             '<div style="text-align: center; margin-top: 32px;">' +
-            '<a href="https://annavedahfoods.com/admin" style="display: inline-block; background-color: #2d1b15; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Review in Dashboard</a>' +
+            '<a href="https://annavedahfoods.com/dashboard" style="display: inline-block; background-color: #2d1b15; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Review in Dashboard</a>' +
             '</div></div></div>',
         });
       } catch (emailErr) {

@@ -1,66 +1,30 @@
 'use client'
 
-import { useState } from 'react'
-import { Star, ThumbsUp, Verified } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { Star, ThumbsUp, Verified, Loader2, MessageSquare, ChevronDown } from 'lucide-react'
 
 type Review = {
-  id: string
+  id: number
+  productSlug: string
   name: string
   location: string
   rating: number
-  date: string
   title: string
   body: string
   verified: boolean
   helpful: number
+  createdAt: string
 }
 
-const seed: Review[] = [
-  {
-    id: 'r1',
-    name: 'Priya Sharma',
-    location: 'Mumbai',
-    rating: 5,
-    date: '2026-04-12',
-    title: 'Genuinely pure quality',
-    body: 'Switched to Annavedah three months ago and the difference is real. The aroma, the texture, the taste — everything feels truly farm-fresh. My family loves it.',
-    verified: true,
-    helpful: 24,
-  },
-  {
-    id: 'r2',
-    name: 'Rahul Desai',
-    location: 'Pune',
-    rating: 5,
-    date: '2026-03-28',
-    title: 'Worth every rupee',
-    body: 'Was skeptical about the price at first but quality justifies it. Packaging is excellent and arrived sealed properly. Will definitely reorder.',
-    verified: true,
-    helpful: 18,
-  },
-  {
-    id: 'r3',
-    name: 'Anita Kulkarni',
-    location: 'Bengaluru',
-    rating: 4,
-    date: '2026-03-15',
-    title: 'Great product, slow delivery',
-    body: 'Product itself is wonderful and feels authentic. Took a bit longer than expected to arrive though. Otherwise very happy.',
-    verified: true,
-    helpful: 9,
-  },
-  {
-    id: 'r4',
-    name: 'Suresh Patil',
-    location: 'Nashik',
-    rating: 5,
-    date: '2026-02-20',
-    title: 'Reminds me of grandmother\'s kitchen',
-    body: 'This is exactly the kind of pure, unprocessed food I grew up with. Brings back childhood memories. Highly recommended.',
-    verified: false,
-    helpful: 31,
-  },
-]
+type Stats = {
+  count: number
+  avg: number
+  r5: number
+  r4: number
+  r3: number
+  r2: number
+  r1: number
+}
 
 function StarRow({ value, size = 'sm' }: { value: number; size?: 'sm' | 'lg' }) {
   const cls = size === 'lg' ? 'w-5 h-5' : 'w-4 h-4'
@@ -76,29 +40,80 @@ function StarRow({ value, size = 'sm' }: { value: number; size?: 'sm' | 'lg' }) 
   )
 }
 
-export default function ProductReviews() {
+function InteractiveStar({ n, value, hovered, onHover, onClick }: {
+  n: number; value: number; hovered: number; onHover: (n: number) => void; onClick: (n: number) => void
+}) {
+  const active = hovered > 0 ? n <= hovered : n <= value
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(n)}
+      onMouseEnter={() => onHover(n)}
+      onMouseLeave={() => onHover(0)}
+      className="p-0.5 transition-transform hover:scale-110"
+      aria-label={`${n} stars`}
+    >
+      <Star className={`w-8 h-8 transition-colors duration-150 ${active ? 'fill-[#c9a45c] text-[#c9a45c]' : 'text-[#e8ddd0] hover:text-[#c9a45c]/40'}`} />
+    </button>
+  )
+}
+
+export default function ProductReviews({ productSlug }: { productSlug: string }) {
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [stats, setStats] = useState<Stats>({ count: 0, avg: 0, r5: 0, r4: 0, r3: 0, r2: 0, r1: 0 })
+  const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<number | null>(null)
-  const [helpfulIds, setHelpfulIds] = useState<Set<string>>(new Set())
+  const [helpfulIds, setHelpfulIds] = useState<Set<number>>(new Set())
   const [showWriteForm, setShowWriteForm] = useState(false)
-  const [draft, setDraft] = useState({ name: '', rating: 5, title: '', body: '' })
+  const [draft, setDraft] = useState({ name: '', location: '', rating: 5, title: '', body: '' })
+  const [hoveredStar, setHoveredStar] = useState(0)
+  const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [submitError, setSubmitError] = useState('')
   const [reviewErrors, setReviewErrors] = useState<Record<string, string>>({})
   const [reviewTouched, setReviewTouched] = useState<Record<string, boolean>>({})
+  const [visibleCount, setVisibleCount] = useState(5)
 
-  const filtered = filter ? seed.filter((r) => r.rating === filter) : seed
-  const avg = seed.reduce((s, r) => s + r.rating, 0) / seed.length
+  const fetchReviews = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/reviews?slug=${encodeURIComponent(productSlug)}`)
+      const data = await res.json()
+      setReviews(data.reviews || [])
+      setStats(data.stats || { count: 0, avg: 0, r5: 0, r4: 0, r3: 0, r2: 0, r1: 0 })
+    } catch {
+      // Fail silently
+    } finally {
+      setLoading(false)
+    }
+  }, [productSlug])
+
+  useEffect(() => {
+    fetchReviews()
+  }, [fetchReviews])
+
+  const filtered = filter ? reviews.filter((r) => r.rating === filter) : reviews
+  const displayedReviews = filtered.slice(0, visibleCount)
+
   const counts = [5, 4, 3, 2, 1].map((n) => ({
     n,
-    c: seed.filter((r) => r.rating === n).length,
-    pct: (seed.filter((r) => r.rating === n).length / seed.length) * 100,
+    c: stats[`r${n}` as keyof Stats] as number || 0,
+    pct: stats.count > 0 ? ((stats[`r${n}` as keyof Stats] as number || 0) / stats.count) * 100 : 0,
   }))
 
-  const markHelpful = (id: string) => {
+  const markHelpful = async (id: number) => {
+    if (helpfulIds.has(id)) return
     setHelpfulIds((prev) => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      next.add(id)
       return next
     })
+    try {
+      await fetch('/api/reviews/helpful', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewId: id }),
+      })
+    } catch {}
   }
 
   const validateReviewField = (field: string, value: string) => {
@@ -123,7 +138,7 @@ export default function ProductReviews() {
     validateReviewField(field, value)
   }
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     // Validate all fields
     const nameErr = !draft.name.trim() ? 'Name is required' : draft.name.trim().length < 2 ? 'Name must be at least 2 characters' : ''
@@ -135,82 +150,160 @@ export default function ProductReviews() {
     
     if (nameErr || titleErr || bodyErr) return
 
-    setSubmitted(true)
-    setTimeout(() => {
-      setShowWriteForm(false)
-      setSubmitted(false)
-      setDraft({ name: '', rating: 5, title: '', body: '' })
-      setReviewErrors({})
-      setReviewTouched({})
-    }, 2000)
+    setSubmitting(true)
+    setSubmitError('')
+
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productSlug,
+          name: draft.name,
+          location: draft.location,
+          rating: draft.rating,
+          title: draft.title,
+          reviewBody: draft.body,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setSubmitError(data.error || 'Failed to submit review')
+        return
+      }
+
+      setSubmitted(true)
+      setTimeout(() => {
+        setShowWriteForm(false)
+        setSubmitted(false)
+        setDraft({ name: '', location: '', rating: 5, title: '', body: '' })
+        setReviewErrors({})
+        setReviewTouched({})
+      }, 3000)
+    } catch {
+      setSubmitError('Network error. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
+
+  const ratingLabels = ['', 'Terrible', 'Poor', 'Average', 'Good', 'Excellent']
 
   return (
     <div className="rounded-3xl border-2 border-[#e8ddd0] bg-white overflow-hidden">
+      {/* Header / Summary */}
       <div className="p-6 md:p-8 border-b border-[#e8ddd0] grid md:grid-cols-[260px_1fr] gap-8">
         <div className="flex flex-col items-center text-center md:items-start md:text-left">
           <h3 className="text-xl font-bold text-[#2d1b15] mb-3">Customer Reviews</h3>
-          <div className="flex items-baseline gap-2 mb-1">
-            <span className="text-5xl font-bold text-[#2d1b15] tabular-nums">{avg.toFixed(1)}</span>
-            <span className="text-sm text-[#6b5347]">/ 5</span>
-          </div>
-          <StarRow value={Math.round(avg)} size="lg" />
-          <p className="text-sm text-[#6b5347] mt-2">Based on {seed.length} reviews</p>
+
+          {loading ? (
+            <div className="flex items-center gap-2 text-[#6b5347]">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span className="text-sm">Loading reviews...</span>
+            </div>
+          ) : stats.count === 0 ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-8 h-8 text-[#e8ddd0]" />
+              </div>
+              <p className="text-sm text-[#6b5347]">No reviews yet</p>
+              <p className="text-xs text-[#a39189]">Be the first to share your experience!</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-baseline gap-2 mb-1">
+                <span className="text-5xl font-bold text-[#2d1b15] tabular-nums">{stats.avg.toFixed(1)}</span>
+                <span className="text-sm text-[#6b5347]">/ 5</span>
+              </div>
+              <StarRow value={Math.round(stats.avg)} size="lg" />
+              <p className="text-sm text-[#6b5347] mt-2">Based on {stats.count} review{stats.count !== 1 ? 's' : ''}</p>
+            </>
+          )}
+
           <button
             onClick={() => setShowWriteForm((s) => !s)}
-            className="mt-4 px-5 py-2.5 bg-[#8b1a1a] hover:bg-[#6d1414] text-white text-sm font-bold uppercase tracking-wider rounded-xl transition-colors"
+            className="mt-4 px-5 py-2.5 bg-[#8b1a1a] hover:bg-[#6d1414] text-white text-sm font-bold uppercase tracking-wider rounded-xl transition-all hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
           >
-            Write a review
+            {showWriteForm ? 'Cancel' : 'Write a review'}
           </button>
         </div>
 
-        <div className="space-y-2">
-          {counts.map(({ n, c, pct }) => (
-            <button
-              key={n}
-              onClick={() => setFilter(filter === n ? null : n)}
-              className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-lg transition-colors ${filter === n ? 'bg-[#c9a45c]/10' : 'hover:bg-[#faf6f0]'}`}
-            >
-              <span className="text-sm font-semibold text-[#2d1b15] w-12 text-left">{n} star</span>
-              <div className="flex-1 h-2 bg-[#e8ddd0] rounded-full overflow-hidden">
-                <div className="h-full bg-[#c9a45c]" style={{ width: `${pct}%` }} />
-              </div>
-              <span className="text-xs text-[#6b5347] w-8 text-right tabular-nums">{c}</span>
-            </button>
-          ))}
-        </div>
+        {/* Rating bars */}
+        {stats.count > 0 && (
+          <div className="space-y-2">
+            {counts.map(({ n, c, pct }) => (
+              <button
+                key={n}
+                onClick={() => setFilter(filter === n ? null : n)}
+                className={`w-full flex items-center gap-3 px-3 py-1.5 rounded-lg transition-all duration-200 ${
+                  filter === n ? 'bg-[#c9a45c]/10 ring-1 ring-[#c9a45c]/30' : 'hover:bg-[#faf6f0]'
+                }`}
+              >
+                <span className="text-sm font-semibold text-[#2d1b15] w-12 text-left">{n} star</span>
+                <div className="flex-1 h-2.5 bg-[#e8ddd0] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-[#c9a45c] to-[#d4b06a] rounded-full transition-all duration-700 ease-out"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="text-xs text-[#6b5347] w-8 text-right tabular-nums">{c}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
+      {/* Write Review Form */}
       {showWriteForm && (
-        <div className="p-6 md:p-8 border-b border-[#e8ddd0] bg-[#faf6f0]/30">
+        <div className="p-6 md:p-8 border-b border-[#e8ddd0] bg-gradient-to-br from-[#faf6f0]/50 to-[#f5ede4]/30">
           {submitted ? (
-            <div className="text-center py-6">
-              <p className="font-bold text-[#2d1b15] text-lg">Thank you!</p>
-              <p className="text-sm text-[#6b5347] mt-1">Your review has been submitted for moderation.</p>
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-green-200">
+                <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <p className="font-bold text-[#2d1b15] text-lg">Thank you for your review!</p>
+              <p className="text-sm text-[#6b5347] mt-1">Your review has been submitted and will appear after moderation.</p>
             </div>
           ) : (
-            <form onSubmit={submit} className="space-y-4 max-w-xl">
+            <form onSubmit={submit} className="space-y-5 max-w-xl">
               <h4 className="text-lg font-bold text-[#2d1b15]">Share your experience</h4>
+
+              {submitError && (
+                <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+                  {submitError}
+                </div>
+              )}
+
+              {/* Rating */}
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wider text-[#6b5347] block mb-1.5">Your rating</label>
-                <div className="flex gap-1">
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#6b5347] block mb-2">Your rating</label>
+                <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((n) => (
-                    <button
+                    <InteractiveStar
                       key={n}
-                      type="button"
-                      onClick={() => setDraft((d) => ({ ...d, rating: n }))}
-                      className="p-1"
-                      aria-label={`${n} stars`}
-                    >
-                      <Star className={`w-7 h-7 ${n <= draft.rating ? 'fill-[#c9a45c] text-[#c9a45c]' : 'text-[#e8ddd0]'}`} />
-                    </button>
+                      n={n}
+                      value={draft.rating}
+                      hovered={hoveredStar}
+                      onHover={setHoveredStar}
+                      onClick={(v) => setDraft((d) => ({ ...d, rating: v }))}
+                    />
                   ))}
+                  <span className="ml-3 text-sm font-semibold text-[#6b5347]">
+                    {ratingLabels[hoveredStar || draft.rating]}
+                  </span>
                 </div>
               </div>
+
+              {/* Name + Location */}
               <div className="grid sm:grid-cols-2 gap-3">
                 <div>
+                  <label className="text-xs font-semibold uppercase tracking-wider text-[#6b5347] block mb-1.5">Your name *</label>
                   <input
-                    placeholder="Your name"
+                    placeholder="e.g., Priya Sharma"
                     value={draft.name}
                     onChange={(e) => {
                       setDraft((d) => ({ ...d, name: e.target.value }))
@@ -226,24 +319,39 @@ export default function ProductReviews() {
                   )}
                 </div>
                 <div>
+                  <label className="text-xs font-semibold uppercase tracking-wider text-[#6b5347] block mb-1.5">Location</label>
                   <input
-                    placeholder="Review title"
-                    value={draft.title}
-                    onChange={(e) => {
-                      setDraft((d) => ({ ...d, title: e.target.value }))
-                      if (reviewTouched.title) validateReviewField('title', e.target.value)
-                    }}
-                    onBlur={() => handleReviewBlur('title', draft.title)}
-                    className={`w-full px-4 py-2.5 rounded-xl border-2 focus:outline-none bg-white transition-colors ${
-                      reviewTouched.title && reviewErrors.title ? 'border-red-400' : 'border-[#e8ddd0] focus:border-[#c9a45c]'
-                    }`}
+                    placeholder="e.g., Mumbai"
+                    value={draft.location}
+                    onChange={(e) => setDraft((d) => ({ ...d, location: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-[#e8ddd0] focus:border-[#c9a45c] focus:outline-none bg-white transition-colors"
                   />
-                  {reviewTouched.title && reviewErrors.title && (
-                    <p className="text-red-500 text-[11px] mt-1">{reviewErrors.title}</p>
-                  )}
                 </div>
               </div>
+
+              {/* Title */}
               <div>
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#6b5347] block mb-1.5">Review title *</label>
+                <input
+                  placeholder="Summarize your experience"
+                  value={draft.title}
+                  onChange={(e) => {
+                    setDraft((d) => ({ ...d, title: e.target.value }))
+                    if (reviewTouched.title) validateReviewField('title', e.target.value)
+                  }}
+                  onBlur={() => handleReviewBlur('title', draft.title)}
+                  className={`w-full px-4 py-2.5 rounded-xl border-2 focus:outline-none bg-white transition-colors ${
+                    reviewTouched.title && reviewErrors.title ? 'border-red-400' : 'border-[#e8ddd0] focus:border-[#c9a45c]'
+                  }`}
+                />
+                {reviewTouched.title && reviewErrors.title && (
+                  <p className="text-red-500 text-[11px] mt-1">{reviewErrors.title}</p>
+                )}
+              </div>
+
+              {/* Body */}
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wider text-[#6b5347] block mb-1.5">Your review *</label>
                 <textarea
                   rows={4}
                   placeholder="Tell us about your experience (minimum 20 characters)..."
@@ -266,12 +374,16 @@ export default function ProductReviews() {
                   </span>
                 </div>
               </div>
+
+              {/* Actions */}
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-[#8b1a1a] hover:bg-[#6d1414] text-white text-sm font-bold uppercase tracking-wider rounded-xl transition-colors"
+                  disabled={submitting}
+                  className="px-6 py-2.5 bg-[#8b1a1a] hover:bg-[#6d1414] disabled:bg-[#b57a7a] text-white text-sm font-bold uppercase tracking-wider rounded-xl transition-all hover:shadow-lg flex items-center gap-2"
                 >
-                  Submit review
+                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {submitting ? 'Submitting...' : 'Submit review'}
                 </button>
                 <button
                   type="button"
@@ -286,41 +398,89 @@ export default function ProductReviews() {
         </div>
       )}
 
-      <ul className="divide-y divide-[#e8ddd0]">
-        {filtered.map((r) => (
-          <li key={r.id} className="p-6 md:p-8 space-y-3">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="font-bold text-[#2d1b15]">{r.name}</p>
-                  {r.verified && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
-                      <Verified className="w-3 h-3" /> Verified
-                    </span>
-                  )}
+      {/* Review List */}
+      {loading ? (
+        <div className="p-12 flex items-center justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-[#c9a45c]" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="p-12 text-center">
+          {filter ? (
+            <>
+              <p className="text-sm text-[#6b5347]">No {filter}-star reviews yet.</p>
+              <button
+                onClick={() => setFilter(null)}
+                className="mt-2 text-sm font-semibold text-[#8b1a1a] hover:underline"
+              >
+                Show all reviews
+              </button>
+            </>
+          ) : (
+            <p className="text-sm text-[#6b5347]">No reviews yet. Be the first to share your thoughts!</p>
+          )}
+        </div>
+      ) : (
+        <>
+          <ul className="divide-y divide-[#e8ddd0]">
+            {displayedReviews.map((r) => (
+              <li key={r.id} className="p-6 md:p-8 space-y-3 hover:bg-[#faf6f0]/30 transition-colors">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      {/* Avatar */}
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#c9a45c] to-[#8b1a1a] flex items-center justify-center text-white text-xs font-bold shrink-0">
+                        {r.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-[#2d1b15]">{r.name}</p>
+                          {r.verified && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">
+                              <Verified className="w-3 h-3" /> Verified Purchase
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-[#6b5347]">
+                          {r.location && `${r.location} · `}
+                          {new Date(r.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <StarRow value={r.rating} />
                 </div>
-                <p className="text-xs text-[#6b5347]">
-                  {r.location} · {new Date(r.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                </p>
-              </div>
-              <StarRow value={r.rating} />
+                <h5 className="font-bold text-[#2d1b15]">{r.title}</h5>
+                <p className="text-sm text-[#2d1b15] leading-relaxed">{r.body}</p>
+                <button
+                  onClick={() => markHelpful(r.id)}
+                  disabled={helpfulIds.has(r.id)}
+                  className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all duration-200 ${
+                    helpfulIds.has(r.id)
+                      ? 'border-[#c9a45c] bg-[#c9a45c]/10 text-[#8b1a1a] cursor-default'
+                      : 'border-[#e8ddd0] text-[#6b5347] hover:border-[#c9a45c] hover:bg-[#c9a45c]/5'
+                  }`}
+                >
+                  <ThumbsUp className="w-3.5 h-3.5" />
+                  Helpful ({r.helpful + (helpfulIds.has(r.id) ? 1 : 0)})
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          {/* Load More */}
+          {filtered.length > visibleCount && (
+            <div className="p-4 border-t border-[#e8ddd0] text-center">
+              <button
+                onClick={() => setVisibleCount((c) => c + 5)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-[#8b1a1a] hover:bg-[#faf6f0] rounded-xl transition-colors"
+              >
+                <ChevronDown className="w-4 h-4" />
+                Show more reviews ({filtered.length - visibleCount} remaining)
+              </button>
             </div>
-            <h5 className="font-bold text-[#2d1b15]">{r.title}</h5>
-            <p className="text-sm text-[#2d1b15] leading-relaxed">{r.body}</p>
-            <button
-              onClick={() => markHelpful(r.id)}
-              className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
-                helpfulIds.has(r.id)
-                  ? 'border-[#c9a45c] bg-[#c9a45c]/10 text-[#8b1a1a]'
-                  : 'border-[#e8ddd0] text-[#6b5347] hover:border-[#c9a45c]'
-              }`}
-            >
-              <ThumbsUp className="w-3.5 h-3.5" />
-              Helpful ({r.helpful + (helpfulIds.has(r.id) ? 1 : 0)})
-            </button>
-          </li>
-        ))}
-      </ul>
+          )}
+        </>
+      )}
     </div>
   )
 }

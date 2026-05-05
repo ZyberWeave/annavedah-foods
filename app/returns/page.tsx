@@ -143,9 +143,9 @@ export default function ReturnsPage() {
               <h2 className="text-2xl md:text-3xl font-bold">Contact Us</h2>
               <p className="text-white/80">For support, please reach out using the details below.</p>
               <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                <a href="mailto:hello@annavedah.com" className="flex items-center gap-2 hover:text-[#c9a45c] transition-colors">
+                <a href="mailto:support@annavedah.com" className="flex items-center gap-2 hover:text-[#c9a45c] transition-colors">
                   <Mail className="w-5 h-5" />
-                  <span>hello@annavedah.com</span>
+                  <span>support@annavedah.com</span>
                 </a>
                 <div className="hidden sm:block w-px h-6 bg-white/20" />
                 <a href="tel:+919763456100" className="flex items-center gap-2 hover:text-[#c9a45c] transition-colors">

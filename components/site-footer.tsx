@@ -33,9 +33,9 @@ export function SiteFooter() {
 
         <div className="space-y-2 text-sm text-background/70">
           <h4 className="text-lg font-semibold mb-3">Contact</h4>
-          <p>Maharashtra, India</p>
+          <p>Shivdatta Nagar, Karmvir Bhaurao Patil Rd, Shivramnagar, Pimple Gurav, Pimpri-Chinchwad, Pune, Maharashtra 411061</p>
           <a href="tel:+919763456100" className="hover:text-accent transition-colors">+91 97634 56100</a>
-          <p>hello@annavedah.com</p>
+          <p>support@annavedah.com</p>
           <div className="flex gap-3 pt-2">
             <a href="https://www.instagram.com/annavedah.foods?igsh=Zmo5YXA0bzRlbHRm&utm_source=qr" target="_blank" rel="noopener noreferrer" className="underline hover:text-accent">Instagram</a>
             <a href="https://www.facebook.com/share/1CnPV6U5Ta/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className="underline hover:text-accent">Facebook</a>

@@ -450,100 +450,18 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#faf6f0] text-[#2d1b15] pt-[116px] lg:pt-[172px]">
       
 
-      {/* Hero Section - Banner Carousel with Category Images */}
+      {/* Hero Section - Single Image */}
       <section className="relative overflow-hidden">
-        <div className="relative w-full flex justify-center">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentBanner}
-              initial={{ opacity: 0, x: 100, scale: 0.95 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: -100, scale: 0.95 }}
-              transition={{ 
-                duration: 0.5, 
-                ease: [0.25, 0.46, 0.45, 0.94]
-              }}
-              className="w-full cursor-pointer"
-              onClick={() => {
-                router.push(`/products?category=${encodeURIComponent(banners[currentBanner].category || 'All')}`);
-              }}
-            >
-              {/* Mobile image — portrait 9:16, renders at natural ratio */}
-              <Image
-                src={banners[currentBanner].mobile}
-                alt="Annavedah Category Banner"
-                width={3072}
-                height={5504}
-                className="w-full h-auto block md:hidden"
-                priority
-              />
-              {/* Tablet image — ~4:3 */}
-              <Image
-                src={banners[currentBanner].tablet}
-                alt="Annavedah Category Banner"
-                width={4800}
-                height={3584}
-                className="w-full h-auto hidden md:block lg:hidden"
-                priority
-              />
-              {/* Desktop image — ~16:9 wide */}
-              <Image
-                src={banners[currentBanner].desktop}
-                alt="Annavedah Category Banner"
-                width={5504}
-                height={3072}
-                className="w-full h-auto hidden lg:block"
-                priority
-              />
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Navigation Arrows with hover effects */}
-          <motion.button
-            onClick={prevBanner}
-            className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all z-10"
-            whileHover={{ scale: 1.1, x: -3 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <ChevronLeft className="w-7 h-7 text-[#8b1a1a]" />
-          </motion.button>
-          <motion.button
-            onClick={nextBanner}
-            className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all z-10"
-            whileHover={{ scale: 1.1, x: 3 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <ChevronRight className="w-7 h-7 text-[#8b1a1a]" />
-          </motion.button>
-
-          {/* Animated Dots */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-10">
-            {banners.map((_, index) => (
-              <motion.button
-                key={index}
-                onClick={() => setCurrentBanner(index)}
-                className={`h-4 rounded-full transition-all ${
-                  index === currentBanner ? 'bg-[#c9a45c]' : 'bg-white/50 hover:bg-white/80'
-                }`}
-                animate={{ 
-                  width: index === currentBanner ? 40 : 16,
-                  scale: index === currentBanner ? 1 : 0.9
-                }}
-                whileHover={{ scale: 1.1 }}
-                transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
-              />
-            ))}
-          </div>
+        <div className="w-full">
+          <Image
+            src="/ChatGPT Image May 5, 2026, 03_59_33 PM.png"
+            alt="Annavedah Foods - Moringa Leaf Powder - Nature's Most Powerful Superfood"
+            width={1024}
+            height={512}
+            className="w-full h-auto"
+            priority
+          />
         </div>
-        
-        {/* Progress bar for current banner */}
-        <motion.div
-          className="absolute bottom-0 left-0 h-1 bg-[#c9a45c]"
-          initial={{ width: "0%" }}
-          animate={{ width: "100%" }}
-          key={currentBanner}
-          transition={{ duration: 5, ease: "linear" }}
-        />
       </section>
 
       {/* Stats Section with CountUp */}

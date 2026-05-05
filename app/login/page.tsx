@@ -67,16 +67,13 @@ export default function LoginPage() {
         throw new Error(data.error || 'Failed to login');
       }
 
-      if (data.user.role === 'admin') {
-        router.push('/admin');
+      // All users go to dashboard from the regular login
+      const params = new URLSearchParams(window.location.search);
+      const redirectPath = params.get('redirect');
+      if (redirectPath) {
+        router.push(redirectPath);
       } else {
-        const params = new URLSearchParams(window.location.search);
-        const redirectPath = params.get('redirect');
-        if (redirectPath) {
-          router.push(redirectPath);
-        } else {
-          router.push('/dashboard');
-        }
+        router.push('/dashboard');
       }
     } catch (err: any) {
       setError(err.message);

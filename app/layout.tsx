@@ -157,7 +157,7 @@ export default function RootLayout({
                 <ul className="space-y-4 text-sm text-[#faf6f0]/70">
                   <li className="flex items-start gap-3">
                     <MapPin className="w-5 h-5 text-[#c9a45c] flex-shrink-0 mt-0.5" />
-                    <span>Maharashtra, India</span>
+                    <span>Shivdatta Nagar, Karmvir Bhaurao Patil Rd, Shivramnagar, Pimple Gurav, Pimpri-Chinchwad, Pune, Maharashtra 411061</span>
                   </li>
                   <li className="flex items-center gap-3">
                     <Phone className="w-5 h-5 text-[#c9a45c] flex-shrink-0" />
@@ -165,7 +165,7 @@ export default function RootLayout({
                   </li>
                   <li className="flex items-center gap-3">
                     <Mail className="w-5 h-5 text-[#c9a45c] flex-shrink-0" />
-                    <span>hello@annavedah.com</span>
+                    <span>support@annavedah.com</span>
                   </li>
                 </ul>
               </div>

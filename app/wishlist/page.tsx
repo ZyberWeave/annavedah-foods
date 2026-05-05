@@ -86,7 +86,7 @@ export default function WishlistPage() {
                   )}
                   <Button
                     className="mt-auto h-11 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-bold rounded-xl"
-                    onClick={() => firstPack && add(p.id, firstPack)}
+                    onClick={() => { if (firstPack) { add(p.id, firstPack); toggle(p.id) } }}
                     disabled={!firstPack}
                   >
                     <ShoppingCart className="w-4 h-4 mr-2" />

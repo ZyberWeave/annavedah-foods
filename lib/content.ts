@@ -1,6 +1,7 @@
 export interface PackPrice {
   size: string
   price: number
+  buyPrice: number
 }
 
 export type ProductCategory =
@@ -21,6 +22,7 @@ export interface Product {
   category: ProductCategory
   price: number
   originalPrice: number
+  costPrice: number
   image: string
   description: string
   benefits: string[]
@@ -143,7 +145,7 @@ const categoryDefaults: Record<
   },
 }
 
-const p = (size: string, price: number): PackPrice => ({ size, price })
+const p = (size: string, price: number, buyPrice?: number): PackPrice => ({ size, price, buyPrice: buyPrice ?? Math.round(price * 0.55) })
 
 const productCatalog: ProductSeed[] = [
   {
@@ -630,12 +632,39 @@ const productCatalog: ProductSeed[] = [
     image: '/Products/essentials/javs chatni.webp',
     packPrices: [],
   },
+
+  // ── TEST PRODUCTS (₹1) — remove before production ──
+  {
+    slug: 'test-powder-1rs',
+    name: 'TEST Powder ₹1',
+    localName: 'Test Powder',
+    category: 'Powders',
+    badge: 'Test',
+    packPrices: [p('100gm', 1, 1)],
+  },
+  {
+    slug: 'test-grain-1rs',
+    name: 'TEST Grain ₹1',
+    localName: 'Test Grain',
+    category: 'Grains',
+    badge: 'Test',
+    packPrices: [p('1kg', 1, 1)],
+  },
+  {
+    slug: 'test-essential-1rs',
+    name: 'TEST Essential ₹1',
+    localName: 'Test Essential',
+    category: 'Essentials',
+    badge: 'Test',
+    packPrices: [p('100gm', 1, 1)],
+  },
 ]
 
 export const products: Product[] = productCatalog.map((item, index) => {
   const defaults = categoryDefaults[item.category]
   const packPrices = item.packPrices ?? []
   const basePrice = packPrices[0]?.price ?? 0
+  const baseCost = packPrices[0]?.buyPrice ?? 0
   const topPrice = packPrices.length > 1 ? packPrices[packPrices.length - 1].price : basePrice
 
   return {
@@ -647,6 +676,7 @@ export const products: Product[] = productCatalog.map((item, index) => {
     category: item.category,
     price: basePrice,
     originalPrice: topPrice,
+    costPrice: baseCost,
     image: item.image ?? '/placeholder.jpg',
     description: item.description ?? defaults.description,
     benefits: item.benefits ?? defaults.benefits,

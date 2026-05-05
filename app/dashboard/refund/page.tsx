@@ -3,12 +3,22 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Loader2, UploadCloud, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Loader2, UploadCloud, CheckCircle2, AlertCircle, Package, RefreshCw, ShieldAlert, Clock, Truck, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 import { validateRequired, validateMinLength } from '@/lib/validations';
 
+const REFUND_REASONS = [
+  { value: 'damaged', label: 'Damaged Product', description: 'Product arrived broken or damaged', icon: ShieldAlert },
+  { value: 'wrong_item', label: 'Wrong Item Received', description: 'Received a different product than ordered', icon: Package },
+  { value: 'quality', label: 'Quality Issue', description: 'Product quality does not match expectations', icon: RefreshCw },
+  { value: 'late_delivery', label: 'Late Delivery', description: 'Order delivered after the expected date', icon: Clock },
+  { value: 'not_delivered', label: 'Not Delivered', description: 'Order was not delivered at all', icon: Truck },
+  { value: 'other', label: 'Other', description: 'Any other reason not listed above', icon: HelpCircle },
+];
+
 export default function RefundRequestPage() {
   const [orderId, setOrderId] = useState('');
+  const [reasonCategory, setReasonCategory] = useState('');
   const [reason, setReason] = useState('');
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -23,8 +33,10 @@ export default function RefundRequestPage() {
     let result;
     if (field === 'orderId') {
       result = validateRequired(value, 'Order ID');
+    } else if (field === 'reasonCategory') {
+      result = validateRequired(value, 'Reason for refund');
     } else if (field === 'reason') {
-      result = validateMinLength(value, 20, 'Reason');
+      result = validateMinLength(value, 20, 'Additional details');
     }
     if (result) {
       setFieldErrors(prev => ({ ...prev, [field]: result!.valid ? '' : result!.message }));
@@ -38,13 +50,15 @@ export default function RefundRequestPage() {
 
   const validateAll = (): boolean => {
     const orderResult = validateRequired(orderId, 'Order ID');
-    const reasonResult = validateMinLength(reason, 20, 'Reason');
+    const categoryResult = validateRequired(reasonCategory, 'Reason for refund');
+    const reasonResult = validateMinLength(reason, 20, 'Additional details');
     setFieldErrors({
       orderId: orderResult.valid ? '' : orderResult.message,
+      reasonCategory: categoryResult.valid ? '' : categoryResult.message,
       reason: reasonResult.valid ? '' : reasonResult.message,
     });
-    setTouched({ orderId: true, reason: true });
-    return orderResult.valid && reasonResult.valid;
+    setTouched({ orderId: true, reasonCategory: true, reason: true });
+    return orderResult.valid && categoryResult.valid && reasonResult.valid;
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,6 +90,7 @@ export default function RefundRequestPage() {
     try {
       const formData = new FormData();
       formData.append('orderId', orderId);
+      formData.append('reasonCategory', reasonCategory);
       formData.append('reason', reason);
       if (image) {
         formData.append('image', image);
@@ -174,8 +189,63 @@ export default function RefundRequestPage() {
             )}
           </div>
 
+          {/* Reason Category Selector */}
           <div>
-            <label className="block text-sm font-semibold text-[#2d1b15] mb-2">Reason for Refund <span className="text-red-400">*</span></label>
+            <label className="block text-sm font-semibold text-[#2d1b15] mb-3">Reason for Refund <span className="text-red-400">*</span></label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {REFUND_REASONS.map((item) => {
+                const Icon = item.icon;
+                const isSelected = reasonCategory === item.value;
+                return (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => {
+                      setReasonCategory(item.value);
+                      setTouched(prev => ({ ...prev, reasonCategory: true }));
+                      setFieldErrors(prev => ({ ...prev, reasonCategory: '' }));
+                    }}
+                    className={`group relative flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all duration-200 ${
+                      isSelected
+                        ? 'border-[#8b1a1a] bg-[#8b1a1a]/5 shadow-sm'
+                        : 'border-[#e8ddd0] bg-white hover:border-[#c9a45c]/60 hover:bg-[#faf6f0]'
+                    }`}
+                  >
+                    {/* Radio indicator */}
+                    <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                      isSelected ? 'border-[#8b1a1a]' : 'border-[#c4b5a8] group-hover:border-[#c9a45c]'
+                    }`}>
+                      {isSelected && (
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#8b1a1a] animate-[scaleIn_0.15s_ease-out]" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <Icon className={`w-4 h-4 flex-shrink-0 ${isSelected ? 'text-[#8b1a1a]' : 'text-[#c9a45c]'}`} />
+                        <span className={`text-sm font-semibold ${isSelected ? 'text-[#8b1a1a]' : 'text-[#2d1b15]'}`}>
+                          {item.label}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#6b5347] leading-relaxed">{item.description}</p>
+                    </div>
+                    {isSelected && (
+                      <CheckCircle2 className="absolute top-3 right-3 w-4 h-4 text-[#8b1a1a]" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            {touched.reasonCategory && fieldErrors.reasonCategory && (
+              <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5" />
+                {fieldErrors.reasonCategory}
+              </p>
+            )}
+          </div>
+
+          {/* Additional Details Textarea */}
+          <div>
+            <label className="block text-sm font-semibold text-[#2d1b15] mb-2">Additional Details <span className="text-red-400">*</span></label>
             <textarea
               value={reason}
               onChange={(e) => {
@@ -183,7 +253,7 @@ export default function RefundRequestPage() {
                 if (touched.reason) validateField('reason', e.target.value);
               }}
               onBlur={() => handleBlur('reason', reason)}
-              placeholder="Please explain the issue in detail (minimum 20 characters)..."
+              placeholder="Please describe the issue in detail — what happened, when you noticed it, etc. (minimum 20 characters)..."
               rows={4}
               className={`${inputClass('reason', reason)} resize-none`}
               aria-invalid={!!fieldErrors.reason}

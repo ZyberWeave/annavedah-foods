@@ -17,7 +17,7 @@ async function main() {
     password: hashedPassword,
     role: 'admin'
   });
-  console.log('Admin user created: admin@annavedah.com / admin123');
+  console.log('Manager account created successfully.');
 }
 
 main().catch(console.error);

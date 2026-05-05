@@ -1,4 +1,24 @@
-import { pgTable, serial, text, timestamp, varchar, integer } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, varchar, integer, boolean, decimal } from 'drizzle-orm/pg-core';
+
+export const testimonials = pgTable('testimonials', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  location: text('location').notNull(),
+  text: text('text').notNull(),
+  rating: integer('rating').default(5).notNull(),
+  active: boolean('active').default(true).notNull(),
+  displayOrder: integer('display_order').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const instagramReels = pgTable('instagram_reels', {
+  id: serial('id').primaryKey(),
+  permalink: text('permalink').notNull(),
+  caption: text('caption'),
+  displayOrder: integer('display_order').default(0).notNull(),
+  active: boolean('active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -50,5 +70,20 @@ export const orders = pgTable('orders', {
   total: integer('total').notNull(),
   status: varchar('status', { length: 50 }).default('success').notNull(),
   items: text('items').notNull(), // JSON string of items
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const productReviews = pgTable('product_reviews', {
+  id: serial('id').primaryKey(),
+  productSlug: text('product_slug').notNull(),
+  userId: integer('user_id').references(() => users.id),
+  name: text('name').notNull(),
+  location: text('location').default('').notNull(),
+  rating: integer('rating').notNull(),
+  title: text('title').notNull(),
+  body: text('body').notNull(),
+  status: varchar('status', { length: 20 }).default('pending').notNull(), // pending, approved, rejected
+  helpful: integer('helpful').default(0).notNull(),
+  verified: boolean('verified').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });

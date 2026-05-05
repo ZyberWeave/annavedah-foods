@@ -121,6 +121,7 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<SortKey>('featured')
+  const [minPrice, setMinPrice] = useState(PRICE_MIN)
   const [maxPrice, setMaxPrice] = useState(PRICE_MAX)
   const [activeTags, setActiveTags] = useState<string[]>([])
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -144,7 +145,7 @@ export default function ProductsPage() {
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.description.toLowerCase().includes(searchQuery.toLowerCase())
       const price = product.price
-      const matchesPrice = price === 0 || price <= maxPrice
+      const matchesPrice = price === 0 || (price >= minPrice && price <= maxPrice)
       const matchesTags =
         activeTags.length === 0 ||
         activeTags.some((tag) => product.benefits.some((b) => b.toLowerCase().includes(tag.toLowerCase())))
@@ -175,7 +176,7 @@ export default function ProductsPage() {
         })
     }
     return sorted
-  }, [selectedCategory, searchQuery, sortBy, maxPrice, activeTags])
+  }, [selectedCategory, searchQuery, sortBy, minPrice, maxPrice, activeTags])
 
   const toggleTag = (tag: string) => {
     setActiveTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
@@ -185,12 +186,17 @@ export default function ProductsPage() {
     setSelectedCategory('All')
     setSearchQuery('')
     setSortBy('featured')
+    setMinPrice(PRICE_MIN)
     setMaxPrice(PRICE_MAX)
     setActiveTags([])
   }
 
   const hasActiveFilters =
-    selectedCategory !== 'All' || searchQuery !== '' || maxPrice !== PRICE_MAX || activeTags.length > 0
+    selectedCategory !== 'All' || searchQuery !== '' || minPrice !== PRICE_MIN || maxPrice !== PRICE_MAX || activeTags.length > 0
+
+  // Percentages for the coloured track bar
+  const minPercent = ((minPrice - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100
+  const maxPercent = ((maxPrice - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100
 
   const FilterPanel = (
     <div className="space-y-8">
@@ -230,18 +236,45 @@ export default function ProductsPage() {
 
       <div>
         <h3 className="text-xl font-bold text-[#2d1b15] mb-4">Price Range</h3>
-        <input
-          type="range"
-          min={PRICE_MIN}
-          max={PRICE_MAX}
-          step={50}
-          value={maxPrice}
-          onChange={(e) => setMaxPrice(Number(e.target.value))}
-          className="w-full accent-[#8b1a1a]"
-        />
+        <div className="dual-range-slider">
+          {/* Background track */}
+          <div className="slider-track" />
+          {/* Coloured range between thumbs */}
+          <div
+            className="slider-range"
+            style={{ left: `${minPercent}%`, width: `${maxPercent - minPercent}%` }}
+          />
+          {/* Min thumb */}
+          <input
+            type="range"
+            min={PRICE_MIN}
+            max={PRICE_MAX}
+            step={50}
+            value={minPrice}
+            onChange={(e) => {
+              const val = Math.min(Number(e.target.value), maxPrice - 50)
+              setMinPrice(val)
+            }}
+            aria-label="Minimum price"
+          />
+          {/* Max thumb */}
+          <input
+            type="range"
+            min={PRICE_MIN}
+            max={PRICE_MAX}
+            step={50}
+            value={maxPrice}
+            onChange={(e) => {
+              const val = Math.max(Number(e.target.value), minPrice + 50)
+              setMaxPrice(val)
+            }}
+            className="thumb-upper"
+            aria-label="Maximum price"
+          />
+        </div>
         <div className="flex justify-between mt-2 text-sm font-semibold text-[#6b5347]">
-          <span>₹0</span>
-          <span className="text-[#8b1a1a]">Up to ₹{maxPrice}</span>
+          <span>₹{minPrice}</span>
+          <span className="text-[#8b1a1a]">₹{maxPrice}</span>
         </div>
       </div>
 
@@ -276,16 +309,101 @@ export default function ProductsPage() {
   )
 
   return (
-    <div className="container mx-auto px-4 pt-[120px] lg:pt-[190px] pb-16 space-y-8">
-      <Breadcrumbs items={[{ label: 'Products' }]} />
+    <div className="pb-16">
+      {/* ══════════════ SHOP HERO BANNER ══════════════ */}
+      <section className="relative w-full h-[420px] sm:h-[480px] md:h-[520px] lg:h-[560px] overflow-hidden">
+        {/* Background image */}
+        <Image
+          src="/Banners/shop-hero.png"
+          alt="Annavedah Foods — Premium organic products"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
+        />
 
-      <div className="space-y-4 text-center">
-        <p className="text-sm font-semibold uppercase tracking-wide text-accent">Products</p>
-        <h1 className="text-4xl font-bold text-primary md:text-5xl">Discover our full range</h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Clean, nutrient-dense powders and blends crafted for daily use. Filter by category or search to find what suits your routine.
-        </p>
-      </div>
+        {/* Gradient overlays */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1a0e08]/90 via-[#1a0e08]/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1a0e08]/70 via-transparent to-[#1a0e08]/30" />
+
+        {/* Decorative floating elements */}
+        <div className="absolute top-8 right-8 w-24 h-24 rounded-full bg-[#c9a45c]/10 blur-2xl animate-pulse" />
+        <div className="absolute bottom-16 right-1/4 w-32 h-32 rounded-full bg-[#8b1a1a]/10 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+
+        {/* Content */}
+        <div className="absolute inset-0 flex items-center">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-2xl space-y-6">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white/90 text-xs font-bold uppercase tracking-widest">
+                <span className="w-2 h-2 rounded-full bg-[#c9a45c] animate-pulse" />
+                सात्विक · पौष्टिक · परिपूर्ण
+              </div>
+
+              {/* Headline */}
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-[1.1] tracking-tight">
+                Discover Our
+                <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f5e6c8] via-[#c9a45c] to-[#f5e6c8]">
+                  Full Range
+                </span>
+              </h1>
+
+              {/* Subline */}
+              <p className="text-base sm:text-lg text-white/75 max-w-lg leading-relaxed">
+                Farm-fresh, nutrient-dense powders, grains, and essentials crafted for your daily wellness. Pure, traditional, and uncompromised.
+              </p>
+
+              {/* Category quick-links */}
+              <div className="flex flex-wrap gap-2 pt-2">
+                {['Grains', 'Pulses', 'Powders', 'Essentials'].map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => { setSelectedCategory(cat); document.getElementById('shop-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}
+                    className="px-4 py-2 rounded-full border border-white/25 bg-white/5 backdrop-blur-sm text-white text-xs font-bold uppercase tracking-wider hover:bg-white/15 hover:border-[#c9a45c] transition-all duration-300"
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Trust stats */}
+              <div className="flex items-center gap-6 pt-4 border-t border-white/10">
+                <div>
+                  <p className="text-2xl font-bold text-[#c9a45c]">80+</p>
+                  <p className="text-[11px] text-white/50 uppercase tracking-wider font-semibold">Products</p>
+                </div>
+                <div className="w-px h-10 bg-white/15" />
+                <div>
+                  <p className="text-2xl font-bold text-[#c9a45c]">100%</p>
+                  <p className="text-[11px] text-white/50 uppercase tracking-wider font-semibold">Natural</p>
+                </div>
+                <div className="w-px h-10 bg-white/15" />
+                <div>
+                  <p className="text-2xl font-bold text-[#c9a45c]">7+</p>
+                  <p className="text-[11px] text-white/50 uppercase tracking-wider font-semibold">Categories</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <button
+          onClick={() => document.getElementById('shop-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-white/40 hover:text-white/70 transition-colors group cursor-pointer"
+          aria-label="Scroll to products"
+        >
+          <span className="text-[10px] font-bold uppercase tracking-widest">Explore</span>
+          <svg className="w-5 h-5 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </section>
+
+      {/* ══════════════ MAIN CONTENT ══════════════ */}
+      <div id="shop-grid" className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+      <Breadcrumbs items={[{ label: 'Products' }]} />
 
       <div className="rounded-3xl bg-gradient-to-r from-[#8b1a1a] via-[#8b1a1a] to-[#6d1414] text-white px-6 py-6 md:py-5 flex flex-col md:flex-row items-center justify-between gap-5 shadow-xl overflow-hidden">
         <div className="min-w-0">
@@ -299,7 +417,7 @@ export default function ProductsPage() {
 
       <div className="flex flex-col lg:flex-row gap-12">
         {/* Desktop sidebar */}
-        <div className="hidden lg:block lg:w-1/4 flex-shrink-0 lg:sticky lg:top-48 lg:self-start lg:h-fit z-10">
+        <div className="hidden lg:block lg:w-1/4 flex-shrink-0 lg:sticky lg:top-48 lg:self-start lg:max-h-[calc(100vh-13rem)] lg:overflow-y-auto z-10 scrollbar-thin scrollbar-thumb-[#e8ddd0] scrollbar-track-transparent pr-2">
           {FilterPanel}
         </div>
 
@@ -382,6 +500,7 @@ export default function ProductsPage() {
           </div>
         </div>
       )}
+      </div>{/* end shop-grid */}
     </div>
   )
 }

@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/components/cart-context'
+import { validateCoupon, coupons } from '@/lib/coupons'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
-import { CheckCircle2, Loader2, MapPin, ShieldCheck, Truck, ChevronRight, AlertCircle } from 'lucide-react'
+import { CheckCircle2, Loader2, MapPin, ShieldCheck, Truck, ChevronRight, AlertCircle, Tag, X, Ticket, ChevronDown, ChevronUp } from 'lucide-react'
 import { validateEmail, validatePhone, validateName, validateRequired } from '@/lib/validations'
 import Breadcrumbs from '@/components/Breadcrumbs'
 
@@ -31,7 +32,7 @@ type Step = 'address' | 'payment' | 'success'
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, total, remove, appliedCoupon } = useCart()
+  const { items, total, remove, appliedCoupon, applyCoupon, removeCoupon } = useCart()
   const [step, setStep] = useState<Step>('address')
   const [loading, setLoading] = useState(false)
   const [serviceability, setServiceability] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle')
@@ -42,6 +43,10 @@ export default function CheckoutPage() {
   })
   const [errors, setErrors] = useState<Partial<FormData>>({})
   const [paymentMethod, setPaymentMethod] = useState<'Prepaid' | 'COD'>('Prepaid')
+  const [promoCode, setPromoCode] = useState('')
+  const [promoError, setPromoError] = useState('')
+  const [promoLoading, setPromoLoading] = useState(false)
+  const [showAvailableCoupons, setShowAvailableCoupons] = useState(false)
 
   const codCharge = paymentMethod === 'COD' ? 99 : 0
   const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0
@@ -153,6 +158,20 @@ export default function CheckoutPage() {
     // if (!form.pincode.match(/^\d{6}$/)) errs.pincode = 'Invalid pincode'
     setErrors(errs)
     return Object.keys(errs).length === 0
+  }
+
+  async function handleApplyCheckoutCoupon() {
+    if (!promoCode.trim()) return
+    setPromoLoading(true)
+    setPromoError('')
+    const result = await applyCoupon(promoCode.trim())
+    if (!result.success) {
+      setPromoError(result.error || 'Invalid coupon')
+    } else {
+      setPromoCode('')
+      setShowAvailableCoupons(false)
+    }
+    setPromoLoading(false)
   }
 
   async function handlePayment() {
@@ -473,6 +492,120 @@ export default function CheckoutPage() {
                   </div>
                   )
                 })}
+              </div>
+
+              {/* ── Coupon Code Section ── */}
+              <div className="border-t border-border pt-4 space-y-3">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Tag className="w-4 h-4" style={{ color: '#c9a45c' }} />
+                  Promo Code
+                </h3>
+
+                {appliedCoupon ? (
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-green-50 border border-green-200">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-green-800">{appliedCoupon.code}</p>
+                        <p className="text-[10px] text-green-600 truncate">{appliedCoupon.description}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={removeCoupon}
+                      className="p-1 hover:bg-green-100 rounded-full transition-colors flex-shrink-0"
+                      aria-label="Remove coupon"
+                    >
+                      <X className="w-4 h-4 text-green-700" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        id="checkout-promo-input"
+                        type="text"
+                        placeholder="Enter coupon code"
+                        value={promoCode}
+                        onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoError('') }}
+                        className="flex-1 px-3 py-2.5 rounded-xl border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400 uppercase tracking-wider font-bold transition-all"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            handleApplyCheckoutCoupon()
+                          }
+                        }}
+                      />
+                      <button
+                        id="checkout-apply-coupon-btn"
+                        onClick={handleApplyCheckoutCoupon}
+                        disabled={promoLoading || !promoCode.trim()}
+                        className="px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl border border-[#c9a45c] text-[#c9a45c] hover:bg-[#c9a45c]/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {promoLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Apply'}
+                      </button>
+                    </div>
+                    {promoError && (
+                      <p className="text-xs text-red-500 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                        {promoError}
+                      </p>
+                    )}
+
+                    {/* Available Coupons Toggle */}
+                    <button
+                      type="button"
+                      onClick={() => setShowAvailableCoupons(!showAvailableCoupons)}
+                      className="text-xs font-semibold flex items-center gap-1 hover:underline transition-colors"
+                      style={{ color: '#c9a45c' }}
+                    >
+                      <Ticket className="w-3.5 h-3.5" />
+                      View available coupons
+                      {showAvailableCoupons ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </button>
+
+                    {showAvailableCoupons && (
+                      <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
+                        {coupons.filter(c => c.active).map((c) => {
+                          const result = validateCoupon(c.code, total)
+                          const isEligible = result.valid
+                          return (
+                            <div
+                              key={c.code}
+                              className={`p-3 rounded-xl border text-left transition-all ${
+                                isEligible
+                                  ? 'border-[#c9a45c]/40 bg-[#c9a45c]/5 hover:border-[#c9a45c] cursor-pointer'
+                                  : 'border-border bg-muted/30 opacity-60'
+                              }`}
+                              onClick={() => {
+                                if (isEligible) {
+                                  setPromoCode(c.code)
+                                  setPromoError('')
+                                }
+                              }}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-xs font-bold text-foreground tracking-wider">{c.code}</p>
+                                  <p className="text-[10px] text-muted-foreground mt-0.5">{c.description}</p>
+                                </div>
+                                {isEligible && (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                                    -₹{result.discount}
+                                  </span>
+                                )}
+                                {!isEligible && !result.valid && (
+                                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-red-50 text-red-500 font-medium">
+                                    Min ₹{c.minOrder}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="border-t border-border pt-4 space-y-4">

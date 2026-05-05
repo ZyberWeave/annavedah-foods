@@ -115,9 +115,9 @@ export default function ContactPage() {
           Whether you want to stock up for home, plan corporate wellness packs, or explore wholesale partnerships, we are here to help.
         </p>
         <div className="space-y-3 text-sm text-foreground/80">
-          <p><span className="font-semibold text-primary">Address:</span> Maharashtra, India</p>
+          <p><span className="font-semibold text-primary">Address:</span> Shivdatta Nagar, Karmvir Bhaurao Patil Rd, Shivramnagar, Pimple Gurav, Pimpri-Chinchwad, Pune, Maharashtra 411061</p>
           <p><span className="font-semibold text-primary">Phone:</span> <a href="tel:+919763456100" className="hover:text-accent transition-colors">+91 97634 56100</a></p>
-          <p><span className="font-semibold text-primary">Email:</span> <a href="mailto:hello@annavedah.com" className="hover:text-accent transition-colors">hello@annavedah.com</a></p>
+          <p><span className="font-semibold text-primary">Email:</span> <a href="mailto:support@annavedah.com" className="hover:text-accent transition-colors">support@annavedah.com</a></p>
         </div>
       </div>
 

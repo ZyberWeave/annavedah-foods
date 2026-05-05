@@ -71,7 +71,7 @@ export default function ProductDetailPage(props: ProductPageProps) {
                 <Star key={n} className={`w-4 h-4 ${n <= 5 ? 'fill-[#c9a45c] text-[#c9a45c]' : 'text-[#e8ddd0]'}`} />
               ))}
             </div>
-            <span className="text-sm text-[#6b5347]"><span className="font-bold text-[#2d1b15]">4.8</span> · 124 reviews</span>
+            <a href="#reviews" className="text-sm text-[#6b5347] hover:text-[#8b1a1a] transition-colors">View reviews ↓</a>
             {product.badge && (
               <span className="text-[10px] font-bold uppercase tracking-widest bg-[#8b1a1a] text-white px-3 py-1 rounded-full">
                 {product.badge}
@@ -194,7 +194,9 @@ export default function ProductDetailPage(props: ProductPageProps) {
 
       <ProductTabs product={product} />
 
-      <ProductReviews />
+      <div id="reviews">
+        <ProductReviews productSlug={product.slug} />
+      </div>
 
       {related.length > 0 && (
         <div className="space-y-6">

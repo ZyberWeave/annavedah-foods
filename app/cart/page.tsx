@@ -179,8 +179,8 @@ export default function CartPage() {
             )}
           </div>
 
-          <div className="space-y-4">
-            <div className="rounded-2xl border-2 border-[#e8ddd0] bg-white p-6 space-y-4 lg:sticky lg:top-48">
+          <div className="space-y-4 lg:sticky lg:top-48 lg:self-start">
+            <div className="rounded-2xl border-2 border-[#e8ddd0] bg-white p-6 space-y-4">
               <h3 className="text-xl font-bold text-[#2d1b15]">Order Summary</h3>
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm text-[#6b5347]">
