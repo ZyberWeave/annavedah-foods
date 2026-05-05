@@ -6,14 +6,12 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { products, banners, testimonials, categories } from '@/lib/content'
-import { Search, Leaf, Heart, Star, ShoppingCart, ChevronLeft, ChevronRight, Package, Users, Shield, Check, Sparkles } from 'lucide-react'
+import { Search, Leaf, Heart, Star, ShoppingCart, Package, Users, Shield, Check, Sparkles } from 'lucide-react'
 import { useCart } from '@/components/cart-context'
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel"
 import AutoScroll from 'embla-carousel-auto-scroll'
 import { motion, useAnimation, useInView, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion'
@@ -642,6 +640,7 @@ export default function HomePage() {
                 opts={{
                   align: "start",
                   loop: true,
+                  dragFree: true,
                 }}
                 plugins={[
                   AutoScroll({
@@ -650,7 +649,7 @@ export default function HomePage() {
                     stopOnMouseEnter: true,
                   })
                 ]}
-                className="w-full max-w-full relative px-4 sm:px-12"
+                className="w-full max-w-full relative cursor-grab active:cursor-grabbing"
               >
                 <CarouselContent>
                   {filteredProducts.map((product, index) => (
@@ -661,10 +660,6 @@ export default function HomePage() {
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <div className="hidden sm:block">
-                  <CarouselPrevious className="border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10 -left-4 bg-white/80 backdrop-blur-sm" />
-                  <CarouselNext className="border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10 -right-4 bg-white/80 backdrop-blur-sm" />
-                </div>
               </Carousel>
             )}
           </AnimatePresence>

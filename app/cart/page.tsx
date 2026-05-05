@@ -1,13 +1,13 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { useCart, CART_LIMIT } from '@/components/cart-context'
 import { products } from '@/lib/content'
-import { Plus, Minus, Trash2, ArrowRight, Tag, X, CheckCircle2, Loader2 } from 'lucide-react'
+import { Plus, Minus, Trash2, ArrowRight, Tag, X, CheckCircle2, Loader2, AlertTriangle } from 'lucide-react'
 import Breadcrumbs from '@/components/Breadcrumbs'
 import TrustBadges from '@/components/TrustBadges'
 import RecentlyViewed from '@/components/RecentlyViewed'
@@ -15,11 +15,17 @@ import RecentlyViewed from '@/components/RecentlyViewed'
 const FREE_SHIPPING_THRESHOLD = 999
 
 export default function CartPage() {
-  const { items, remove, updateQty, total, add, appliedCoupon, applyCoupon, removeCoupon, isFull } = useCart()
+  const { items, remove, updateQty, total, add, clearCart, appliedCoupon, applyCoupon, removeCoupon, isFull } = useCart()
   const router = useRouter()
   const [promoCode, setPromoCode] = useState('')
   const [promoError, setPromoError] = useState('')
   const [promoLoading, setPromoLoading] = useState(false)
+  const [showClearModal, setShowClearModal] = useState(false)
+
+  const handleClearAll = useCallback(() => {
+    clearCart()
+    setShowClearModal(false)
+  }, [clearCart])
 
   const discountedTotal = appliedCoupon ? Math.max(0, total - appliedCoupon.discount) : total
 
@@ -50,7 +56,7 @@ export default function CartPage() {
     <div className="container mx-auto px-4 pt-[120px] lg:pt-[190px] pb-16 space-y-8">
       <Breadcrumbs items={[{ label: 'Cart' }]} />
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-accent">Cart</p>
           <h1 className="text-3xl font-bold text-primary md:text-4xl flex items-center gap-3">
@@ -64,9 +70,20 @@ export default function CartPage() {
             )}
           </h1>
         </div>
-        <Link href="/products" className="text-sm font-semibold text-primary hover:text-accent transition-colors">
-          Continue shopping →
-        </Link>
+        <div className="flex items-center gap-3">
+          {items.length > 0 && (
+            <button
+              onClick={() => setShowClearModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete All
+            </button>
+          )}
+          <Link href="/products" className="text-sm font-semibold text-primary hover:text-accent transition-colors">
+            Continue shopping →
+          </Link>
+        </div>
       </div>
 
       {items.length === 0 ? (
@@ -278,6 +295,44 @@ export default function CartPage() {
       )}
 
       {items.length > 0 && <RecentlyViewed />}
+
+      {/* Delete All Confirmation Modal */}
+      {showClearModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => setShowClearModal(false)}
+          />
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-5 animate-in zoom-in-95 fade-in duration-200">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[#2d1b15]">Delete all items?</h3>
+                <p className="text-sm text-[#6b5347] mt-1">
+                  This will remove all <span className="font-semibold text-[#2d1b15]">{items.length} item{items.length !== 1 ? 's' : ''}</span> from your cart. This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end pt-2">
+              <button
+                onClick={() => setShowClearModal(false)}
+                className="px-5 py-2.5 text-sm font-semibold text-[#6b5347] bg-[#f0e8dc] hover:bg-[#e8ddd0] rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClearAll}
+                className="px-5 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Yes, Delete All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

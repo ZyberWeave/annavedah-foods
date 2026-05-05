@@ -1,9 +1,9 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Heart, ShoppingCart, X } from 'lucide-react'
+import { Heart, ShoppingCart, X, Trash2, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useWishlist, WISHLIST_LIMIT } from '@/components/wishlist-context'
 import { useCart } from '@/components/cart-context'
@@ -11,8 +11,14 @@ import { products } from '@/lib/content'
 import Breadcrumbs from '@/components/Breadcrumbs'
 
 export default function WishlistPage() {
-  const { ids, toggle, count, isFull } = useWishlist()
+  const { ids, toggle, count, clear, isFull } = useWishlist()
   const { add } = useCart()
+  const [showClearModal, setShowClearModal] = useState(false)
+
+  const handleClearAll = useCallback(() => {
+    clear()
+    setShowClearModal(false)
+  }, [clear])
 
   const items = useMemo(
     () => ids.map((id) => products.find((p) => p.id === id)).filter(Boolean) as typeof products,
@@ -23,19 +29,30 @@ export default function WishlistPage() {
     <div className="container mx-auto px-4 pt-[120px] lg:pt-[190px] pb-16 space-y-8">
       <Breadcrumbs items={[{ label: 'Wishlist' }]} />
 
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-wide text-accent">Saved for later</p>
-        <h1 className="text-3xl md:text-4xl font-bold text-primary flex items-center gap-3">
-          <Heart className="w-8 h-8 text-[#8b1a1a] fill-[#8b1a1a]" />
-          My Wishlist
-          {count > 0 && (
-            <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
-              isFull ? 'bg-red-100 text-red-700' : count >= WISHLIST_LIMIT - 2 ? 'bg-amber-100 text-amber-700' : 'bg-[#f0e8dc] text-[#6b5347]'
-            }`}>
-              {count}/{WISHLIST_LIMIT}
-            </span>
-          )}
-        </h1>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-wide text-accent">Saved for later</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-primary flex items-center gap-3">
+            <Heart className="w-8 h-8 text-[#8b1a1a] fill-[#8b1a1a]" />
+            My Wishlist
+            {count > 0 && (
+              <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
+                isFull ? 'bg-red-100 text-red-700' : count >= WISHLIST_LIMIT - 2 ? 'bg-amber-100 text-amber-700' : 'bg-[#f0e8dc] text-[#6b5347]'
+              }`}>
+                {count}/{WISHLIST_LIMIT}
+              </span>
+            )}
+          </h1>
+        </div>
+        {items.length > 0 && (
+          <button
+            onClick={() => setShowClearModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete All
+          </button>
+        )}
       </div>
 
       {items.length === 0 ? (
@@ -96,6 +113,44 @@ export default function WishlistPage() {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Delete All Confirmation Modal */}
+      {showClearModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => setShowClearModal(false)}
+          />
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-5 animate-in zoom-in-95 fade-in duration-200">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[#2d1b15]">Delete all items?</h3>
+                <p className="text-sm text-[#6b5347] mt-1">
+                  This will remove all <span className="font-semibold text-[#2d1b15]">{items.length} item{items.length !== 1 ? 's' : ''}</span> from your wishlist. This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end pt-2">
+              <button
+                onClick={() => setShowClearModal(false)}
+                className="px-5 py-2.5 text-sm font-semibold text-[#6b5347] bg-[#f0e8dc] hover:bg-[#e8ddd0] rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClearAll}
+                className="px-5 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Yes, Delete All
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

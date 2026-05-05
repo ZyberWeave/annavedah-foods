@@ -26,6 +26,7 @@ type CartContextValue = {
   add: (id: number, pack?: { size: string; price: number }, qty?: number, opts?: { silent?: boolean }) => void
   remove: (id: number, size?: string) => void
   updateQty: (id: number, size: string | undefined, qty: number) => void
+  clearCart: () => void
   total: number
   count: number
   isOpen: boolean
@@ -195,6 +196,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     )
   }, [])
 
+  const clearCart = useCallback(() => {
+    setItems([])
+    setAppliedCoupon(null)
+    localStorage.removeItem('annavedah_cart')
+    fetch('/api/cart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: [] })
+    }).catch(() => {})
+  }, [])
+
   const total = items.reduce((sum, item) => sum + (item.selectedPack ? item.selectedPack.price : item.product.price) * item.qty, 0)
   const count = items.reduce((sum, item) => sum + item.qty, 0)
 
@@ -231,7 +243,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <CartContext.Provider value={{ items, add, remove, updateQty, total, count, isOpen, openCart, closeCart, appliedCoupon, applyCoupon, removeCoupon, isFull: uniqueItemCount(items) >= CART_LIMIT }}>
+    <CartContext.Provider value={{ items, add, remove, updateQty, clearCart, total, count, isOpen, openCart, closeCart, appliedCoupon, applyCoupon, removeCoupon, isFull: uniqueItemCount(items) >= CART_LIMIT }}>
       {children}
     </CartContext.Provider>
   )
