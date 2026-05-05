@@ -7,7 +7,7 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await verifySession();
   
   if (!session || session.role !== 'admin') {
@@ -16,7 +16,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
   try {
     const { status } = await req.json();
-    const refundId = parseInt(params.id);
+    const resolvedParams = await params;
+    const refundId = parseInt(resolvedParams.id);
 
     if (!['approved', 'rejected'].includes(status)) {
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 });

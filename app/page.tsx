@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { products, banners, testimonials, categories } from '@/lib/content'
@@ -17,6 +18,8 @@ import {
 import AutoScroll from 'embla-carousel-auto-scroll'
 import { motion, useAnimation, useInView, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion'
 import CountUp from 'react-countup'
+import InstagramFeed from '@/components/InstagramFeed'
+import TrustBadges from '@/components/TrustBadges'
 
 // Enhanced Animation Variants
 const fadeInUp = {
@@ -415,6 +418,7 @@ function PLPProductCard({ product, index, add }: any) {
 }
 
 export default function HomePage() {
+  const router = useRouter()
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [currentBanner, setCurrentBanner] = useState(0)
@@ -446,37 +450,100 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#faf6f0] text-[#2d1b15] pt-[116px] lg:pt-[172px]">
       
 
-      {/* Hero Section - Full image, no text, sits below fixed navbar */}
-      {/* Mobile: 36px bar + 80px header = 116px; Desktop: 36px + 80px + 56px nav = 172px */}
-      <section
-        className="relative h-[calc(100vh-116px)] lg:h-[calc(100vh-172px)]"
-      >
-        <div className="absolute inset-0">
-          {/* Mobile image */}
-          <Image
-            src="/Products/hero_section mobile.webp"
-            alt="Annavedah Foods - Dehydrated Vegetable Powders"
-            fill
-            className="object-cover object-top md:hidden"
-            priority
-          />
-          {/* Tablet image */}
-          <Image
-            src="/Products/hero_section_tablet.webp"
-            alt="Annavedah Foods - Dehydrated Vegetable Powders"
-            fill
-            className="object-cover object-top hidden md:block lg:hidden"
-            priority
-          />
-          {/* Desktop image */}
-          <Image
-            src="/Products/Hero_section.webp"
-            alt="Annavedah Foods - Dehydrated Vegetable Powders"
-            fill
-            className="object-cover object-top hidden lg:block"
-            priority
-          />
+      {/* Hero Section - Banner Carousel with Category Images */}
+      <section className="relative overflow-hidden">
+        <div className="relative w-full flex justify-center">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentBanner}
+              initial={{ opacity: 0, x: 100, scale: 0.95 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: -100, scale: 0.95 }}
+              transition={{ 
+                duration: 0.5, 
+                ease: [0.25, 0.46, 0.45, 0.94]
+              }}
+              className="w-full cursor-pointer"
+              onClick={() => {
+                router.push(`/products?category=${encodeURIComponent(banners[currentBanner].category || 'All')}`);
+              }}
+            >
+              {/* Mobile image — portrait 9:16, renders at natural ratio */}
+              <Image
+                src={banners[currentBanner].mobile}
+                alt="Annavedah Category Banner"
+                width={3072}
+                height={5504}
+                className="w-full h-auto block md:hidden"
+                priority
+              />
+              {/* Tablet image — ~4:3 */}
+              <Image
+                src={banners[currentBanner].tablet}
+                alt="Annavedah Category Banner"
+                width={4800}
+                height={3584}
+                className="w-full h-auto hidden md:block lg:hidden"
+                priority
+              />
+              {/* Desktop image — ~16:9 wide */}
+              <Image
+                src={banners[currentBanner].desktop}
+                alt="Annavedah Category Banner"
+                width={5504}
+                height={3072}
+                className="w-full h-auto hidden lg:block"
+                priority
+              />
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Navigation Arrows with hover effects */}
+          <motion.button
+            onClick={prevBanner}
+            className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all z-10"
+            whileHover={{ scale: 1.1, x: -3 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <ChevronLeft className="w-7 h-7 text-[#8b1a1a]" />
+          </motion.button>
+          <motion.button
+            onClick={nextBanner}
+            className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all z-10"
+            whileHover={{ scale: 1.1, x: 3 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <ChevronRight className="w-7 h-7 text-[#8b1a1a]" />
+          </motion.button>
+
+          {/* Animated Dots */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-10">
+            {banners.map((_, index) => (
+              <motion.button
+                key={index}
+                onClick={() => setCurrentBanner(index)}
+                className={`h-4 rounded-full transition-all ${
+                  index === currentBanner ? 'bg-[#c9a45c]' : 'bg-white/50 hover:bg-white/80'
+                }`}
+                animate={{ 
+                  width: index === currentBanner ? 40 : 16,
+                  scale: index === currentBanner ? 1 : 0.9
+                }}
+                whileHover={{ scale: 1.1 }}
+                transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
+              />
+            ))}
+          </div>
         </div>
+        
+        {/* Progress bar for current banner */}
+        <motion.div
+          className="absolute bottom-0 left-0 h-1 bg-[#c9a45c]"
+          initial={{ width: "0%" }}
+          animate={{ width: "100%" }}
+          key={currentBanner}
+          transition={{ duration: 5, ease: "linear" }}
+        />
       </section>
 
       {/* Stats Section with CountUp */}
@@ -550,97 +617,7 @@ export default function HomePage() {
         </div>
       </motion.section>
 
-      {/* Banner Carousel with AnimatePresence */}
-      <section className="relative overflow-hidden">
-        <div className="relative w-full flex justify-center">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentBanner}
-              initial={{ opacity: 0, x: 100, scale: 0.95 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: -100, scale: 0.95 }}
-              transition={{ 
-                duration: 0.5, 
-                ease: [0.25, 0.46, 0.45, 0.94]
-              }}
-              className="w-full"
-            >
-              <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1]">
-                {/* Mobile image */}
-                <Image
-                  src={banners[currentBanner].mobile}
-                  alt="Annavedah Promotional Banner"
-                  fill
-                  className="object-cover md:hidden"
-                  priority
-                />
-                {/* Tablet image */}
-                <Image
-                  src={banners[currentBanner].tablet}
-                  alt="Annavedah Promotional Banner"
-                  fill
-                  className="object-cover hidden md:block lg:hidden"
-                  priority
-                />
-                {/* Desktop image */}
-                <Image
-                  src={banners[currentBanner].desktop}
-                  alt="Annavedah Promotional Banner"
-                  fill
-                  className="object-cover hidden lg:block"
-                  priority
-                />
-              </div>
-            </motion.div>
-          </AnimatePresence>
 
-          {/* Navigation Arrows with hover effects */}
-          <motion.button
-            onClick={prevBanner}
-            className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all z-10"
-            whileHover={{ scale: 1.1, x: -3 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <ChevronLeft className="w-7 h-7 text-[#8b1a1a]" />
-          </motion.button>
-          <motion.button
-            onClick={nextBanner}
-            className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition-all z-10"
-            whileHover={{ scale: 1.1, x: 3 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <ChevronRight className="w-7 h-7 text-[#8b1a1a]" />
-          </motion.button>
-
-          {/* Animated Dots */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-10">
-            {banners.map((_, index) => (
-              <motion.button
-                key={index}
-                onClick={() => setCurrentBanner(index)}
-                className={`h-4 rounded-full transition-all ${
-                  index === currentBanner ? 'bg-[#c9a45c]' : 'bg-white/50 hover:bg-white/80'
-                }`}
-                animate={{ 
-                  width: index === currentBanner ? 40 : 16,
-                  scale: index === currentBanner ? 1 : 0.9
-                }}
-                whileHover={{ scale: 1.1 }}
-                transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
-              />
-            ))}
-          </div>
-        </div>
-        
-        {/* Progress bar for current banner */}
-        <motion.div
-          className="absolute bottom-0 left-0 h-1 bg-[#c9a45c]"
-          initial={{ width: "0%" }}
-          animate={{ width: "100%" }}
-          key={currentBanner}
-          transition={{ duration: 5, ease: "linear" }}
-        />
-      </section>
 
       {/* Products Section with enhanced animations */}
       <section id="products" className="py-24 bg-[#faf6f0]">
@@ -932,119 +909,291 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Benefits Section with enhanced animations */}
+      {/* Benefits Section — Premium Bento Grid */}
       <motion.section
-        className="py-24 bg-[#faf6f0] relative overflow-hidden"
+        className="py-28 relative overflow-hidden"
+        style={{ background: 'linear-gradient(165deg, #faf6f0 0%, #f5ede2 40%, #faf6f0 100%)' }}
         initial="initial"
         whileInView="animate"
         viewport={{ once: true, margin: "-50px" }}
         variants={staggerContainer}
       >
-        {/* Subtle background animation */}
+        {/* Decorative mandala watermark */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-[0.03] pointer-events-none">
+          <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="100" cy="100" r="95" stroke="#8b1a1a" strokeWidth="0.5" fill="none"/>
+            <circle cx="100" cy="100" r="75" stroke="#8b1a1a" strokeWidth="0.5" fill="none"/>
+            <circle cx="100" cy="100" r="55" stroke="#8b1a1a" strokeWidth="0.5" fill="none"/>
+            <circle cx="100" cy="100" r="35" stroke="#8b1a1a" strokeWidth="0.5" fill="none"/>
+            {[...Array(12)].map((_, i) => (
+              <line key={i} x1="100" y1="5" x2="100" y2="195" stroke="#8b1a1a" strokeWidth="0.3" transform={`rotate(${i * 30} 100 100)`}/>
+            ))}
+            {[...Array(8)].map((_, i) => (
+              <ellipse key={`e${i}`} cx="100" cy="100" rx="60" ry="30" stroke="#c9a45c" strokeWidth="0.3" fill="none" transform={`rotate(${i * 22.5} 100 100)`}/>
+            ))}
+          </svg>
+        </div>
+
+        {/* Floating decorative particles */}
         <motion.div
-          className="absolute top-0 left-0 w-full h-full opacity-30"
-          style={{
-            background: "radial-gradient(circle at 30% 50%, rgba(201, 164, 92, 0.1) 0%, transparent 50%)"
-          }}
-          animate={{ 
-            scale: [1, 1.2, 1],
-          }}
-          transition={{ duration: 10, repeat: Infinity }}
+          className="absolute top-20 right-[15%] w-3 h-3 rounded-full bg-[#c9a45c]/30"
+          animate={{ y: [0, -30, 0], opacity: [0.3, 0.7, 0.3] }}
+          transition={{ duration: 4, repeat: Infinity }}
+        />
+        <motion.div
+          className="absolute top-40 left-[10%] w-2 h-2 rounded-full bg-[#8b1a1a]/20"
+          animate={{ y: [0, -20, 0], opacity: [0.2, 0.5, 0.2] }}
+          transition={{ duration: 5, repeat: Infinity, delay: 1 }}
+        />
+        <motion.div
+          className="absolute bottom-32 right-[25%] w-4 h-4 rounded-full bg-[#c9a45c]/20"
+          animate={{ y: [0, -25, 0], opacity: [0.2, 0.6, 0.2] }}
+          transition={{ duration: 6, repeat: Infinity, delay: 2 }}
         />
         
         <div className="container mx-auto px-4 relative z-10">
+          {/* Section Header */}
           <motion.div
-            className="text-center mb-16"
+            className="text-center mb-20"
             variants={fadeInUp}
           >
-            <motion.span
-              className="inline-block px-4 py-1 bg-[#8b1a1a]/10 text-[#8b1a1a] rounded-full text-sm font-medium mb-4"
+            <motion.div
+              className="inline-flex items-center gap-3 px-5 py-2 bg-[#8b1a1a]/8 border border-[#8b1a1a]/15 rounded-full text-sm font-medium mb-6 text-[#8b1a1a]"
               variants={scaleIn}
-              whileHover={{ scale: 1.05 }}
             >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#c9a45c] animate-pulse" />
               Why Choose Us
-            </motion.span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#c9a45c] animate-pulse" />
+            </motion.div>
             <motion.h2
-              className="text-4xl md:text-5xl font-bold text-[#8b1a1a] mb-4"
+              className="text-4xl md:text-6xl font-bold text-[#2d1b15] mb-5 tracking-tight"
               variants={fadeInUp}
             >
-              The Annavedah Difference
+              The Annavedah{' '}
+              <span className="relative inline-block">
+                <span className="relative z-10 text-[#8b1a1a]">Difference</span>
+                <motion.span
+                  className="absolute bottom-1 left-0 w-full h-3 bg-[#c9a45c]/20 rounded-full -z-0"
+                  initial={{ scaleX: 0 }}
+                  whileInView={{ scaleX: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5, duration: 0.8, ease: "easeOut" }}
+                  style={{ transformOrigin: "left" }}
+                />
+              </span>
             </motion.h2>
+            <motion.p
+              className="text-lg text-[#6b5347] max-w-xl mx-auto"
+              variants={fadeInUp}
+            >
+              Rooted in ancient Ayurvedic wisdom, refined by modern science
+            </motion.p>
           </motion.div>
 
-          <motion.div
-            className="grid md:grid-cols-2 lg:grid-cols-4 gap-6"
-            variants={staggerContainer}
-          >
-            {[
-              {
-                icon: Leaf,
-                title: 'Nutrient Dense',
-                description: 'Dehydration preserves up to 95% of nutrients while removing excess moisture',
-                color: 'from-[#8b1a1a] to-[#c9a45c]',
-              },
-              {
-                icon: Sparkles,
-                title: 'Easy Integration',
-                description: 'Mix into smoothies, soups, rotis, or warm drinks for daily nutrition',
-                color: 'from-[#c9a45c] to-[#8b1a1a]',
-              },
-              {
-                icon: Heart,
-                title: 'Ayurveda Inspired',
-                description: 'Blends designed according to ancient wellness principles and doshas',
-                color: 'from-[#2d1b15] to-[#8b1a1a]',
-              },
-              {
-                icon: Star,
-                title: 'Lab Tested',
-                description: 'Every batch tested for purity, potency, and zero contamination',
-                color: 'from-[#6b5347] to-[#c9a45c]',
-              },
-            ].map((benefit, index) => (
+          {/* Bento Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5 max-w-6xl mx-auto">
+            
+            {/* Card 1 — Hero Card (Large, spans 7 cols) */}
+            <motion.div
+              className="lg:col-span-7 group relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#8b1a1a] via-[#7a1616] to-[#5a1010] p-10 md:p-12 min-h-[320px] flex flex-col justify-between cursor-default"
+              variants={staggerItem}
+              whileHover={{ scale: 1.01 }}
+              transition={{ type: "spring", stiffness: 200 }}
+            >
+              {/* Background decorative circle */}
               <motion.div
-                key={index}
-                className="group p-8 bg-white rounded-3xl border-2 border-[#e8ddd0] hover:border-[#c9a45c] transition-colors duration-300"
-                variants={staggerItem}
-                whileHover={{ 
-                  y: -10, 
-                  boxShadow: "0 25px 50px rgba(0,0,0,0.1)",
-                  transition: { duration: 0.3 }
-                }}
-              >
+                className="absolute -top-20 -right-20 w-80 h-80 rounded-full border border-white/10"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+              />
+              <motion.div
+                className="absolute -top-10 -right-10 w-60 h-60 rounded-full border border-[#c9a45c]/15"
+                animate={{ rotate: -360 }}
+                transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+              />
+              
+              {/* Sanskrit watermark */}
+              <div className="absolute bottom-6 right-8 text-[5rem] md:text-[7rem] font-bold text-white/[0.04] leading-none select-none pointer-events-none">
+                पोषण
+              </div>
+
+              <div>
                 <motion.div
-                  className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${benefit.color} flex items-center justify-center mb-6`}
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  transition={{ type: "spring", stiffness: 300 }}
+                  className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center mb-8"
+                  whileHover={{ rotate: 10, scale: 1.1 }}
                 >
-                  <motion.div
-                    animate={{ 
-                      y: [0, -3, 0],
-                    }}
-                    transition={{ 
-                      duration: 2, 
-                      repeat: Infinity,
-                      delay: index * 0.2
-                    }}
-                  >
-                    <benefit.icon className="w-8 h-8 text-white" />
-                  </motion.div>
+                  <Leaf className="w-7 h-7 text-[#c9a45c]" />
                 </motion.div>
-                <motion.h3
-                  className="text-xl font-bold text-[#2d1b15] mb-3"
-                  variants={fadeInUp}
+                <h3 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
+                  95% Nutrients<br />
+                  <span className="text-[#c9a45c]">Preserved</span>
+                </h3>
+                <p className="text-white/70 text-lg max-w-md leading-relaxed">
+                  Our proprietary dehydration process locks in nearly all vitamins, minerals, and life force (प्राण) while removing only excess moisture.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 mt-8">
+                <div className="flex -space-x-1">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="w-2 h-2 rounded-full bg-[#c9a45c]" style={{ opacity: 1 - i * 0.15 }} />
+                  ))}
+                </div>
+                <span className="text-white/50 text-sm">Nutrient Dense • Farm to Pack</span>
+              </div>
+            </motion.div>
+
+            {/* Card 2 — Top Right (5 cols) */}
+            <motion.div
+              className="lg:col-span-5 group relative overflow-hidden rounded-[2rem] bg-white border-2 border-[#e8ddd0] p-8 md:p-10 flex flex-col justify-between min-h-[320px] cursor-default"
+              variants={staggerItem}
+              whileHover={{ 
+                borderColor: "#c9a45c",
+                boxShadow: "0 20px 60px rgba(139, 26, 26, 0.08)",
+              }}
+              transition={{ duration: 0.4 }}
+            >
+              {/* Accent corner */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#c9a45c]/10 to-transparent rounded-bl-[4rem]" />
+              
+              <div>
+                <motion.div
+                  className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#c9a45c]/20 to-[#c9a45c]/5 border border-[#c9a45c]/30 flex items-center justify-center mb-6"
+                  whileHover={{ rotate: -10, scale: 1.1 }}
                 >
-                  {benefit.title}
-                </motion.h3>
-                <motion.p
-                  className="text-[#6b5347] leading-relaxed"
-                  variants={fadeInUp}
-                >
-                  {benefit.description}
-                </motion.p>
-              </motion.div>
-            ))}
-          </motion.div>
+                  <Sparkles className="w-7 h-7 text-[#c9a45c]" />
+                </motion.div>
+                <h3 className="text-2xl font-bold text-[#2d1b15] mb-3">
+                  Effortless Daily<br />Nutrition
+                </h3>
+                <p className="text-[#6b5347] leading-relaxed">
+                  Stir into your morning smoothie, knead into roti dough, or dissolve in warm milk — nutrition that fits your life, not the other way around.
+                </p>
+              </div>
+
+              {/* Usage tags */}
+              <div className="flex flex-wrap gap-2 mt-6">
+                {['Smoothies', 'Rotis', 'Soups', 'Warm Drinks'].map((tag) => (
+                  <span key={tag} className="px-3 py-1.5 bg-[#faf6f0] border border-[#e8ddd0] rounded-full text-xs font-medium text-[#6b5347] group-hover:border-[#c9a45c]/40 transition-colors">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Card 3 — Bottom Left (5 cols) */}
+            <motion.div
+              className="lg:col-span-5 group relative overflow-hidden rounded-[2rem] p-8 md:p-10 flex flex-col justify-between min-h-[280px] cursor-default"
+              style={{ background: 'linear-gradient(135deg, #fdf8f0 0%, #f8ecd8 100%)' }}
+              variants={staggerItem}
+              whileHover={{ 
+                boxShadow: "0 20px 60px rgba(201, 164, 92, 0.15)",
+              }}
+              transition={{ duration: 0.4 }}
+            >
+              {/* Decorative Ayurveda symbol */}
+              <div className="absolute -bottom-4 -left-4 text-[6rem] text-[#c9a45c]/[0.07] font-bold select-none pointer-events-none leading-none">
+                ॐ
+              </div>
+              
+              <div>
+                <div className="flex items-start justify-between mb-6">
+                  <motion.div
+                    className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#8b1a1a] to-[#6d1414] flex items-center justify-center"
+                    whileHover={{ rotate: 10, scale: 1.1 }}
+                  >
+                    <Heart className="w-7 h-7 text-white" />
+                  </motion.div>
+                  <div className="flex items-center gap-1.5 px-3 py-1 bg-[#8b1a1a]/8 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#8b1a1a] animate-pulse" />
+                    <span className="text-xs font-semibold text-[#8b1a1a]">Ancient Wisdom</span>
+                  </div>
+                </div>
+                <h3 className="text-2xl font-bold text-[#2d1b15] mb-3">
+                  Ayurveda-Inspired<br />Formulations
+                </h3>
+                <p className="text-[#6b5347] leading-relaxed">
+                  Each blend is thoughtfully designed around Tridosha principles — balancing Vata, Pitta, and Kapha for holistic well-being.
+                </p>
+              </div>
+
+              {/* Dosha indicators */}
+              <div className="flex items-center gap-4 mt-6">
+                {[
+                  { name: 'Vata', color: '#6b5347' },
+                  { name: 'Pitta', color: '#8b1a1a' },
+                  { name: 'Kapha', color: '#c9a45c' },
+                ].map((dosha) => (
+                  <div key={dosha.name} className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: dosha.color }} />
+                    <span className="text-xs font-medium text-[#6b5347]">{dosha.name}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Card 4 — Bottom Right (7 cols) */}
+            <motion.div
+              className="lg:col-span-7 group relative overflow-hidden rounded-[2rem] bg-[#2d1b15] p-8 md:p-10 flex flex-col justify-between min-h-[280px] cursor-default"
+              variants={staggerItem}
+              whileHover={{ scale: 1.01 }}
+              transition={{ type: "spring", stiffness: 200 }}
+            >
+              {/* Animated scan line */}
+              <motion.div
+                className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#c9a45c]/50 to-transparent"
+                animate={{ top: ["0%", "100%", "0%"] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+              />
+              
+              {/* Grid pattern overlay */}
+              <div className="absolute inset-0 opacity-[0.03]" style={{
+                backgroundImage: `linear-gradient(rgba(201,164,92,1) 1px, transparent 1px), linear-gradient(90deg, rgba(201,164,92,1) 1px, transparent 1px)`,
+                backgroundSize: '40px 40px'
+              }} />
+
+              <div className="relative z-10">
+                <div className="flex items-start justify-between mb-6">
+                  <motion.div
+                    className="w-14 h-14 rounded-2xl bg-[#c9a45c]/15 border border-[#c9a45c]/30 flex items-center justify-center"
+                    whileHover={{ rotate: -10, scale: 1.1 }}
+                  >
+                    <Shield className="w-7 h-7 text-[#c9a45c]" />
+                  </motion.div>
+                  <motion.div
+                    className="flex items-center gap-2 px-3 py-1.5 bg-green-500/15 border border-green-500/25 rounded-full"
+                    animate={{ opacity: [0.7, 1, 0.7] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <Check className="w-3.5 h-3.5 text-green-400" />
+                    <span className="text-xs font-semibold text-green-400">Verified</span>
+                  </motion.div>
+                </div>
+                <h3 className="text-2xl md:text-3xl font-bold text-white mb-3">
+                  Lab Tested &{' '}
+                  <span className="text-[#c9a45c]">Certified Pure</span>
+                </h3>
+                <p className="text-white/60 leading-relaxed max-w-lg">
+                  Every single batch undergoes rigorous third-party lab testing for purity, potency, heavy metals, and zero contamination before reaching you.
+                </p>
+              </div>
+
+              {/* Test metrics */}
+              <div className="flex flex-wrap gap-4 mt-8 relative z-10">
+                {[
+                  { label: 'Purity', value: '99.9%' },
+                  { label: 'Heavy Metals', value: 'Zero' },
+                  { label: 'Additives', value: 'None' },
+                ].map((metric) => (
+                  <div key={metric.label} className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl backdrop-blur-sm">
+                    <div className="text-lg font-bold text-[#c9a45c]">{metric.value}</div>
+                    <div className="text-xs text-white/40">{metric.label}</div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+          </div>
         </div>
       </motion.section>
 
@@ -1140,6 +1289,14 @@ export default function HomePage() {
           </motion.div>
         </div>
       </motion.section>
+
+      <InstagramFeed />
+
+      <section className="py-12 bg-white border-t border-[#e8ddd0]">
+        <div className="container mx-auto px-4">
+          <TrustBadges />
+        </div>
+      </section>
 
     </div>
   )

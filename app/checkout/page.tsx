@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation'
 import { useCart } from '@/components/cart-context'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
-import { CheckCircle2, Loader2, MapPin, ShieldCheck, Truck } from 'lucide-react'
+import { CheckCircle2, Loader2, MapPin, ShieldCheck, Truck, ChevronRight, AlertCircle } from 'lucide-react'
+import { validateEmail, validatePhone, validateName, validateRequired } from '@/lib/validations'
+import Breadcrumbs from '@/components/Breadcrumbs'
 
 declare global {
   interface Window {
@@ -29,7 +31,7 @@ type Step = 'address' | 'payment' | 'success'
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, total, remove } = useCart()
+  const { items, total, remove, appliedCoupon } = useCart()
   const [step, setStep] = useState<Step>('address')
   const [loading, setLoading] = useState(false)
   const [serviceability, setServiceability] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle')
@@ -42,7 +44,8 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<'Prepaid' | 'COD'>('Prepaid')
 
   const codCharge = paymentMethod === 'COD' ? 99 : 0
-  const finalTotal = total + codCharge
+  const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0
+  const finalTotal = total - couponDiscount + codCharge
 
   const [isAuthChecking, setIsAuthChecking] = useState(true)
 
@@ -134,12 +137,18 @@ export default function CheckoutPage() {
 
   function validate(): boolean {
     const errs: Partial<FormData> = {}
-    if (!form.firstName.trim()) errs.firstName = 'Required'
-    if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) errs.email = 'Invalid email'
-    if (!form.phone.match(/^[6-9]\d{9}$/)) errs.phone = 'Invalid mobile number'
-    if (!form.address.trim()) errs.address = 'Required'
-    if (!form.city.trim()) errs.city = 'Required'
-    if (!form.state.trim()) errs.state = 'Required'
+    const nameResult = validateName(form.firstName, 'First name')
+    if (!nameResult.valid) errs.firstName = nameResult.message
+    const emailResult = validateEmail(form.email)
+    if (!emailResult.valid) errs.email = emailResult.message
+    const phoneResult = validatePhone(form.phone)
+    if (!phoneResult.valid) errs.phone = phoneResult.message
+    const addrResult = validateRequired(form.address, 'Address')
+    if (!addrResult.valid) errs.address = addrResult.message
+    const cityResult = validateRequired(form.city, 'City')
+    if (!cityResult.valid) errs.city = cityResult.message
+    const stateResult = validateRequired(form.state, 'State')
+    if (!stateResult.valid) errs.state = stateResult.message
     // TODO: Add pincode validation back in the future when shiprocket is setting up
     // if (!form.pincode.match(/^\d{6}$/)) errs.pincode = 'Invalid pincode'
     setErrors(errs)
@@ -293,14 +302,54 @@ export default function CheckoutPage() {
 
   const states = ['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Delhi','Jammu & Kashmir','Ladakh']
 
+  const steps = [
+    { id: 'address', label: 'Address' },
+    { id: 'payment', label: 'Payment' },
+    { id: 'success', label: 'Confirmation' },
+  ] as const
+  const currentStepIdx = steps.findIndex((s) => s.id === step)
+
   return (
     <div className="min-h-screen pt-[120px] lg:pt-[190px] pb-12 px-4" style={{ background: 'var(--background)' }}>
       <div className="max-w-5xl mx-auto">
 
+        <div className="mb-6">
+          <Breadcrumbs items={[{ label: 'Cart', href: '/cart' }, { label: 'Checkout' }]} />
+        </div>
+
         {/* Header */}
-        <div className="mb-10 text-center">
+        <div className="mb-8 text-center">
           <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#c9a45c' }}>Secure Checkout</p>
           <h1 className="text-3xl font-bold text-foreground">Complete Your Order</h1>
+        </div>
+
+        {/* Step indicator */}
+        <div className="mb-10 flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm">
+          {steps.map((s, i) => {
+            const done = i < currentStepIdx
+            const active = i === currentStepIdx
+            return (
+              <div key={s.id} className="flex items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-colors ${
+                      done
+                        ? 'bg-[#c9a45c] border-[#c9a45c] text-white'
+                        : active
+                        ? 'bg-[#8b1a1a] border-[#8b1a1a] text-white'
+                        : 'bg-white border-[#e8ddd0] text-[#6b5347]'
+                    }`}
+                  >
+                    {done ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
+                  </div>
+                  <span className={`font-bold uppercase tracking-wider ${active ? 'text-[#8b1a1a]' : done ? 'text-[#2d1b15]' : 'text-[#6b5347]'}`}>
+                    {s.label}
+                  </span>
+                </div>
+                {i < steps.length - 1 && <ChevronRight className="w-4 h-4 text-[#c9a45c]" />}
+              </div>
+            )
+          })}
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
@@ -317,7 +366,7 @@ export default function CheckoutPage() {
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-1 block">First Name *</label>
                   <input className={inputClass('firstName')} placeholder="Rahul" value={form.firstName} onChange={e => set('firstName', e.target.value)} />
-                  {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>}
+                  {errors.firstName && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.firstName}</p>}
                 </div>
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-1 block">Last Name</label>
@@ -328,29 +377,29 @@ export default function CheckoutPage() {
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Email Address *</label>
                 <input type="email" className={inputClass('email')} placeholder="you@example.com" value={form.email} onChange={e => set('email', e.target.value)} />
-                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                {errors.email && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.email}</p>}
               </div>
 
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Mobile Number *</label>
                 <div className="flex">
                   <span className="flex items-center px-3 rounded-l-xl border border-r-0 border-border bg-muted text-sm text-muted-foreground">+91</span>
-                  <input className={`${inputClass('phone')} rounded-l-none`} placeholder="9876543210" maxLength={10} value={form.phone} onChange={e => set('phone', e.target.value.replace(/\D/g, ''))} />
+                  <input className={`${inputClass('phone')} rounded-l-none`} placeholder="9876543210" maxLength={10} inputMode="numeric" value={form.phone} onChange={e => set('phone', e.target.value.replace(/\D/g, ''))} />
                 </div>
-                {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+                {errors.phone && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.phone}</p>}
               </div>
 
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Full Address *</label>
                 <textarea className={`${inputClass('address')} resize-none h-20`} placeholder="Flat / House No, Street, Area" value={form.address} onChange={e => set('address', e.target.value)} />
-                {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
+                {errors.address && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.address}</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-1 block">City *</label>
                   <input className={inputClass('city')} placeholder="Pune" value={form.city} onChange={e => set('city', e.target.value)} />
-                  {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
+                  {errors.city && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.city}</p>}
                 </div>
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-1 block">State *</label>
@@ -358,7 +407,7 @@ export default function CheckoutPage() {
                     <option value="">Select state</option>
                     {states.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
-                  {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>}
+                  {errors.state && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.state}</p>}
                 </div>
               </div>
 
@@ -453,6 +502,12 @@ export default function CheckoutPage() {
                     <span>Subtotal</span>
                     <span>₹{total}</span>
                   </div>
+                  {appliedCoupon && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Coupon ({appliedCoupon.code})</span>
+                      <span className="font-medium">-₹{appliedCoupon.discount}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Shipping</span>
                     <span className="text-green-600 font-medium">Free</span>
