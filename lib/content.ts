@@ -701,12 +701,6 @@ export const banners = [
     mobile: '/Banners/pc%20view/chatni.png',
   },
   {
-    category: 'Essentials',
-    desktop: '/Banners/pc%20view/ESSENTIAL.jpg',
-    tablet: '/Banners/pc%20view/ESSENTIAL.jpg',
-    mobile: '/Banners/pc%20view/ESSENTIAL.jpg',
-  },
-  {
     category: 'Grains',
     desktop: '/Banners/pc%20view/Grains..png',
     tablet: '/Banners/pc%20view/Grains..png',
