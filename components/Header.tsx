@@ -112,7 +112,7 @@ export default function Header() {
                   <Image src="/Logo.webp" alt="Annavedah Foods" fill sizes="56px" className="object-cover" priority />
                 </div>
                 <div className="hidden sm:block text-center">
-                  <h1 className="text-xl lg:text-2xl font-bold tracking-widest uppercase text-[#8b1a1a]">Annavedah</h1>
+                  <h1 className="text-xl lg:text-2xl font-bold tracking-widest uppercase text-[#8b1a1a]">Annavedah Foods</h1>
                 </div>
               </Link>
             </div>
@@ -279,7 +279,7 @@ export default function Header() {
               <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-[#c9a45c]/50">
                 <Image src="/Logo.webp" alt="Annavedah Foods" fill sizes="40px" className="object-cover" priority />
               </div>
-              <span className="text-lg font-bold text-[#8b1a1a] uppercase tracking-widest">Annavedah</span>
+              <span className="text-lg font-bold text-[#8b1a1a] uppercase tracking-widest">Annavedah Foods</span>
             </Link>
             <button onClick={() => setMobileMenuOpen(false)} className="p-2 bg-[#f0e8dc] rounded-full text-[#8b1a1a]" aria-label="Close menu">
               <X className="w-6 h-6" />
