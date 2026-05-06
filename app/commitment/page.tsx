@@ -361,32 +361,7 @@ export default function DonationCommitmentPage() {
         </div>
       </section>
 
-      {/* ══════ PDF DOWNLOAD ══════ */}
-      <section className="py-12 bg-white">
-        <div className="container mx-auto px-4">
-          <AnimatedSection className="max-w-2xl mx-auto text-center">
-            <motion.div variants={fadeInUp} className="bg-[#faf6f0] rounded-2xl p-6 border border-[#e8ddd0] flex flex-col sm:flex-row items-center gap-4">
-              <div className="w-14 h-14 rounded-xl bg-[#8b1a1a]/10 flex items-center justify-center flex-shrink-0">
-                <svg className="w-7 h-7 text-[#8b1a1a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <div className="text-center sm:text-left flex-1">
-                <p className="font-bold text-[#2d1b15]">Read Our Full Commitment Document</p>
-                <p className="text-sm text-[#6b5347]">Download the complete PDF detailing our donation philosophy</p>
-              </div>
-              <a
-                href="/Our Donation Commitment Annavedah Foods.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-[#8b1a1a] text-white rounded-xl font-semibold hover:bg-[#6d1414] transition-colors shadow-md whitespace-nowrap"
-              >
-                Download PDF
-              </a>
-            </motion.div>
-          </AnimatedSection>
-        </div>
-      </section>
+
 
       {/* ══════ CTA ══════ */}
       <section className="py-20 md:py-28 bg-gradient-to-br from-[#8b1a1a] to-[#6d1414] relative overflow-hidden">

@@ -96,7 +96,7 @@ export default function BenefitsPage() {
     <div className="min-h-screen bg-[#faf6f0]">
 
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden pt-[120px] lg:pt-[190px] pb-20">
+      <section className="relative overflow-hidden pt-[140px] lg:pt-[200px] pb-12 md:pb-20">
         <div className="absolute inset-0 opacity-30 pattern-overlay" />
         <div className="absolute top-20 left-10 w-72 h-72 bg-[#c9a45c]/15 rounded-full blur-3xl" />
         <div className="absolute bottom-10 right-10 w-96 h-96 bg-[#8b1a1a]/10 rounded-full blur-3xl" />

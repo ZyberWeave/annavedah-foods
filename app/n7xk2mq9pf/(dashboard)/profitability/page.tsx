@@ -229,10 +229,14 @@ export default function ProfitabilityPage() {
               <select
                 value={categoryFilter}
                 onChange={e => setCategoryFilter(e.target.value as any)}
-                className="pl-10 pr-8 py-2.5 border-2 border-[#e8ddd0] rounded-xl text-sm focus:outline-none focus:border-[#c9a45c] bg-white transition-colors appearance-none cursor-pointer"
+                className="appearance-none rounded-xl border-2 border-[#e8ddd0] bg-white py-2.5 pl-10 pr-11 text-sm focus:outline-none focus:border-[#c9a45c] transition-colors cursor-pointer"
               >
                 {categories.map(c => <option key={c} value={c}>{c === 'All' ? 'All Categories' : c}</option>)}
               </select>
+              <ChevronDown
+                className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6b5347]"
+                aria-hidden="true"
+              />
             </div>
           </div>
         </div>

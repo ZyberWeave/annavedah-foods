@@ -55,7 +55,7 @@ export function SiteFooter() {
           <Link href="/shipping" className="hover:text-background transition-colors">Shipping Policy</Link>
           <Link href="/returns" className="hover:text-background transition-colors">Cancellation & Refund Policy</Link>
         </div>
-        (c) 2026 Annavedah Foods. Designed and created by Zyberweave.
+        © 2026 Annavedah Foods. Designed and Developed by <a href="https://zyberweave.com" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors underline">ZyberWeave</a>.
       </div>
     </footer>
   )

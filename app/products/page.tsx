@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { categories, products, type Product } from '@/lib/content'
 import { useCart } from '@/components/cart-context'
-import { ShoppingCart, Check, Search, SlidersHorizontal, X, ArrowUpDown } from 'lucide-react'
+import { ShoppingCart, Check, Search, SlidersHorizontal, X, ArrowUpDown, ChevronDown } from 'lucide-react'
 import Breadcrumbs from '@/components/Breadcrumbs'
 import WishlistButton from '@/components/WishlistButton'
 import TrustBadges from '@/components/TrustBadges'
@@ -440,16 +440,22 @@ export default function ProductsPage() {
             <div className="flex items-center gap-2">
               <ArrowUpDown className="w-4 h-4 text-[#6b5347] hidden sm:block" />
               <label htmlFor="sort" className="sr-only">Sort by</label>
-              <select
-                id="sort"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortKey)}
-                className="px-3 py-2.5 rounded-xl border-2 border-[#e8ddd0] bg-white text-sm font-bold text-[#2d1b15] focus:outline-none focus:border-[#c9a45c] cursor-pointer"
-              >
-                {sortOptions.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  id="sort"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortKey)}
+                  className="appearance-none rounded-xl border-2 border-[#e8ddd0] bg-white px-3 py-2.5 pr-10 text-sm font-bold text-[#2d1b15] focus:outline-none focus:border-[#c9a45c] cursor-pointer"
+                >
+                  {sortOptions.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+                <ChevronDown
+                  className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6b5347]"
+                  aria-hidden="true"
+                />
+              </div>
             </div>
           </div>
 

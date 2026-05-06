@@ -422,10 +422,20 @@ export default function CheckoutPage() {
                 </div>
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-1 block">State *</label>
-                  <select className={inputClass('state')} value={form.state} onChange={e => set('state', e.target.value)}>
-                    <option value="">Select state</option>
-                    {states.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <div className="relative">
+                    <select
+                      className={`${inputClass('state')} appearance-none pr-11`}
+                      value={form.state}
+                      onChange={e => set('state', e.target.value)}
+                    >
+                      <option value="">Select state</option>
+                      {states.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <ChevronDown
+                      className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                  </div>
                   {errors.state && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.state}</p>}
                 </div>
               </div>

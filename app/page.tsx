@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { products, banners, testimonials, categories } from '@/lib/content'
-import { Search, Leaf, Heart, Star, ShoppingCart, Package, Users, Shield, Check, Sparkles } from 'lucide-react'
+import { Search, Leaf, Heart, Star, ShoppingCart, Package, Users, Shield, Check, Sparkles, ChevronDown } from 'lucide-react'
 import { useCart } from '@/components/cart-context'
 import {
   Carousel,
@@ -445,26 +445,67 @@ export default function HomePage() {
   const prevBanner = () => setCurrentBanner((prev) => (prev - 1 + banners.length) % banners.length)
 
   return (
-    <div className="min-h-screen bg-[#faf6f0] text-[#2d1b15] pt-[116px] lg:pt-[172px]">
+    <div className="min-h-screen bg-[#faf6f0] text-[#2d1b15] pt-[130px] lg:pt-[172px]">
       
 
-      {/* Hero Section - Single Image */}
+      {/* Hero Section - Banner Slideshow */}
       <section className="relative overflow-hidden">
-        <div className="w-full">
-          <Image
-            src="/ChatGPT Image May 5, 2026, 03_59_33 PM.png"
-            alt="Annavedah Foods - Moringa Leaf Powder - Nature's Most Powerful Superfood"
-            width={1024}
-            height={512}
-            className="w-full h-auto"
-            priority
-          />
+        <div className="relative w-full">
+          {banners.map((b, i) => (
+            <Link
+              key={b.category}
+              href={`/products?category=${encodeURIComponent(b.category)}`}
+              aria-label={`Shop ${b.category}`}
+              className={`block transition-opacity duration-700 ${
+                i === currentBanner ? 'opacity-100 relative' : 'opacity-0 absolute inset-0 pointer-events-none'
+              }`}
+            >
+              <Image
+                src={b.desktop}
+                alt={`${b.category} — Annavedah Foods`}
+                width={1920}
+                height={800}
+                className="w-full h-auto"
+                priority={i === 0}
+              />
+            </Link>
+          ))}
+
+          {/* Dots */}
+          <div className="absolute bottom-3 md:bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+            {banners.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentBanner(i)}
+                aria-label={`Go to slide ${i + 1}`}
+                className={`h-2 rounded-full transition-all ${
+                  i === currentBanner ? 'w-6 bg-white' : 'w-2 bg-white/50 hover:bg-white/80'
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* Prev / Next */}
+          <button
+            onClick={prevBanner}
+            aria-label="Previous slide"
+            className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center rounded-full bg-black/30 hover:bg-black/50 text-white backdrop-blur z-10"
+          >
+            ‹
+          </button>
+          <button
+            onClick={nextBanner}
+            aria-label="Next slide"
+            className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 items-center justify-center rounded-full bg-black/30 hover:bg-black/50 text-white backdrop-blur z-10"
+          >
+            ›
+          </button>
         </div>
       </section>
 
       {/* Stats Section with CountUp */}
       <motion.section
-        className="py-16 bg-gradient-to-r from-[#8b1a1a] to-[#6d1414] relative overflow-hidden"
+        className="py-6 md:py-16 bg-gradient-to-r from-[#8b1a1a] to-[#6d1414] relative overflow-hidden"
         initial="initial"
         whileInView="animate"
         viewport={{ once: true, margin: "-100px" }}
@@ -485,7 +526,7 @@ export default function HomePage() {
         
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
-            className="grid grid-cols-2 md:grid-cols-4 gap-8"
+            className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-8"
             variants={staggerContainer}
           >
             {[
@@ -502,14 +543,14 @@ export default function HomePage() {
                 transition={{ type: "spring", stiffness: 300 }}
               >
                 <motion.div
-                  className="flex items-center justify-center mb-4"
+                  className="flex items-center justify-center mb-1 md:mb-4"
                   animate={{ scale: [1, 1.2, 1] }}
                   transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
                 >
-                  <stat.icon className="w-8 h-8 text-[#c9a45c]" />
+                  <stat.icon className="w-5 h-5 md:w-8 md:h-8 text-[#c9a45c]" />
                 </motion.div>
                 <motion.div
-                  className="text-4xl md:text-5xl font-bold text-[#c9a45c] mb-2"
+                  className="text-lg md:text-5xl font-bold text-[#c9a45c] mb-0.5 md:mb-2"
                   initial={{ opacity: 0, scale: 0.5 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
@@ -522,7 +563,7 @@ export default function HomePage() {
                   />
                 </motion.div>
                 <motion.p
-                  className="text-white/80 text-sm md:text-base"
+                  className="text-white/80 text-[10px] md:text-base leading-tight"
                   variants={fadeInUp}
                 >
                   {stat.label}
@@ -536,11 +577,11 @@ export default function HomePage() {
 
 
       {/* Products Section with enhanced animations */}
-      <section id="products" className="py-24 bg-[#faf6f0]">
+      <section id="products" className="py-12 md:py-24 bg-[#faf6f0]">
         <div className="container mx-auto px-4">
           {/* Section Header */}
           <motion.div 
-            className="text-center mb-16"
+            className="text-center mb-8 md:mb-16"
             initial="initial"
             whileInView="animate"
             viewport={{ once: true, margin: "-50px" }}
@@ -568,7 +609,7 @@ export default function HomePage() {
 
           {/* Search & Filter with animations */}
           <motion.div 
-            className="mb-12 space-y-6"
+            className="mb-6 md:mb-12 space-y-4 md:space-y-6"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -589,8 +630,22 @@ export default function HomePage() {
               />
             </motion.div>
 
+            <div className="md:hidden relative max-w-xs mx-auto">
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full appearance-none px-5 py-3 pr-12 rounded-2xl border-2 border-[#e8ddd0] bg-white text-sm font-semibold text-[#2d1b15] focus:outline-none focus:border-[#c9a45c] transition-colors cursor-pointer"
+              >
+                {categories.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b5347] pointer-events-none" />
+            </div>
+
+            {/* Desktop: Buttons */}
             <motion.div 
-              className="flex gap-3 overflow-x-auto pb-2 justify-center flex-wrap"
+              className="hidden md:flex gap-3 overflow-x-auto pb-2 justify-center flex-wrap"
               variants={staggerContainer}
               initial="initial"
               whileInView="animate"
@@ -667,7 +722,7 @@ export default function HomePage() {
       </section>
 
       {/* About/Heritage Section with enhanced animations */}
-      <section id="about" className="py-24 bg-gradient-to-br from-[#8b1a1a] to-[#6d1414] text-white relative overflow-hidden">
+      <section id="about" className="py-12 md:py-24 bg-gradient-to-br from-[#8b1a1a] to-[#6d1414] text-white relative overflow-hidden">
         {/* Animated decorative pattern */}
         <motion.div 
           className="absolute inset-0 opacity-10"
@@ -700,7 +755,7 @@ export default function HomePage() {
         
         <div className="container mx-auto px-4 relative z-10">
           <motion.div 
-            className="grid lg:grid-cols-2 gap-16 items-center"
+            className="grid lg:grid-cols-2 gap-8 md:gap-16 items-center"
             initial="initial"
             whileInView="animate"
             viewport={{ once: true, margin: "-100px" }}
@@ -824,7 +879,7 @@ export default function HomePage() {
 
       {/* Benefits Section — Premium Bento Grid */}
       <motion.section
-        className="py-28 relative overflow-hidden"
+        className="py-12 md:py-28 relative overflow-hidden"
         style={{ background: 'linear-gradient(165deg, #faf6f0 0%, #f5ede2 40%, #faf6f0 100%)' }}
         initial="initial"
         whileInView="animate"
@@ -867,7 +922,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 relative z-10">
           {/* Section Header */}
           <motion.div
-            className="text-center mb-20"
+            className="text-center mb-10 md:mb-20"
             variants={fadeInUp}
           >
             <motion.div
@@ -1114,7 +1169,7 @@ export default function HomePage() {
 
       {/* Newsletter Section with enhanced animations */}
       <motion.section
-        className="py-20 bg-[#8b1a1a] relative overflow-hidden"
+        className="py-12 md:py-20 bg-[#8b1a1a] relative overflow-hidden"
         initial="initial"
         whileInView="animate"
         viewport={{ once: true }}

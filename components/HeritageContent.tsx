@@ -224,10 +224,10 @@ export default function HeritageContent() {
       </section>
 
       {/* ─── Anna + Vedah Wordmark ───────────────────────────────── */}
-      <section className="py-24 md:py-32 relative">
+      <section className="py-12 md:py-32 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-[#faf6f0] to-white" />
         <div className="container mx-auto px-4 relative">
-          <motion.div {...fadeUp} className="max-w-4xl mx-auto text-center space-y-10">
+          <motion.div {...fadeUp} className="max-w-4xl mx-auto text-center space-y-6 md:space-y-10">
             <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#c9a45c]">The Name</p>
 
             <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12">
@@ -263,7 +263,7 @@ export default function HeritageContent() {
       </section>
 
       {/* ─── Stats ─────────────────────────────────────────────── */}
-      <section className="py-20 bg-[#2d1b15] text-[#faf6f0] relative overflow-hidden">
+      <section className="py-10 md:py-20 bg-[#2d1b15] text-[#faf6f0] relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-96 h-96 bg-[#c9a45c] rounded-full blur-3xl" />
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#8b1a1a] rounded-full blur-3xl" />
@@ -300,7 +300,7 @@ export default function HeritageContent() {
       </section>
 
       {/* ─── Four Pillars ───────────────────────────────────────── */}
-      <section className="py-24 md:py-32 relative" id="pillars">
+      <section className="py-12 md:py-32 relative" id="pillars">
         <div className="container mx-auto px-4">
           <motion.div {...fadeUp} className="text-center mb-16 max-w-2xl mx-auto space-y-4">
             <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#c9a45c]">Four Pillars</p>
@@ -352,9 +352,9 @@ export default function HeritageContent() {
       </section>
 
       {/* ─── Story / Timeline ─────────────────────────────────── */}
-      <section id="story" className="py-24 md:py-32 bg-gradient-to-b from-white via-[#faf6f0] to-white relative">
+      <section id="story" className="py-12 md:py-32 bg-gradient-to-b from-white via-[#faf6f0] to-white relative">
         <div className="container mx-auto px-4">
-          <motion.div {...fadeUp} className="text-center mb-20 max-w-2xl mx-auto space-y-4">
+          <motion.div {...fadeUp} className="text-center mb-10 md:mb-20 max-w-2xl mx-auto space-y-4">
             <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#c9a45c]">Our Story</p>
             <h2 className="text-4xl md:text-6xl font-bold text-[#2d1b15] tracking-tight">
               A thread that runs through <span className="italic text-[#8b1a1a]">centuries.</span>
@@ -372,7 +372,7 @@ export default function HeritageContent() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: '-80px' }}
                 transition={{ duration: 0.7 }}
-                className={`relative grid md:grid-cols-2 gap-8 mb-16 last:mb-0 ${i % 2 === 1 ? 'md:[&>div:first-child]:order-2' : ''}`}
+                className={`relative grid md:grid-cols-2 gap-4 md:gap-8 mb-8 md:mb-16 last:mb-0 ${i % 2 === 1 ? 'md:[&>div:first-child]:order-2' : ''}`}
               >
                 {/* Spacer */}
                 <div className="hidden md:block" />
@@ -382,7 +382,7 @@ export default function HeritageContent() {
                     <span className="text-xs font-bold text-[#8b1a1a]">{i + 1}</span>
                   </div>
 
-                  <div className="rounded-2xl bg-white border-2 border-[#e8ddd0] p-6 md:p-7 hover:border-[#c9a45c] hover:shadow-xl transition-all">
+                  <div className="rounded-2xl bg-white border-2 border-[#e8ddd0] p-4 md:p-7 hover:border-[#c9a45c] hover:shadow-xl transition-all">
                     <p className="text-2xl font-bold text-[#c9a45c] mb-1" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
                       {event.year}
                     </p>
@@ -398,7 +398,7 @@ export default function HeritageContent() {
       </section>
 
       {/* ─── Founder Quote ─────────────────────────────────── */}
-      <section className="py-24 md:py-32 bg-[#8b1a1a] text-white relative overflow-hidden">
+      <section className="py-12 md:py-32 bg-[#8b1a1a] text-white relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#c9a45c]/20 rounded-full blur-[120px]" />
           <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-[#f5e6c8]/10 rounded-full blur-[100px]" />
@@ -425,9 +425,9 @@ export default function HeritageContent() {
       </section>
 
       {/* ─── Farm-to-Home Journey ─────────────────────────────────── */}
-      <section className="py-24 md:py-32 relative">
+      <section className="py-12 md:py-32 relative">
         <div className="container mx-auto px-4">
-          <motion.div {...fadeUp} className="text-center mb-16 max-w-2xl mx-auto space-y-4">
+          <motion.div {...fadeUp} className="text-center mb-8 md:mb-16 max-w-2xl mx-auto space-y-3 md:space-y-4">
             <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#c9a45c]">From Farm to Home</p>
             <h2 className="text-4xl md:text-6xl font-bold text-[#2d1b15] tracking-tight">
               Every step, <span className="italic text-[#8b1a1a]">deliberate.</span>
@@ -440,7 +440,7 @@ export default function HeritageContent() {
           <div className="relative">
             <div className="hidden lg:block absolute top-12 left-[10%] right-[10%] h-0.5 border-t-2 border-dashed border-[#c9a45c]/30" />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
               {journeySteps.map((step, i) => {
                 const Icon = step.icon
                 return (
@@ -452,17 +452,17 @@ export default function HeritageContent() {
                     transition={{ duration: 0.6, delay: i * 0.1 }}
                     className="relative text-center group"
                   >
-                    <div className="relative inline-flex w-24 h-24 mb-5">
+                    <div className="relative inline-flex w-16 h-16 md:w-24 md:h-24 mb-3 md:mb-5">
                       <div className="absolute inset-0 rounded-full bg-[#c9a45c]/10 group-hover:scale-110 transition-transform duration-500" />
-                      <div className="relative w-24 h-24 rounded-full bg-white border-2 border-[#c9a45c] flex items-center justify-center shadow-lg group-hover:shadow-2xl group-hover:-translate-y-1 transition-all duration-500">
-                        <Icon className="w-9 h-9 text-[#8b1a1a]" />
+                      <div className="relative w-16 h-16 md:w-24 md:h-24 rounded-full bg-white border-2 border-[#c9a45c] flex items-center justify-center shadow-lg group-hover:shadow-2xl group-hover:-translate-y-1 transition-all duration-500">
+                        <Icon className="w-6 h-6 md:w-9 md:h-9 text-[#8b1a1a]" />
                       </div>
-                      <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-[#8b1a1a] text-white text-xs font-bold flex items-center justify-center shadow-md">
+                      <div className="absolute -top-1 -right-1 md:-top-2 md:-right-2 w-5 h-5 md:w-7 md:h-7 rounded-full bg-[#8b1a1a] text-white text-[10px] md:text-xs font-bold flex items-center justify-center shadow-md">
                         {i + 1}
                       </div>
                     </div>
-                    <h3 className="text-lg font-bold text-[#2d1b15] mb-2">{step.title}</h3>
-                    <p className="text-sm text-[#6b5347] leading-relaxed">{step.body}</p>
+                    <h3 className="text-sm md:text-lg font-bold text-[#2d1b15] mb-1 md:mb-2">{step.title}</h3>
+                    <p className="text-xs md:text-sm text-[#6b5347] leading-relaxed">{step.body}</p>
                   </motion.div>
                 )
               })}
@@ -472,7 +472,7 @@ export default function HeritageContent() {
       </section>
 
       {/* ─── Sourcing Map ─────────────────────────────────── */}
-      <section className="py-24 md:py-32 bg-gradient-to-br from-[#faf6f0] via-white to-[#faf6f0] relative">
+      <section className="py-12 md:py-32 bg-gradient-to-br from-[#faf6f0] via-white to-[#faf6f0] relative">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <motion.div {...fadeUp} className="space-y-6">
@@ -534,7 +534,7 @@ export default function HeritageContent() {
       </section>
 
       {/* ─── Wisdom Quotes ─────────────────────────────────── */}
-      <section className="py-24 md:py-32 bg-[#faf6f0] relative">
+      <section className="py-12 md:py-32 bg-[#faf6f0] relative">
         <div className="container mx-auto px-4">
           <motion.div {...fadeUp} className="text-center mb-16 max-w-2xl mx-auto space-y-4">
             <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#c9a45c]">Ancient Wisdom</p>
@@ -571,7 +571,7 @@ export default function HeritageContent() {
       </section>
 
       {/* ─── Promise ─────────────────────────────────── */}
-      <section className="py-24 md:py-32 relative">
+      <section className="py-12 md:py-32 relative">
         <div className="container mx-auto px-4">
           <motion.div {...fadeUp} className="max-w-5xl mx-auto">
             <div className="grid md:grid-cols-3 gap-8 rounded-3xl bg-gradient-to-br from-[#2d1b15] via-[#3d2620] to-[#2d1b15] p-10 md:p-16 text-white relative overflow-hidden">
@@ -609,7 +609,7 @@ export default function HeritageContent() {
       </section>
 
       {/* ─── Final CTA ─────────────────────────────────── */}
-      <section className="py-24 md:py-32 bg-gradient-to-b from-[#faf6f0] to-white relative">
+      <section className="py-12 md:py-32 bg-gradient-to-b from-[#faf6f0] to-white relative">
         <div className="container mx-auto px-4">
           <motion.div {...fadeUp} className="max-w-3xl mx-auto text-center space-y-8">
             <div className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full bg-[#c9a45c]/15 border border-[#c9a45c]/30">

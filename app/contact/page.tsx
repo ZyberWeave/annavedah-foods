@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
-import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
+import { AlertCircle, CheckCircle2, ChevronDown, Loader2 } from 'lucide-react'
 import { validateEmail, validateName, validatePhone, validateMinLength } from '@/lib/validations'
 
 interface ContactForm {
@@ -209,16 +209,22 @@ export default function ContactPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold text-foreground/80">Reason</label>
-              <select
-                value={form.reason}
-                onChange={(e) => set('reason', e.target.value)}
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 focus:border-accent focus:outline-none focus:ring-2 focus:ring-amber-200 transition-all"
-              >
-                <option>Product enquiry</option>
-                <option>Wholesale/Corporate</option>
-                <option>Feedback</option>
-                <option>Partnership</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={form.reason}
+                  onChange={(e) => set('reason', e.target.value)}
+                  className="w-full appearance-none rounded-xl border border-border bg-background px-4 py-3 pr-11 focus:border-accent focus:outline-none focus:ring-2 focus:ring-amber-200 transition-all"
+                >
+                  <option>Product enquiry</option>
+                  <option>Wholesale/Corporate</option>
+                  <option>Feedback</option>
+                  <option>Partnership</option>
+                </select>
+                <ChevronDown
+                  className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden="true"
+                />
+              </div>
             </div>
           </div>
           <div className="space-y-2">
