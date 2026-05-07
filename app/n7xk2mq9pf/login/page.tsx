@@ -26,7 +26,7 @@ export default function SecureLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch('/api/auth/admin-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -36,11 +36,6 @@ export default function SecureLoginPage() {
 
       if (!res.ok) {
         throw new Error(data.error || 'Authentication failed');
-      }
-
-      // Only allow admin role through this login
-      if (data.user.role !== 'admin') {
-        throw new Error('Access denied');
       }
 
       router.push(`/${ADMIN_SLUG}`);

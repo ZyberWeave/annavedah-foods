@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { productReviews } from '@/lib/schema';
-import { verifySession } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth';
 import { eq, desc, sql } from 'drizzle-orm';
 
 // Admin GET — all reviews (with optional status filter)
 export async function GET(request: NextRequest) {
   try {
-    const session = await verifySession();
-    if (!session || session.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { response } = await requireAdmin();
+    if (response) return response;
 
     const status = request.nextUrl.searchParams.get('status');
 
@@ -42,10 +40,8 @@ export async function GET(request: NextRequest) {
 // Admin PUT — update review status (approve/reject)
 export async function PUT(request: NextRequest) {
   try {
-    const session = await verifySession();
-    if (!session || session.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { response } = await requireAdmin();
+    if (response) return response;
 
     const { id, status } = await request.json();
     if (!id || !['approved', 'rejected', 'pending'].includes(status)) {
@@ -67,10 +63,8 @@ export async function PUT(request: NextRequest) {
 // Admin DELETE — delete a review
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await verifySession();
-    if (!session || session.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { response } = await requireAdmin();
+    if (response) return response;
 
     const { id } = await request.json();
     if (!id) {

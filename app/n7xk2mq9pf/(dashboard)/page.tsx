@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Loader2, Users, ShoppingBag, TrendingUp, LogOut, ShieldCheck, Box, Instagram, Plus, Trash2, ArrowUp, ArrowDown, Eye, EyeOff, Link2, Check, BarChart3 } from 'lucide-react';
+import { Loader2, Users, ShoppingBag, TrendingUp, Box, Instagram, Plus, Trash2, ArrowUp, ArrowDown, Eye, EyeOff, Link2, Check, BarChart3 } from 'lucide-react';
 import { ADMIN_SLUG } from '@/lib/admin-config';
 
 interface InstaReel {
@@ -15,14 +15,13 @@ interface InstaReel {
 }
 
 export default function AdminDashboardPage() {
-  const [user, setUser] = useState<any>(null);
   const [refunds, setRefunds] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   // Instagram Reels state
   const [reels, setReels] = useState<InstaReel[]>([]);
-  const [reelsLoading, setReelsLoading] = useState(false);
   const [newReelLink, setNewReelLink] = useState('');
   const [newReelCaption, setNewReelCaption] = useState('');
   const [addingReel, setAddingReel] = useState(false);
@@ -35,12 +34,17 @@ export default function AdminDashboardPage() {
         if (!data.user || data.user.role !== 'admin') {
           router.push(`/${ADMIN_SLUG}/login`);
         } else {
-          setUser(data.user);
           // Fetch refunds for admin
           fetch('/api/admin/refunds')
             .then(res => res.json())
             .then(data => {
               if (data.refunds) setRefunds(data.refunds);
+            });
+          // Fetch dashboard stats
+          fetch('/api/admin/stats')
+            .then(res => res.json())
+            .then(data => {
+              if (!data.error) setStats(data);
             });
           // Fetch Instagram Reels
           fetch('/api/admin/instagram-reels')
@@ -54,50 +58,23 @@ export default function AdminDashboardPage() {
       .finally(() => setLoading(false));
   }, [router]);
 
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    window.location.href = `/${ADMIN_SLUG}/login`;
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen pt-32 pb-16 flex items-center justify-center bg-[#faf6f0]">
+      <div className="flex items-center justify-center py-24">
         <Loader2 className="w-8 h-8 animate-spin text-[#c9a45c]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pt-[120px] lg:pt-[190px] pb-16 bg-[#faf6f0]">
-      <div className="container mx-auto px-4 max-w-7xl">
-        <div className="flex items-center justify-between mb-8 bg-white p-6 rounded-3xl border border-[#e8ddd0] shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-[#8b1a1a]/10 rounded-xl flex items-center justify-center">
-              <ShieldCheck className="w-6 h-6 text-[#8b1a1a]" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-[#2d1b15]">Portal</h1>
-              <p className="text-sm text-[#6b5347]">Manage store, orders, and users securely.</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden sm:block text-right">
-              <p className="text-sm font-bold text-[#2d1b15]">{user?.name}</p>
-              <p className="text-xs text-[#c9a45c] uppercase tracking-wider font-semibold">Manager</p>
-            </div>
-            <Button onClick={handleLogout} variant="outline" className="border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10">
-              <LogOut className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Log Out</span>
-            </Button>
-          </div>
-        </div>
-
+    <div className="space-y-8">
         {/* Stats Row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {[
-            { title: 'Total Revenue', value: '₹0.00', icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-100' },
-            { title: 'Active Orders', value: '0', icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-100' },
-            { title: 'Total Users', value: '1', icon: Users, color: 'text-purple-600', bg: 'bg-purple-100' },
-            { title: 'Products', value: '42', icon: Box, color: 'text-amber-600', bg: 'bg-amber-100' },
+            { title: 'Total Revenue', value: stats ? '₹' + Number(stats.totalRevenue).toLocaleString('en-IN') : '—', icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-100' },
+            { title: 'Active Orders', value: stats ? String(stats.activeOrders) : '—', icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-100' },
+            { title: 'Total Users', value: stats ? String(stats.userCount) : '—', icon: Users, color: 'text-purple-600', bg: 'bg-purple-100' },
+            { title: 'Products', value: stats ? String(stats.productCount) : '—', icon: Box, color: 'text-amber-600', bg: 'bg-amber-100' },
           ].map((stat, i) => (
             <div key={i} className="bg-white p-6 rounded-3xl border border-[#e8ddd0] shadow-sm flex items-center gap-4">
               <div className={`w-12 h-12 rounded-full ${stat.bg} flex items-center justify-center`}>
@@ -117,12 +94,43 @@ export default function AdminDashboardPage() {
             <div className="bg-white rounded-3xl border border-[#e8ddd0] shadow-sm overflow-hidden">
               <div className="p-6 border-b border-[#e8ddd0] flex justify-between items-center">
                 <h2 className="text-lg font-bold text-[#2d1b15]">Recent Orders</h2>
-                <Button variant="ghost" className="text-[#8b1a1a] hover:bg-[#faf6f0]">View All</Button>
+                <Button onClick={() => router.push(`/${ADMIN_SLUG}/orders`)} variant="ghost" className="text-[#8b1a1a] hover:bg-[#faf6f0]">View All</Button>
               </div>
-              <div className="p-12 text-center text-[#6b5347]">
-                <ShoppingBag className="w-12 h-12 text-[#e8ddd0] mx-auto mb-4" />
-                <p>No recent orders found.</p>
-              </div>
+              {!stats ? (
+                <div className="p-12 text-center text-[#6b5347]"><Loader2 className="w-6 h-6 mx-auto mb-3 animate-spin text-[#c9a45c]" />Loading…</div>
+              ) : stats.recentOrders.length === 0 ? (
+                <div className="p-12 text-center text-[#6b5347]">
+                  <ShoppingBag className="w-12 h-12 text-[#e8ddd0] mx-auto mb-4" />
+                  <p>No recent orders yet.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-[#e8ddd0]">
+                  {stats.recentOrders.map((o: any) => (
+                    <div key={o.orderId} className="p-4 flex items-center justify-between gap-4 hover:bg-[#faf6f0]/40 transition-colors">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-full bg-[#8b1a1a]/10 flex items-center justify-center text-[#8b1a1a] text-xs font-bold flex-shrink-0">
+                          {o.customerName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-[#2d1b15] truncate">{o.customerName}</p>
+                          <p className="text-xs text-[#6b5347] truncate">#{o.orderId} · {o.items} item{o.items === 1 ? '' : 's'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                          (o.status || '').toLowerCase() === 'delivered' ? 'bg-green-100 text-green-700' :
+                          (o.status || '').toLowerCase() === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                          (o.status || '').toLowerCase() === 'cancelled' ? 'bg-red-100 text-red-700' :
+                          'bg-amber-100 text-amber-700'
+                        }`}>
+                          {o.status || 'processing'}
+                        </span>
+                        <p className="text-sm font-bold text-[#2d1b15]">₹{Number(o.total).toLocaleString('en-IN')}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Refund Requests Table */}
@@ -322,10 +330,11 @@ export default function AdminDashboardPage() {
                           onClick={async () => {
                             if (idx === 0) return;
                             const prevReel = reels.sort((a, b) => a.displayOrder - b.displayOrder)[idx - 1];
-                            await Promise.all([
-                              fetch('/api/admin/instagram-reels', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: reel.id, displayOrder: prevReel.displayOrder }) }),
-                              fetch('/api/admin/instagram-reels', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: prevReel.id, displayOrder: reel.displayOrder }) }),
-                            ]);
+                            await fetch('/api/admin/instagram-reels/reorder', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ aId: reel.id, bId: prevReel.id }),
+                            });
                             setReels(prev => prev.map(r => {
                               if (r.id === reel.id) return { ...r, displayOrder: prevReel.displayOrder };
                               if (r.id === prevReel.id) return { ...r, displayOrder: reel.displayOrder };
@@ -345,10 +354,11 @@ export default function AdminDashboardPage() {
                             const sorted = reels.sort((a, b) => a.displayOrder - b.displayOrder);
                             if (idx === sorted.length - 1) return;
                             const nextReel = sorted[idx + 1];
-                            await Promise.all([
-                              fetch('/api/admin/instagram-reels', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: reel.id, displayOrder: nextReel.displayOrder }) }),
-                              fetch('/api/admin/instagram-reels', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: nextReel.id, displayOrder: reel.displayOrder }) }),
-                            ]);
+                            await fetch('/api/admin/instagram-reels/reorder', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ aId: reel.id, bId: nextReel.id }),
+                            });
                             setReels(prev => prev.map(r => {
                               if (r.id === reel.id) return { ...r, displayOrder: nextReel.displayOrder };
                               if (r.id === nextReel.id) return { ...r, displayOrder: reel.displayOrder };
@@ -407,14 +417,14 @@ export default function AdminDashboardPage() {
             <div className="bg-white rounded-3xl border border-[#e8ddd0] shadow-sm p-6">
               <h2 className="text-lg font-bold text-[#2d1b15] mb-4">Quick Actions</h2>
               <div className="space-y-3">
-                <Button className="w-full justify-start bg-[#faf6f0] text-[#2d1b15] hover:bg-[#e8ddd0] border border-[#e8ddd0]">
-                  <Box className="w-4 h-4 mr-3 text-[#c9a45c]" /> Add New Product
+                <Button onClick={() => router.push(`/${ADMIN_SLUG}/orders`)} className="w-full justify-start bg-[#faf6f0] text-[#2d1b15] hover:bg-[#e8ddd0] border border-[#e8ddd0]">
+                  <ShoppingBag className="w-4 h-4 mr-3 text-[#c9a45c]" /> Manage Orders {stats?.activeOrders ? <span className="ml-auto text-xs text-[#8b1a1a] font-bold">{stats.activeOrders} active</span> : null}
                 </Button>
-                <Button className="w-full justify-start bg-[#faf6f0] text-[#2d1b15] hover:bg-[#e8ddd0] border border-[#e8ddd0]">
-                  <ShoppingBag className="w-4 h-4 mr-3 text-[#c9a45c]" /> Manage Orders
+                <Button onClick={() => router.push(`/${ADMIN_SLUG}/reviews`)} className="w-full justify-start bg-[#faf6f0] text-[#2d1b15] hover:bg-[#e8ddd0] border border-[#e8ddd0]">
+                  <Users className="w-4 h-4 mr-3 text-[#c9a45c]" /> Moderate Reviews
                 </Button>
-                <Button className="w-full justify-start bg-[#faf6f0] text-[#2d1b15] hover:bg-[#e8ddd0] border border-[#e8ddd0]">
-                  <Users className="w-4 h-4 mr-3 text-[#c9a45c]" /> View Customers
+                <Button onClick={() => router.push(`/${ADMIN_SLUG}/testimonials`)} className="w-full justify-start bg-[#faf6f0] text-[#2d1b15] hover:bg-[#e8ddd0] border border-[#e8ddd0]">
+                  <Box className="w-4 h-4 mr-3 text-[#c9a45c]" /> Manage Testimonials
                 </Button>
                 <Button onClick={() => router.push(`/${ADMIN_SLUG}/profitability`)} className="w-full justify-start bg-gradient-to-r from-green-50 to-emerald-50 text-[#2d1b15] hover:from-green-100 hover:to-emerald-100 border border-green-200">
                   <BarChart3 className="w-4 h-4 mr-3 text-green-600" /> Product Profitability
@@ -441,7 +451,6 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 }

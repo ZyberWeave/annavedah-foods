@@ -660,32 +660,39 @@ const productCatalog: ProductSeed[] = [
   },
 ]
 
-export const products: Product[] = productCatalog.map((item, index) => {
-  const defaults = categoryDefaults[item.category]
-  const packPrices = item.packPrices ?? []
-  const basePrice = packPrices[0]?.price ?? 0
-  const baseCost = packPrices[0]?.buyPrice ?? 0
-  const topPrice = packPrices.length > 1 ? packPrices[packPrices.length - 1].price : basePrice
+export const products: Product[] = productCatalog
+  .filter((item) => {
+    if (item.badge === 'Test') return true
+    const hasImage = !!item.image
+    const hasPrice = (item.packPrices ?? []).some((pp) => pp.price > 0)
+    return hasImage && hasPrice
+  })
+  .map((item, index) => {
+    const defaults = categoryDefaults[item.category]
+    const packPrices = item.packPrices ?? []
+    const basePrice = packPrices[0]?.price ?? 0
+    const baseCost = packPrices[0]?.buyPrice ?? 0
+    const topPrice = packPrices.length > 1 ? packPrices[packPrices.length - 1].price : basePrice
 
-  return {
-    id: index + 1,
-    slug: item.slug,
-    name: item.name,
-    nameHindi: item.name,
-    localName: item.name,
-    category: item.category,
-    price: basePrice,
-    originalPrice: topPrice,
-    costPrice: baseCost,
-    image: item.image ?? '/placeholder.jpg',
-    description: item.description ?? defaults.description,
-    benefits: item.benefits ?? defaults.benefits,
-    usage: item.usage ?? defaults.usage,
-    highlights: item.highlights ?? defaults.highlights,
-    packPrices,
-    badge: item.badge,
-  }
-})
+    return {
+      id: index + 1,
+      slug: item.slug,
+      name: item.name,
+      nameHindi: item.name,
+      localName: item.name,
+      category: item.category,
+      price: basePrice,
+      originalPrice: topPrice,
+      costPrice: baseCost,
+      image: item.image ?? '/placeholder.jpg',
+      description: item.description ?? defaults.description,
+      benefits: item.benefits ?? defaults.benefits,
+      usage: item.usage ?? defaults.usage,
+      highlights: item.highlights ?? defaults.highlights,
+      packPrices,
+      badge: item.badge,
+    }
+  })
 
 export const banners = [
   {

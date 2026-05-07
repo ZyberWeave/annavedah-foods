@@ -6,7 +6,9 @@
       "Bash(git -C \"c:/Users/rroha/Downloads/annavedah-foods-website\" add lib/content.ts)",
       "Bash(git -C c:/Users/rroha/Downloads/annavedah-foods-website commit -m ' *)",
       "Bash(git -C \"c:/Users/rroha/Downloads/annavedah-foods-website\" push)",
-      "Bash(git -C \"c:/Users/rroha/Downloads/annavedah-foods-website\" add components/Header.tsx)"
+      "Bash(git -C \"c:/Users/rroha/Downloads/annavedah-foods-website\" add components/Header.tsx)",
+      "Bash(awk 'NR>=150 && NR<=151 || NR>=635 && NR<=662' \"c:/Users/rroha/Downloads/annavedah-foods-website/lib/content.ts\")",
+      "Bash(npx tsc *)"
     ]
   }
 }

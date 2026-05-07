@@ -2,7 +2,8 @@
 
 import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
-import { AlertCircle, CheckCircle2, ChevronDown, Loader2 } from 'lucide-react'
+import { AlertCircle, CheckCircle2, ChevronDown, Loader2, MapPin, Phone, Mail, Clock, MessageCircle, Instagram, Sparkles, ShieldCheck, Truck } from 'lucide-react'
+import Link from 'next/link'
 import { validateEmail, validateName, validatePhone, validateMinLength } from '@/lib/validations'
 
 interface ContactForm {
@@ -108,16 +109,122 @@ export default function ContactPage() {
 
   return (
     <div className="container mx-auto px-4 pt-[120px] lg:pt-[190px] pb-16 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] md:items-start">
-      <div className="space-y-4">
-        <p className="text-sm font-semibold uppercase tracking-wide text-accent">Contact</p>
-        <h1 className="text-4xl font-bold text-primary md:text-5xl">Let's talk about your nutrition goals.</h1>
-        <p className="text-lg text-muted-foreground">
-          Whether you want to stock up for home, plan corporate wellness packs, or explore wholesale partnerships, we are here to help.
-        </p>
-        <div className="space-y-3 text-sm text-foreground/80">
-          <p><span className="font-semibold text-primary">Address:</span> Shivdatta Nagar, Karmvir Bhaurao Patil Rd, Shivramnagar, Pimple Gurav, Pimpri-Chinchwad, Pune, Maharashtra 411061</p>
-          <p><span className="font-semibold text-primary">Phone:</span> <a href="tel:+919763456100" className="hover:text-accent transition-colors">+91 97634 56100</a></p>
-          <p><span className="font-semibold text-primary">Email:</span> <a href="mailto:support@annavedah.com" className="hover:text-accent transition-colors">support@annavedah.com</a></p>
+      <div className="space-y-8">
+        <div className="space-y-4">
+          <div className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-accent">
+            <Sparkles className="w-3.5 h-3.5" /> We reply within 1 business day
+          </div>
+          <h1 className="text-4xl font-bold text-primary md:text-5xl leading-tight">Let's talk about your nutrition goals.</h1>
+          <p className="text-lg text-muted-foreground leading-relaxed">
+            Whether you want to stock up for home, plan corporate wellness packs, or explore wholesale partnerships, our team is here to help — with a real human at the other end.
+          </p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <a href="tel:+919763456100" className="group flex items-start gap-3 rounded-2xl border border-border bg-card p-4 transition-all hover:border-accent hover:shadow-md">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent group-hover:bg-accent group-hover:text-white transition-colors">
+              <Phone className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Call us</p>
+              <p className="text-sm font-semibold text-primary truncate">+91 97634 56100</p>
+              <p className="text-xs text-muted-foreground">Mon–Sat, 10am–7pm IST</p>
+            </div>
+          </a>
+
+          <a href="https://wa.me/919763456100" target="_blank" rel="noreferrer" className="group flex items-start gap-3 rounded-2xl border border-border bg-card p-4 transition-all hover:border-green-500 hover:shadow-md">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-green-100 text-green-600 group-hover:bg-green-600 group-hover:text-white transition-colors">
+              <MessageCircle className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">WhatsApp</p>
+              <p className="text-sm font-semibold text-primary">Chat with us</p>
+              <p className="text-xs text-muted-foreground">Fastest response · usually under 1 hr</p>
+            </div>
+          </a>
+
+          <a href="mailto:support@annavedahfoods.com" className="group flex items-start gap-3 rounded-2xl border border-border bg-card p-4 transition-all hover:border-accent hover:shadow-md">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent group-hover:bg-accent group-hover:text-white transition-colors">
+              <Mail className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Email</p>
+              <p className="text-sm font-semibold text-primary truncate">support@annavedahfoods.com</p>
+              <p className="text-xs text-muted-foreground">Reply within one business day</p>
+            </div>
+          </a>
+
+          <div className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
+              <Clock className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Working Hours</p>
+              <p className="text-sm font-semibold text-primary">Mon – Sat</p>
+              <p className="text-xs text-muted-foreground">10:00 AM – 7:00 PM IST</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-gradient-to-br from-[#faf6f0] to-card p-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <MapPin className="w-4 h-4" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Visit our office</p>
+              <p className="text-sm font-semibold text-primary">Annavedah Foods HQ</p>
+              <p className="text-sm text-foreground/80 leading-relaxed">
+                Shivdatta Nagar, Karmvir Bhaurao Patil Rd,<br/>
+                Shivramnagar, Pimple Gurav, Pimpri-Chinchwad,<br/>
+                Pune, Maharashtra 411061
+              </p>
+              <a
+                href="https://www.google.com/maps/dir/?api=1&destination=Annavedah+Foods+Pune"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-accent hover:underline pt-1"
+              >
+                Get directions →
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-primary">Why people reach out</p>
+          <div className="flex flex-wrap gap-2">
+            {['Bulk / wholesale orders', 'Corporate gifting', 'Product queries', 'Order issues', 'Press & partnerships'].map((tag) => (
+              <span key={tag} className="rounded-full border border-border bg-card px-3 py-1 text-xs text-foreground/70">
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 pt-2">
+          <div className="flex flex-col items-center text-center gap-1.5 rounded-xl bg-card border border-border p-3">
+            <Truck className="w-5 h-5 text-accent" />
+            <p className="text-[11px] font-semibold text-primary leading-tight">Free shipping<br/>across India</p>
+          </div>
+          <div className="flex flex-col items-center text-center gap-1.5 rounded-xl bg-card border border-border p-3">
+            <ShieldCheck className="w-5 h-5 text-accent" />
+            <p className="text-[11px] font-semibold text-primary leading-tight">100% authentic<br/>traditional recipes</p>
+          </div>
+          <Link href="/products" className="flex flex-col items-center text-center gap-1.5 rounded-xl bg-card border border-border p-3 hover:border-accent transition-colors">
+            <Sparkles className="w-5 h-5 text-accent" />
+            <p className="text-[11px] font-semibold text-primary leading-tight">Browse our<br/>collections →</p>
+          </Link>
+        </div>
+
+        <div className="flex items-center gap-3 pt-2 border-t border-border">
+          <p className="text-xs font-semibold text-muted-foreground">Follow us</p>
+          <a href="https://www.instagram.com/annavedahfoods" target="_blank" rel="noreferrer" className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-foreground/70 hover:border-accent hover:text-accent transition-colors">
+            <Instagram className="w-4 h-4" />
+          </a>
+          <a href="https://wa.me/919763456100" target="_blank" rel="noreferrer" className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-foreground/70 hover:border-green-600 hover:text-green-600 transition-colors">
+            <MessageCircle className="w-4 h-4" />
+          </a>
         </div>
       </div>
 

@@ -1,18 +1,15 @@
 import { NextResponse } from 'next/server';
-import { verifySession } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { refundRequests, users } from '@/lib/schema';
 import { eq, desc } from 'drizzle-orm';
 
 export async function GET() {
-  const session = await verifySession();
-  
-  if (!session || session.role !== 'admin') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { response } = await requireAdmin();
+  if (response) return response;
 
   try {
-    const refunds = await db
+    const rows = await db
       .select({
         id: refundRequests.id,
         orderId: refundRequests.orderId,
@@ -20,14 +17,25 @@ export async function GET() {
         imageUrl: refundRequests.imageUrl,
         status: refundRequests.status,
         createdAt: refundRequests.createdAt,
-        user: {
-          name: users.name,
-          email: users.email,
-        }
+        userName: users.name,
+        userEmail: users.email,
       })
       .from(refundRequests)
-      .innerJoin(users, eq(refundRequests.userId, users.id))
+      .leftJoin(users, eq(refundRequests.userId, users.id))
       .orderBy(desc(refundRequests.createdAt));
+
+    const refunds = rows.map((r) => ({
+      id: r.id,
+      orderId: r.orderId,
+      reason: r.reason,
+      imageUrl: r.imageUrl,
+      status: r.status,
+      createdAt: r.createdAt,
+      user: {
+        name: r.userName ?? '(deleted user)',
+        email: r.userEmail ?? '',
+      },
+    }));
 
     return NextResponse.json({ refunds });
   } catch (error) {

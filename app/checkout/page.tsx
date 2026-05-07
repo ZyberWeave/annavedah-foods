@@ -291,7 +291,7 @@ export default function CheckoutPage() {
   // ─── SUCCESS SCREEN ────────────────────────────────────────────────────────
   if (step === 'success') {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 py-20" style={{ background: 'var(--background)' }}>
+      <div className="min-h-[calc(100vh-140px)] flex items-center justify-center px-4 py-10" style={{ background: 'var(--background)' }}>
         <div className="max-w-md w-full text-center space-y-6 rounded-3xl border border-border bg-card p-10 shadow-xl">
           <div className="flex justify-center">
             <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: 'rgba(201,164,92,0.15)' }}>

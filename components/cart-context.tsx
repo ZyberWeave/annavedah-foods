@@ -26,6 +26,7 @@ type CartContextValue = {
   add: (id: number, pack?: { size: string; price: number }, qty?: number, opts?: { silent?: boolean }) => void
   remove: (id: number, size?: string) => void
   updateQty: (id: number, size: string | undefined, qty: number) => void
+  changePack: (id: number, currentSize: string | undefined, newPack: { size: string; price: number }) => void
   clearCart: () => void
   total: number
   count: number
@@ -184,6 +185,32 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((prev) => prev.filter((item) => !(item.product.id === id && item.selectedPack?.size === size)))
   }, [])
 
+  const changePack = useCallback((id: number, currentSize: string | undefined, newPack: { size: string; price: number }) => {
+    setItems((prev) => {
+      const target = prev.find((item) => item.product.id === id && item.selectedPack?.size === currentSize)
+      if (!target) return prev
+      if (newPack.size === currentSize) return prev
+
+      // If a line with the new size already exists, merge quantities and drop the old line
+      const existingNewSize = prev.find((item) => item.product.id === id && item.selectedPack?.size === newPack.size)
+      if (existingNewSize) {
+        return prev
+          .filter((item) => !(item.product.id === id && item.selectedPack?.size === currentSize))
+          .map((item) =>
+            item.product.id === id && item.selectedPack?.size === newPack.size
+              ? { ...item, qty: item.qty + target.qty }
+              : item,
+          )
+      }
+
+      return prev.map((item) =>
+        item.product.id === id && item.selectedPack?.size === currentSize
+          ? { ...item, selectedPack: newPack }
+          : item,
+      )
+    })
+  }, [])
+
   const updateQty = useCallback((id: number, size: string | undefined, qty: number) => {
     if (qty <= 0) {
       setItems((prev) => prev.filter((item) => !(item.product.id === id && item.selectedPack?.size === size)))
@@ -243,7 +270,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <CartContext.Provider value={{ items, add, remove, updateQty, clearCart, total, count, isOpen, openCart, closeCart, appliedCoupon, applyCoupon, removeCoupon, isFull: uniqueItemCount(items) >= CART_LIMIT }}>
+    <CartContext.Provider value={{ items, add, remove, updateQty, changePack, clearCart, total, count, isOpen, openCart, closeCart, appliedCoupon, applyCoupon, removeCoupon, isFull: uniqueItemCount(items) >= CART_LIMIT }}>
       {children}
     </CartContext.Provider>
   )

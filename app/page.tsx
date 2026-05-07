@@ -645,7 +645,7 @@ export default function HomePage() {
 
             {/* Desktop: Buttons */}
             <motion.div 
-              className="hidden md:flex gap-3 overflow-x-auto pb-2 justify-center flex-wrap"
+              className="hidden md:flex gap-3 py-2 justify-center flex-wrap"
               variants={staggerContainer}
               initial="initial"
               whileInView="animate"

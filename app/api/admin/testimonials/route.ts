@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { testimonials } from '@/lib/schema';
-import { verifySession } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth';
 import { eq, asc } from 'drizzle-orm';
 
 // GET all testimonials (admin view — includes inactive)
 export async function GET() {
-  const session = await verifySession();
-  if (!session || session.role !== 'admin') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { response } = await requireAdmin();
+  if (response) return response;
 
   const rows = await db
     .select()
@@ -21,10 +19,8 @@ export async function GET() {
 
 // POST — add a new testimonial
 export async function POST(req: NextRequest) {
-  const session = await verifySession();
-  if (!session || session.role !== 'admin') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { response } = await requireAdmin();
+  if (response) return response;
 
   const body = await req.json();
   const { name, location, text, rating } = body;
@@ -53,10 +49,8 @@ export async function POST(req: NextRequest) {
 
 // PATCH — update a testimonial (toggle active, reorder, edit)
 export async function PATCH(req: NextRequest) {
-  const session = await verifySession();
-  if (!session || session.role !== 'admin') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { response } = await requireAdmin();
+  if (response) return response;
 
   const body = await req.json();
   const { id, active, displayOrder, name, location, text, rating } = body;
@@ -84,10 +78,8 @@ export async function PATCH(req: NextRequest) {
 
 // DELETE — remove a testimonial
 export async function DELETE(req: NextRequest) {
-  const session = await verifySession();
-  if (!session || session.role !== 'admin') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { response } = await requireAdmin();
+  if (response) return response;
 
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');

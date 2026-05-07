@@ -15,7 +15,7 @@ import RecentlyViewed from '@/components/RecentlyViewed'
 const FREE_SHIPPING_THRESHOLD = 999
 
 export default function CartPage() {
-  const { items, remove, updateQty, total, add, clearCart, appliedCoupon, applyCoupon, removeCoupon, isFull } = useCart()
+  const { items, remove, updateQty, total, add, changePack, clearCart, appliedCoupon, applyCoupon, removeCoupon, isFull } = useCart()
   const router = useRouter()
   const [promoCode, setPromoCode] = useState('')
   const [promoError, setPromoError] = useState('')
@@ -129,10 +129,30 @@ export default function CartPage() {
                   <div className="flex-1 space-y-1">
                     <Link href={`/products/${product.slug}`} className="block">
                       <h3 className="text-lg font-bold text-[#2d1b15] hover:text-[#8b1a1a] transition-colors">
-                        {product.name} {item.selectedPack && <span className="text-[#6b5347] font-normal">· {item.selectedPack.size}</span>}
+                        {product.name}
                       </h3>
                     </Link>
                     <p className="text-sm text-[#6b5347]">{product.category}</p>
+                    {product.packPrices.length > 1 ? (
+                      <div className="pt-2">
+                        <label className="text-[11px] font-semibold uppercase tracking-wider text-[#6b5347] block mb-1">Size</label>
+                        <select
+                          value={item.selectedPack?.size ?? ''}
+                          onChange={(e) => {
+                            const pack = product.packPrices.find((pp) => pp.size === e.target.value)
+                            if (pack) changePack(product.id, item.selectedPack?.size, { size: pack.size, price: pack.price })
+                          }}
+                          className="text-sm border-2 border-[#e8ddd0] rounded-lg px-3 py-1.5 bg-white text-[#2d1b15] font-semibold focus:outline-none focus:border-[#c9a45c]"
+                          aria-label="Change pack size"
+                        >
+                          {product.packPrices.map((pp) => (
+                            <option key={pp.size} value={pp.size}>{pp.size} — ₹{pp.price}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : item.selectedPack ? (
+                      <p className="text-sm text-[#6b5347] pt-1">Size: <span className="font-semibold text-[#2d1b15]">{item.selectedPack.size}</span></p>
+                    ) : null}
                     <div className="flex items-center gap-2 pt-2">
                       <div className="flex items-center border-2 border-[#e8ddd0] rounded-xl overflow-hidden">
                         <button
@@ -289,7 +309,7 @@ export default function CartPage() {
               <p className="text-[11px] text-[#6b5347] text-center">Shipping &amp; taxes calculated at checkout.</p>
             </div>
 
-            <TrustBadges variant="grid" limit={4} />
+            <TrustBadges variant="grid" limit={4} compact />
           </div>
         </div>
       )}

@@ -10,7 +10,7 @@ import { products } from '@/lib/content'
 const FREE_SHIPPING_THRESHOLD = 999
 
 export default function SlideCart() {
-  const { items, isOpen, closeCart, total, count, remove, updateQty, add, appliedCoupon, isFull } = useCart()
+  const { items, isOpen, closeCart, total, count, remove, updateQty, add, changePack, appliedCoupon, isFull } = useCart()
 
   const upsells = useMemo(() => {
     const inCart = new Set(items.map((i) => i.product.id))
@@ -122,8 +122,24 @@ export default function SlideCart() {
                         className="font-semibold text-[#2d1b15] hover:text-[#8b1a1a] text-sm line-clamp-2"
                       >
                         {item.product.name}
-                        {item.selectedPack && <span className="text-[#6b5347] font-normal"> · {item.selectedPack.size}</span>}
                       </Link>
+                      {item.product.packPrices.length > 1 ? (
+                        <select
+                          value={item.selectedPack?.size ?? ''}
+                          onChange={(e) => {
+                            const pack = item.product.packPrices.find((pp) => pp.size === e.target.value)
+                            if (pack) changePack(item.product.id, item.selectedPack?.size, { size: pack.size, price: pack.price })
+                          }}
+                          className="mt-1 text-xs border border-[#e8ddd0] rounded-md px-2 py-1 bg-white text-[#2d1b15] focus:outline-none focus:border-[#c9a45c]"
+                          aria-label="Change pack size"
+                        >
+                          {item.product.packPrices.map((pp) => (
+                            <option key={pp.size} value={pp.size}>{pp.size} — ₹{pp.price}</option>
+                          ))}
+                        </select>
+                      ) : item.selectedPack ? (
+                        <p className="text-xs text-[#6b5347] mt-1">{item.selectedPack.size}</p>
+                      ) : null}
                       <p className="text-[#8b1a1a] font-bold text-sm mt-1">₹{unitPrice * item.qty}</p>
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex items-center border border-[#e8ddd0] rounded-lg overflow-hidden">

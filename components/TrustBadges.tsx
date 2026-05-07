@@ -11,7 +11,7 @@ const items = [
   { icon: ShieldCheck, label: 'Authentic Products', sub: '100% pure' },
 ]
 
-export default function TrustBadges({ variant = 'grid', limit }: { variant?: 'grid' | 'row'; limit?: number }) {
+export default function TrustBadges({ variant = 'grid', limit, compact = false }: { variant?: 'grid' | 'row'; limit?: number; compact?: boolean }) {
   const display = limit ? items.slice(0, limit) : items
 
   if (variant === 'row') {
@@ -31,7 +31,7 @@ export default function TrustBadges({ variant = 'grid', limit }: { variant?: 'gr
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div className={compact ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4'}>
       {display.map((b) => {
         const Icon = b.icon
         return (

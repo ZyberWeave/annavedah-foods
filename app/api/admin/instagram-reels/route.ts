@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { instagramReels } from '@/lib/schema';
-import { verifySession } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth';
 import { eq, asc } from 'drizzle-orm';
 
 // GET all reels (admin view - includes inactive)
 export async function GET() {
-  const session = await verifySession();
-  if (!session || session.role !== 'admin') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { response } = await requireAdmin();
+  if (response) return response;
 
   const reels = await db
     .select()
@@ -21,10 +19,8 @@ export async function GET() {
 
 // POST - add a new reel
 export async function POST(req: NextRequest) {
-  const session = await verifySession();
-  if (!session || session.role !== 'admin') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { response } = await requireAdmin();
+  if (response) return response;
 
   const body = await req.json();
   const { permalink, caption } = body;
@@ -51,10 +47,8 @@ export async function POST(req: NextRequest) {
 
 // PATCH - update a reel (toggle active, reorder, edit)
 export async function PATCH(req: NextRequest) {
-  const session = await verifySession();
-  if (!session || session.role !== 'admin') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { response } = await requireAdmin();
+  if (response) return response;
 
   const body = await req.json();
   const { id, active, displayOrder, permalink, caption } = body;
@@ -80,10 +74,8 @@ export async function PATCH(req: NextRequest) {
 
 // DELETE - remove a reel
 export async function DELETE(req: NextRequest) {
-  const session = await verifySession();
-  if (!session || session.role !== 'admin') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const { response } = await requireAdmin();
+  if (response) return response;
 
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
