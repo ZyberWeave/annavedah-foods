@@ -21,7 +21,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ cart: null }, { status: 200 })
     }
 
-    return NextResponse.json({ cart: JSON.parse(userRecords[0].cartData) }, { status: 200 })
+    let parsedCart: unknown = null
+    try {
+      parsedCart = JSON.parse(userRecords[0].cartData)
+    } catch (parseErr) {
+      console.error('[cart/get] corrupted cartData', parseErr)
+      return NextResponse.json({ cart: null, warning: 'Corrupted cart data; reset.' }, { status: 200 })
+    }
+    return NextResponse.json({ cart: parsedCart }, { status: 200 })
   } catch (err) {
     console.error('[cart/get]', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

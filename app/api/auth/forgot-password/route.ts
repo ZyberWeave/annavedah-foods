@@ -3,6 +3,9 @@ import { db } from '@/lib/db';
 import { users, otps } from '@/lib/schema';
 import { eq } from 'drizzle-orm';
 import { Resend } from 'resend';
+import { getClientIp, rateLimitOr429 } from '@/lib/rate-limit';
+import { escapeHtml } from '@/lib/email-utils';
+import bcrypt from 'bcryptjs';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -18,6 +21,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
+    const clientIp = getClientIp(req);
+    const ipBlock = await rateLimitOr429(`forgot:ip:${clientIp}`, 5, 600);
+    if (ipBlock) return ipBlock;
+    const emailBlock = await rateLimitOr429(`forgot:email:${String(email).toLowerCase()}`, 3, 900);
+    if (emailBlock) return emailBlock;
+
     // Check if user exists
     const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
@@ -30,16 +39,20 @@ export async function POST(req: Request) {
     const otp = generateOTP();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-    // Store OTP in database
+    // Store OTP in database — hashed so a DB read can't reveal codes.
     await db.insert(otps).values({
       email,
-      otp,
+      otp: await bcrypt.hash(otp, 10),
       expiresAt,
     });
 
     const requestedAt = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) + ' IST';
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'Unknown';
+    const reqIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'Unknown';
     const userAgent = req.headers.get('user-agent') || 'Unknown device';
+    const safeName = escapeHtml(user.name || 'there');
+    const safeEmail = escapeHtml(email);
+    const safeIp = escapeHtml(reqIp);
+    const safeUa = escapeHtml(userAgent);
 
     // Send email via Resend
     await resend.emails.send({
@@ -54,8 +67,8 @@ export async function POST(req: Request) {
             <p style="color:#6b5347; font-size:13px; margin:8px 0 0;">Requested ${requestedAt}</p>
           </div>
           <div style="padding:36px 32px;">
-            <p style="color:#2d1b15; font-size:16px; margin:0 0 12px;">Hi ${user.name || 'there'},</p>
-            <p style="color:#6b5347; font-size:15px; line-height:1.6;">We received a request to reset the password for the Annavedah Foods account linked to <strong>${email}</strong>. Use the 6-digit code below to continue.</p>
+            <p style="color:#2d1b15; font-size:16px; margin:0 0 12px;">Hi ${safeName},</p>
+            <p style="color:#6b5347; font-size:15px; line-height:1.6;">We received a request to reset the password for the Annavedah Foods account linked to <strong>${safeEmail}</strong>. Use the 6-digit code below to continue.</p>
 
             <div style="background:#faf6f0; border:1px dashed #c9a45c; border-radius:12px; padding:24px; text-align:center; margin:24px 0;">
               <p style="margin:0 0 8px; color:#a39189; font-size:11px; letter-spacing:1px; text-transform:uppercase;">Your reset code</p>
@@ -66,8 +79,8 @@ export async function POST(req: Request) {
             <h3 style="color:#2d1b15; font-size:15px; margin:24px 0 8px; border-bottom:1px solid #e8ddd0; padding-bottom:6px;">Request details</h3>
             <table style="width:100%; border-collapse:collapse; font-size:13px;">
               <tr><td style="padding:5px 0; color:#6b5347; width:120px;">Time</td><td style="padding:5px 0; color:#2d1b15;">${requestedAt}</td></tr>
-              <tr><td style="padding:5px 0; color:#6b5347;">IP address</td><td style="padding:5px 0; color:#2d1b15; font-family:monospace;">${ip}</td></tr>
-              <tr><td style="padding:5px 0; color:#6b5347; vertical-align:top;">Device</td><td style="padding:5px 0; color:#2d1b15; word-break:break-word;">${userAgent}</td></tr>
+              <tr><td style="padding:5px 0; color:#6b5347;">IP address</td><td style="padding:5px 0; color:#2d1b15; font-family:monospace;">${safeIp}</td></tr>
+              <tr><td style="padding:5px 0; color:#6b5347; vertical-align:top;">Device</td><td style="padding:5px 0; color:#2d1b15; word-break:break-word;">${safeUa}</td></tr>
             </table>
 
             <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:14px 16px; margin-top:24px; font-size:13px; color:#991b1b; line-height:1.6;">

@@ -63,18 +63,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Review must be at least 20 characters' }, { status: 400 });
     }
 
-    // Check if user has purchased this product (for verified badge)
+    // Verified badge: requires a successful order belonging to this user that
+    // was paid via Razorpay (i.e. paymentId present and not 'COD'). COD is
+    // self-declared at checkout time and could be cancelled — don't trust it
+    // for social proof.
     let isVerified = false;
     try {
       const userOrders = await db
-        .select({ items: orders.items })
+        .select({ items: orders.items, paymentId: orders.paymentId })
         .from(orders)
         .where(and(eq(orders.userId, session.userId), eq(orders.status, 'success')));
 
       for (const order of userOrders) {
+        if (!order.paymentId || order.paymentId === 'COD') continue;
         try {
           const items = JSON.parse(order.items);
-          if (Array.isArray(items) && items.some((item: any) => item.slug === productSlug)) {
+          if (Array.isArray(items) && items.some((item: any) => item?.slug === productSlug)) {
             isVerified = true;
             break;
           }

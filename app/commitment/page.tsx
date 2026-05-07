@@ -3,37 +3,37 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Heart, PawPrint, ShieldCheck, Sparkles, HandHeart, Dog, Cat, Bird, Rabbit } from 'lucide-react'
-import { motion, useScroll, useTransform, useInView } from 'framer-motion'
+import { motion, useScroll, useTransform, useInView, type Variants } from 'framer-motion'
 import { useRef } from 'react'
 
-const fadeInUp = {
+const fadeInUp: Variants = {
   initial: { opacity: 0, y: 60 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: 'easeOut' } }
+  animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: 'easeOut' } },
 }
 
-const fadeInLeft = {
+const fadeInLeft: Variants = {
   initial: { opacity: 0, x: -60 },
-  animate: { opacity: 1, x: 0, transition: { duration: 0.8, ease: 'easeOut' } }
+  animate: { opacity: 1, x: 0, transition: { duration: 0.8, ease: 'easeOut' } },
 }
 
-const fadeInRight = {
+const fadeInRight: Variants = {
   initial: { opacity: 0, x: 60 },
-  animate: { opacity: 1, x: 0, transition: { duration: 0.8, ease: 'easeOut' } }
+  animate: { opacity: 1, x: 0, transition: { duration: 0.8, ease: 'easeOut' } },
 }
 
-const staggerContainer = {
+const staggerContainer: Variants = {
   initial: {},
-  animate: { transition: { staggerChildren: 0.15, delayChildren: 0.1 } }
+  animate: { transition: { staggerChildren: 0.15, delayChildren: 0.1 } },
 }
 
-const staggerItem = {
+const staggerItem: Variants = {
   initial: { opacity: 0, y: 30 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } }
+  animate: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
 }
 
-const scaleIn = {
+const scaleIn: Variants = {
   initial: { opacity: 0, scale: 0.8 },
-  animate: { opacity: 1, scale: 1, transition: { duration: 0.5, type: 'spring', stiffness: 200, damping: 15 } }
+  animate: { opacity: 1, scale: 1, transition: { duration: 0.5, type: 'spring', stiffness: 200, damping: 15 } },
 }
 
 function AnimatedSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {

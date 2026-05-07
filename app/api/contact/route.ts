@@ -1,26 +1,51 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { escapeHtml, getAdminEmails } from '@/lib/email-utils';
+import { getClientIp, rateLimitOr429 } from '@/lib/rate-limit';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const ADMIN_EMAILS = ['support@annavedah.com'];
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req);
+    const ipBlock = await rateLimitOr429(`contact:ip:${ip}`, 5, 600);
+    if (ipBlock) return ipBlock;
+
     const { name, email, phone, reason, company, message } = await req.json();
 
     if (!name || !email || !message) {
       return NextResponse.json({ error: 'Name, email, and message are required' }, { status: 400 });
     }
+    if (typeof name !== 'string' || name.length > 100) {
+      return NextResponse.json({ error: 'Name must be under 100 characters' }, { status: 400 });
+    }
+    if (typeof email !== 'string' || !EMAIL_RE.test(email) || email.length > 200) {
+      return NextResponse.json({ error: 'Please enter a valid email address' }, { status: 400 });
+    }
+    if (typeof message !== 'string' || message.length > 5000) {
+      return NextResponse.json({ error: 'Message must be under 5000 characters' }, { status: 400 });
+    }
+    const emailBlock = await rateLimitOr429(`contact:email:${email.toLowerCase()}`, 3, 600);
+    if (emailBlock) return emailBlock;
 
     const submittedAt = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) + ' IST';
     const ticketRef = 'CT-' + Date.now().toString(36).toUpperCase();
-    const reasonLabel = reason || 'General';
+    const reasonLabel = (typeof reason === 'string' && reason) ? reason : 'General';
 
-    // Send notification to admin
+    const eName = escapeHtml(name);
+    const eEmail = escapeHtml(email);
+    const ePhone = phone ? escapeHtml(phone) : '';
+    const eCompany = company ? escapeHtml(company) : '';
+    const eReason = escapeHtml(reasonLabel);
+    const eMessage = escapeHtml(message);
+    const eFirst = escapeHtml(String(name).split(' ')[0] || 'customer');
+
+    // Notification to admin
     await resend.emails.send({
       from: 'Annavedah Foods <noreply@annavedahfoods.com>',
-      to: ADMIN_EMAILS,
+      to: getAdminEmails(),
       replyTo: email,
       subject: `📩 ${reasonLabel} — ${name} (${ticketRef})`,
       html: `
@@ -31,22 +56,19 @@ export async function POST(req: Request) {
           </div>
           <div style="padding: 28px 32px;">
             <div style="background:#fffbeb; border-left:4px solid #d97706; padding:12px 16px; border-radius:6px; margin-bottom:20px;">
-              <p style="margin:0; color:#78350f; font-size:13px; font-weight:600;">Reason: ${reasonLabel}</p>
+              <p style="margin:0; color:#78350f; font-size:13px; font-weight:600;">Reason: ${eReason}</p>
             </div>
             <h3 style="color:#8b1a1a; border-bottom:1px solid #e8ddd0; padding-bottom:6px; margin-top:0;">Sender</h3>
             <table style="width: 100%; border-collapse: collapse; font-size:14px;">
-              <tr><td style="padding:6px 0; color:#6b5347; width:120px;">Name</td><td style="padding:6px 0; color:#2d1b15; font-weight:600;">${name}</td></tr>
-              <tr><td style="padding:6px 0; color:#6b5347;">Email</td><td style="padding:6px 0;"><a href="mailto:${email}" style="color:#8b1a1a;">${email}</a></td></tr>
-              ${phone ? `<tr><td style="padding:6px 0; color:#6b5347;">Phone</td><td style="padding:6px 0;"><a href="tel:${phone}" style="color:#8b1a1a;">${phone}</a></td></tr>` : ''}
-              ${company ? `<tr><td style="padding:6px 0; color:#6b5347;">Company</td><td style="padding:6px 0; color:#2d1b15;">${company}</td></tr>` : ''}
-              <tr><td style="padding:6px 0; color:#6b5347;">Reason</td><td style="padding:6px 0; color:#2d1b15;">${reasonLabel}</td></tr>
+              <tr><td style="padding:6px 0; color:#6b5347; width:120px;">Name</td><td style="padding:6px 0; color:#2d1b15; font-weight:600;">${eName}</td></tr>
+              <tr><td style="padding:6px 0; color:#6b5347;">Email</td><td style="padding:6px 0;"><a href="mailto:${encodeURIComponent(email)}" style="color:#8b1a1a;">${eEmail}</a></td></tr>
+              ${ePhone ? `<tr><td style="padding:6px 0; color:#6b5347;">Phone</td><td style="padding:6px 0;"><a href="tel:${encodeURIComponent(phone)}" style="color:#8b1a1a;">${ePhone}</a></td></tr>` : ''}
+              ${eCompany ? `<tr><td style="padding:6px 0; color:#6b5347;">Company</td><td style="padding:6px 0; color:#2d1b15;">${eCompany}</td></tr>` : ''}
+              <tr><td style="padding:6px 0; color:#6b5347;">Reason</td><td style="padding:6px 0; color:#2d1b15;">${eReason}</td></tr>
               <tr><td style="padding:6px 0; color:#6b5347;">Submitted</td><td style="padding:6px 0; color:#2d1b15;">${submittedAt}</td></tr>
             </table>
             <h3 style="color:#8b1a1a; border-bottom:1px solid #e8ddd0; padding-bottom:6px; margin-top:24px;">Message</h3>
-            <div style="background:#faf6f0; border:1px solid #e8ddd0; border-radius:8px; padding:16px; color:#2d1b15; line-height:1.6; white-space:pre-line; font-size:14px;">${message}</div>
-            <div style="text-align:center; margin-top:28px;">
-              <a href="mailto:${email}?subject=Re%3A%20${encodeURIComponent(reasonLabel)}%20%E2%80%94%20${encodeURIComponent(ticketRef)}" style="display:inline-block; background:#2d1b15; color:#fff; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold;">Reply to ${name.split(' ')[0]}</a>
-            </div>
+            <div style="background:#faf6f0; border:1px solid #e8ddd0; border-radius:8px; padding:16px; color:#2d1b15; line-height:1.6; white-space:pre-line; font-size:14px;">${eMessage}</div>
           </div>
           <div style="background:#faf6f0; padding:14px; text-align:center; border-top:1px solid #e8ddd0;">
             <p style="color:#a39189; font-size:12px; margin:0;">Sent via the contact form on annavedahfoods.com</p>
@@ -55,7 +77,7 @@ export async function POST(req: Request) {
       `,
     });
 
-    // Send confirmation to customer
+    // Confirmation to customer
     await resend.emails.send({
       from: 'Annavedah Foods <noreply@annavedahfoods.com>',
       to: email,
@@ -68,32 +90,18 @@ export async function POST(req: Request) {
             <p style="color:#6b5347; font-size:13px; margin:8px 0 0;">Reference ${ticketRef} &middot; ${submittedAt}</p>
           </div>
           <div style="padding:36px 32px;">
-            <p style="color:#2d1b15; font-size:16px; margin:0 0 12px;">Hi ${name},</p>
+            <p style="color:#2d1b15; font-size:16px; margin:0 0 12px;">Hi ${eFirst},</p>
             <p style="color:#6b5347; font-size:15px; line-height:1.6;">Your message has reached our team and we'll personally get back to you. Here's what you sent us, just so you have a copy:</p>
 
             <div style="background:#faf6f0; border:1px solid #e8ddd0; border-radius:10px; padding:16px; margin:20px 0;">
-              <p style="margin:0 0 6px; font-size:12px; color:#a39189; text-transform:uppercase; letter-spacing:0.5px;">Topic — ${reasonLabel}</p>
-              <p style="margin:0; color:#2d1b15; line-height:1.6; white-space:pre-line; font-size:14px;">${message}</p>
+              <p style="margin:0 0 6px; font-size:12px; color:#a39189; text-transform:uppercase; letter-spacing:0.5px;">Topic — ${eReason}</p>
+              <p style="margin:0; color:#2d1b15; line-height:1.6; white-space:pre-line; font-size:14px;">${eMessage}</p>
             </div>
-
-            <h3 style="color:#2d1b15; font-size:16px; margin:24px 0 10px; border-bottom:1px solid #e8ddd0; padding-bottom:6px;">What happens next</h3>
-            <ul style="color:#6b5347; font-size:14px; line-height:1.8; padding-left:20px; margin:0;">
-              <li>Our customer-care team reviews every message personally — usually within <strong>1 business day</strong> (Mon–Sat, 10am–7pm IST).</li>
-              <li>For order-related queries, please keep your order ID handy when we reply.</li>
-              <li>If you don't see our reply, check your Promotions / Spam folder and mark us as Not Spam.</li>
-            </ul>
-
-            <h3 style="color:#2d1b15; font-size:16px; margin:24px 0 10px; border-bottom:1px solid #e8ddd0; padding-bottom:6px;">Other ways to reach us</h3>
-            <p style="color:#6b5347; font-size:14px; line-height:1.7; margin:0;">
-              ✉️ <a href="mailto:support@annavedahfoods.com" style="color:#8b1a1a;">support@annavedahfoods.com</a><br/>
-              🌐 <a href="https://annavedahfoods.com" style="color:#8b1a1a;">annavedahfoods.com</a><br/>
-              🛍️ <a href="https://annavedahfoods.com/products" style="color:#8b1a1a;">Browse our products</a>
-            </p>
 
             <p style="color:#6b5347; font-size:14px; margin-top:24px;">Warm regards,<br/><strong style="color:#2d1b15;">Team Annavedah</strong></p>
           </div>
           <div style="background:#2d1b15; padding:18px; text-align:center;">
-            <p style="color:#a39189; font-size:11px; margin:0;">© ${new Date().getFullYear()} Annavedah Foods. All rights reserved. This is an automated confirmation — please reply to reach a human.</p>
+            <p style="color:#a39189; font-size:11px; margin:0;">© ${new Date().getFullYear()} Annavedah Foods. All rights reserved.</p>
           </div>
         </div>
       `,

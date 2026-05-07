@@ -3,6 +3,23 @@ import { and, eq } from 'drizzle-orm';
 import { db } from './db';
 import { abandonedCarts, orders, users } from './schema';
 
+export async function findOrderByOrderId(orderId: string) {
+  const [row] = await db.select().from(orders).where(eq(orders.orderId, orderId)).limit(1);
+  return row ?? null;
+}
+
+export function userOwnsOrder(
+  order: { userId: number | null; customerEmail: string },
+  session: { userId: number },
+  sessionEmail: string | null,
+): boolean {
+  if (order.userId != null && order.userId === session.userId) return true;
+  if (order.userId == null && sessionEmail && order.customerEmail.toLowerCase() === sessionEmail.toLowerCase()) {
+    return true;
+  }
+  return false;
+}
+
 export type PersistedOrderItem = {
   name: string;
   qty: number;

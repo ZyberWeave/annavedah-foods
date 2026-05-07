@@ -3,13 +3,19 @@ import { db } from '@/lib/db'
 import { abandonedCarts } from '@/lib/schema'
 import { eq, and, isNull, lt } from 'drizzle-orm'
 import { Resend } from 'resend'
+import { escapeHtml } from '@/lib/email-utils'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function GET(request: Request) {
-  // Simple auth for cron: in production, verify a secret token or Vercel's Cron header
+  // Cron auth: CRON_SECRET MUST be set, and the caller must present it.
+  const expected = process.env.CRON_SECRET
+  if (!expected) {
+    console.error('[cron/abandoned-cart] CRON_SECRET is not configured')
+    return new NextResponse('Cron not configured', { status: 503 })
+  }
   const authHeader = request.headers.get('authorization')
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${expected}`) {
     return new NextResponse('Unauthorized', { status: 401 })
   }
 
@@ -41,10 +47,12 @@ export async function GET(request: Request) {
 
       const itemsHtml = items.map((i: any) =>
         `<li style="padding: 12px 0; border-bottom: 1px dashed #e8ddd0; display:flex; justify-content:space-between; color: #6b5347;">
-          <span><strong style="color:#2d1b15;">${i.qty} ×</strong> ${getName(i)}</span>
-          <strong style="color:#2d1b15;">Rs ${getPrice(i) * i.qty}</strong>
+          <span><strong style="color:#2d1b15;">${Number(i.qty) || 0} ×</strong> ${escapeHtml(getName(i))}</span>
+          <strong style="color:#2d1b15;">Rs ${Number(getPrice(i) * i.qty) || 0}</strong>
         </li>`
       ).join('')
+
+      const safeName = escapeHtml(name)
 
       const lastUpdated = cart.updatedAt
         ? new Date(cart.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })
@@ -58,10 +66,10 @@ export async function GET(request: Request) {
           <div style="background-color: #faf6f0; padding: 40px 20px; text-align: center; border-bottom: 2px solid #c9a45c;">
             <img src="https://annavedahfoods.com/Logo.webp" alt="Annavedah Foods Logo" style="height: 60px; width: auto; margin-bottom: 20px;" />
             <h1 style="color: #8b1a1a; margin: 0; font-size: 28px; letter-spacing: -0.5px;">We saved your cart!</h1>
-            ${lastUpdated ? `<p style="color:#6b5347; font-size:13px; margin:8px 0 0;">Last updated on ${lastUpdated}</p>` : ''}
+            ${lastUpdated ? `<p style="color:#6b5347; font-size:13px; margin:8px 0 0;">Last updated on ${escapeHtml(lastUpdated)}</p>` : ''}
           </div>
           <div style="padding: 40px 32px;">
-            <p style="color: #6b5347; font-size: 16px; line-height: 1.6; margin-top: 0;">Hi <strong>${name}</strong>,</p>
+            <p style="color: #6b5347; font-size: 16px; line-height: 1.6; margin-top: 0;">Hi <strong>${safeName}</strong>,</p>
             <p style="color: #6b5347; font-size: 16px; line-height: 1.6;">A few hand-picked items have been waiting in your cart at Annavedah Foods. Stocks move fast on small-batch traditional foods — we wanted to make sure you don't miss out.</p>
 
             <h3 style="color: #2d1b15; font-size: 17px; margin: 28px 0 12px; border-bottom: 1px solid #e8ddd0; padding-bottom: 8px;">Your Items (${itemCount})</h3>

@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, varchar, integer, boolean, decimal } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, varchar, integer, boolean, decimal, primaryKey } from 'drizzle-orm/pg-core';
 
 export const products = pgTable('products', {
   id: serial('id').primaryKey(),
@@ -95,6 +95,22 @@ export const orders = pgTable('orders', {
   items: text('items').notNull(), // JSON string of items
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+export const reviewHelpfulVotes = pgTable('review_helpful_votes', {
+  reviewId: integer('review_id').notNull(),
+  userId: integer('user_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.reviewId, t.userId] }),
+}));
+
+export const rateLimits = pgTable('rate_limits', {
+  key: text('key').notNull(),
+  windowStart: timestamp('window_start').notNull(),
+  count: integer('count').default(0).notNull(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.key, t.windowStart] }),
+}));
 
 export const productReviews = pgTable('product_reviews', {
   id: serial('id').primaryKey(),

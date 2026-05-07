@@ -47,19 +47,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { orderId, paymentId, customerEmail, total, items, status } = await req.json()
+    const { orderId, paymentId, customerEmail, total, items } = await req.json()
 
     if (!orderId || !customerEmail || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'orderId, customerEmail, and items are required' }, { status: 400 })
     }
 
+    // Authoritative status transitions to 'success' happen ONLY in the
+    // Razorpay verify route (signature-checked) or the Shiprocket COD route
+    // (auth + ownership-checked). Client-driven creates land as 'pending' so
+    // no one can fabricate "I already paid" rows from here.
     const order = await persistOrderRecord({
       orderId,
       paymentId: paymentId ?? null,
       customerEmail,
       total: Number(total),
       items,
-      status: status || 'success',
+      status: 'pending',
       userId: session.userId,
     })
 

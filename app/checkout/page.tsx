@@ -180,32 +180,16 @@ export default function CheckoutPage() {
     if (!validate()) return
     setLoading(true)
     try {
-      const orderItems = items.map(i => ({
-        name: `${i.product.name}${i.selectedPack ? ` (${i.selectedPack.size})` : ''}`,
+      // Server-priced cart shape — never send prices from the client.
+      const cart = items.map(i => ({
+        slug: i.product.slug,
+        packSize: i.selectedPack?.size ?? null,
         qty: i.qty,
-        price: i.selectedPack ? i.selectedPack.price : i.product.price,
       }))
+      const couponCode = appliedCoupon?.code ?? null
 
       if (paymentMethod === 'COD') {
         const generatedOrderId = `COD_${Date.now()}`
-
-        const persistRes = await fetch('/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            orderId: generatedOrderId,
-            paymentId: 'COD',
-            customerEmail: form.email,
-            items: orderItems,
-            total: finalTotal,
-            status: 'success',
-          }),
-        })
-
-        const persistData = await persistRes.json().catch(() => null)
-        if (!persistRes.ok) {
-          throw new Error(persistData?.error || 'Could not save COD order')
-        }
 
         const shiprocketRes = await fetch('/api/shiprocket/create-order', {
           method: 'POST',
@@ -214,8 +198,8 @@ export default function CheckoutPage() {
             orderId: generatedOrderId,
             paymentId: 'COD',
             customer: form,
-            items: orderItems,
-            total: finalTotal,
+            cart,
+            couponCode,
             paymentMethod: 'COD',
           }),
         })
@@ -236,14 +220,14 @@ export default function CheckoutPage() {
         return;
       }
 
-      // 1. Create Razorpay order
+      // 1. Create Razorpay order — server prices the cart authoritatively.
       const orderRes = await fetch('/api/razorpay/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: finalTotal * 100, receipt: `receipt_${Date.now()}` }),
+        body: JSON.stringify({ cart, couponCode, receipt: `receipt_${Date.now()}` }),
       })
       const order = await orderRes.json()
-      if (!order.id) throw new Error('Could not create payment order')
+      if (!order.id) throw new Error(order?.error || 'Could not create payment order')
 
       // 2. Open Razorpay modal
       const options = {
@@ -269,40 +253,41 @@ export default function CheckoutPage() {
           const verifyRes = await fetch('/api/razorpay/verify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
               ...response,
               customer: form,
-              items: orderItems,
-              total: finalTotal,
-              orderId: order.id
+              cart,
+              couponCode,
             }),
           })
-          const verify = await verifyRes.json()
-          if (!verify.verified) throw new Error('Payment verification failed')
+          const verify = await verifyRes.json().catch(() => null)
+          if (!verifyRes.ok || !verify?.verified) {
+            throw new Error(verify?.error || 'Payment verification failed')
+          }
 
-          // 4. Create Shiprocket order
+          // 4. Create Shiprocket order — server reuses the persisted DB row.
+          // The local orderId is the razorpay_order_id (bound at verify time).
           const shiprocketRes = await fetch('/api/shiprocket/create-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              orderId: order.id,
+              orderId: response.razorpay_order_id,
               paymentId: response.razorpay_payment_id,
               customer: form,
-              items: orderItems,
-              total: finalTotal,
               paymentMethod: 'Prepaid',
             }),
           })
 
           const shiprocketData = await shiprocketRes.json().catch(() => null)
+          // Shipping sync can soft-fail (we still have a paid, persisted order)
+          // — surface a manual-review message rather than blocking the user.
           setSuccessMessage(
             !shiprocketRes.ok || shiprocketData?.shippingSyncFailed
               ? 'Payment is confirmed. Shipping sync needs manual review, and our team will update dispatch shortly.'
               : ''
           )
 
-          setOrderId(order.id)
-          // Clear cart items
+          setOrderId(response.razorpay_order_id)
           items.forEach(i => remove(i.product.id, i.selectedPack?.size))
           setStep('success')
         },

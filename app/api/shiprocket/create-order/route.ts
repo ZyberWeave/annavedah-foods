@@ -1,19 +1,90 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createShiprocketOrder, type ShiprocketOrderPayload } from '@/lib/shiprocket'
 import { Resend } from 'resend'
-import { persistOrderRecord } from '@/lib/order-records'
+import { findOrderByOrderId, persistOrderRecord, userOwnsOrder } from '@/lib/order-records'
 import { verifySession } from '@/lib/auth'
+import { escapeHtml, getAdminEmails, validateOrderItems } from '@/lib/email-utils'
+import { db } from '@/lib/db'
+import { users } from '@/lib/schema'
+import { eq } from 'drizzle-orm'
+import { getClientIp, rateLimitOr429 } from '@/lib/rate-limit'
+import { priceCart } from '@/lib/pricing'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    const { orderId, paymentId, customer, items, total, paymentMethod = 'Prepaid' } = body
     const session = await verifySession()
+    if (!session || !session.userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
-    if (!orderId || !customer || !items?.length) {
+    const ip = getClientIp(req)
+    const rl = await rateLimitOr429(`shiprocket:user:${session.userId}:${ip}`, 20, 60)
+    if (rl) return rl
+
+    const body = await req.json()
+    const { orderId, paymentId, customer, cart, couponCode, paymentMethod = 'Prepaid' } = body
+
+    if (!orderId || !customer) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    }
+
+    // Server-priced lines/total. For Prepaid, this is overwritten below by
+    // whatever was persisted at razorpay/verify time (defense in depth).
+    let validatedItems: { name: string; qty: number; price: number; slug?: string }[]
+    let numericTotal: number
+
+    if (paymentMethod === 'COD') {
+      if (!cart) return NextResponse.json({ error: 'cart is required' }, { status: 400 })
+      try {
+        const pricing = await priceCart(cart, { couponCode, paymentMethod: 'COD' })
+        validatedItems = pricing.items
+        numericTotal = pricing.total
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Invalid cart'
+        return NextResponse.json({ error: msg }, { status: 400 })
+      }
+    } else {
+      // Will be replaced from DB row below.
+      validatedItems = []
+      numericTotal = 0
+    }
+
+    // Resolve session email for ownership checks.
+    const [sessionUser] = await db.select({ email: users.email }).from(users).where(eq(users.id, session.userId)).limit(1)
+    const sessionEmail = sessionUser?.email ?? null
+
+    // Look up the existing order. For Prepaid, this MUST exist (created by
+    // /api/razorpay/verify). For COD, it may or may not exist — if it does,
+    // ownership must match.
+    const existing = await findOrderByOrderId(orderId)
+
+    if (paymentMethod !== 'COD') {
+      if (!existing || existing.status !== 'success') {
+        return NextResponse.json({ error: 'Order not found or unverified' }, { status: 404 })
+      }
+      if (!userOwnsOrder(existing, session, sessionEmail)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+      // Trust the DB's totals/items, not whatever the client just sent.
+      const dbItemsRaw = (() => { try { return JSON.parse(existing.items) } catch { return [] } })()
+      try {
+        validatedItems = validateOrderItems(dbItemsRaw)
+      } catch {
+        return NextResponse.json({ error: 'Stored order items are invalid' }, { status: 500 })
+      }
+      numericTotal = existing.total
+    }
+
+    let codAlreadyProcessed = false
+    if (paymentMethod === 'COD') {
+      if (existing) {
+        if (!userOwnsOrder(existing, session, sessionEmail)) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        }
+        if (existing.status === 'success') codAlreadyProcessed = true
+      }
     }
 
     const now = new Date()
@@ -33,7 +104,7 @@ export async function POST(req: NextRequest) {
       billing_email: customer.email,
       billing_phone: customer.phone,
       shipping_is_billing: true,
-      order_items: items.map((item: { name: string; qty: number; price: number }, idx: number) => ({
+      order_items: validatedItems.map((item, idx) => ({
         name: item.name,
         sku: `SKU-${idx + 1}`,
         units: item.qty,
@@ -43,22 +114,22 @@ export async function POST(req: NextRequest) {
         hsn: 0,
       })),
       payment_method: paymentMethod,
-      sub_total: total,
+      sub_total: numericTotal,
       length: 15,
       breadth: 10,
       height: 10,
       weight: 0.5,
     }
 
-    if (paymentMethod === 'COD') {
+    if (paymentMethod === 'COD' && !codAlreadyProcessed) {
       await persistOrderRecord({
         orderId,
         paymentId: paymentId || 'COD',
         customerEmail: customer.email,
-        total: Number(total),
-        items,
+        total: numericTotal,
+        items: validatedItems,
         status: 'success',
-        userId: session?.userId ?? null,
+        userId: session.userId,
       })
     }
 
@@ -76,16 +147,29 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (paymentMethod === 'COD') {
+    if (paymentMethod === 'COD' && !codAlreadyProcessed) {
+      const eFirst = escapeHtml(customer.firstName)
+      const eLast = escapeHtml(customer.lastName)
+      const eAddress = escapeHtml(customer.address)
+      const eLandmark = customer.landmark ? escapeHtml(customer.landmark) : ''
+      const eCity = escapeHtml(customer.city)
+      const eState = escapeHtml(customer.state)
+      const ePincode = escapeHtml(customer.pincode)
+      const ePhone = escapeHtml(customer.phone)
+      const eEmail = escapeHtml(customer.email)
+      const eOrderId = escapeHtml(orderId)
+      const eTotal = escapeHtml(numericTotal)
+      const eShipmentId = shiprocketResponse?.shipment_id ? escapeHtml(shiprocketResponse.shipment_id) : ''
+
       try {
-        const orderItemsHtml = items.map((i: any) =>
+        const orderItemsHtml = validatedItems.map((i) =>
           '<li style="padding: 12px 0; border-bottom: 1px dashed #e8ddd0; display: flex; justify-content: space-between; color: #6b5347;">' +
-          '<span>' + i.qty + 'x ' + i.name + '</span>' +
+          '<span>' + i.qty + 'x ' + escapeHtml(i.name) + '</span>' +
           '<strong style="color: #2d1b15;">Rs ' + (i.price * i.qty) + '</strong>' +
           '</li>'
         ).join('');
 
-        const itemCount = items.reduce((s: number, i: any) => s + i.qty, 0);
+        const itemCount = validatedItems.reduce((s, i) => s + i.qty, 0);
         const placedAt = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) + ' IST';
         const fmtDate = (d: Date) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
         const etaRange = fmtDate(new Date(Date.now() + 3 * 86400000)) + ' – ' + fmtDate(new Date(Date.now() + 6 * 86400000));
@@ -93,20 +177,20 @@ export async function POST(req: NextRequest) {
         await resend.emails.send({
           from: 'Annavedah Foods <support@annavedahfoods.com>',
           to: customer.email,
-          subject: 'COD Order Confirmed — ' + orderId + ' (Pay Rs ' + total + ' on delivery)',
+          subject: 'COD Order Confirmed — ' + orderId + ' (Pay Rs ' + numericTotal + ' on delivery)',
           html: '<div style="font-family: \'Helvetica Neue\', Arial, sans-serif; max-width: 640px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e8ddd0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">' +
             '<div style="background-color: #faf6f0; padding: 40px 20px; text-align: center; border-bottom: 2px solid #c9a45c;">' +
             '<img src="https://annavedahfoods.com/Logo.webp" alt="Annavedah Foods Logo" style="height: 60px; width: auto; margin-bottom: 20px;" />' +
             '<h1 style="color: #8b1a1a; margin: 0; font-size: 28px; letter-spacing: -0.5px;">Your COD Order is Confirmed!</h1>' +
-            '<p style="color: #6b5347; font-size: 13px; margin: 8px 0 0;">Order ' + orderId + ' &middot; placed ' + placedAt + '</p>' +
+            '<p style="color: #6b5347; font-size: 13px; margin: 8px 0 0;">Order ' + eOrderId + ' &middot; placed ' + placedAt + '</p>' +
             '</div>' +
             '<div style="padding: 40px 32px;">' +
-            '<p style="color: #6b5347; font-size: 16px; line-height: 1.6; margin-top: 0;">Hi <strong>' + customer.firstName + '</strong>,</p>' +
-            '<p style="color: #6b5347; font-size: 16px; line-height: 1.6;">Your Cash-on-Delivery order is locked in. Please keep <strong>Rs ' + total + '</strong> ready for the courier when they arrive at your doorstep.</p>' +
+            '<p style="color: #6b5347; font-size: 16px; line-height: 1.6; margin-top: 0;">Hi <strong>' + eFirst + '</strong>,</p>' +
+            '<p style="color: #6b5347; font-size: 16px; line-height: 1.6;">Your Cash-on-Delivery order is locked in. Please keep <strong>Rs ' + eTotal + '</strong> ready for the courier when they arrive at your doorstep.</p>' +
 
             '<div style="background-color: #fffbeb; padding: 18px 20px; border-radius: 12px; border: 1px solid #fde68a; margin: 24px 0;">' +
               '<p style="margin: 0 0 4px; color: #78350f; font-size: 14px; font-weight: bold;">Amount due on delivery</p>' +
-              '<p style="margin: 0; color: #78350f; font-size: 24px; font-weight: 700;">Rs ' + total + '</p>' +
+              '<p style="margin: 0; color: #78350f; font-size: 24px; font-weight: 700;">Rs ' + eTotal + '</p>' +
               '<p style="margin: 8px 0 0; color: #78350f; font-size: 13px;">Cash only. The courier may not carry change for very large notes.</p>' +
             '</div>' +
 
@@ -118,7 +202,7 @@ export async function POST(req: NextRequest) {
 
             '<h3 style="color: #2d1b15; font-size: 17px; margin: 28px 0 12px; border-bottom: 1px solid #e8ddd0; padding-bottom: 8px;">Order Details</h3>' +
             '<table style="width: 100%; border-collapse: collapse; font-size: 14px;">' +
-              '<tr><td style="padding: 6px 0; color: #6b5347; width: 160px;">Order ID</td><td style="padding: 6px 0; color: #2d1b15; font-weight: 600;">' + orderId + '</td></tr>' +
+              '<tr><td style="padding: 6px 0; color: #6b5347; width: 160px;">Order ID</td><td style="padding: 6px 0; color: #2d1b15; font-weight: 600;">' + eOrderId + '</td></tr>' +
               '<tr><td style="padding: 6px 0; color: #6b5347;">Payment Method</td><td style="padding: 6px 0; color: #2d1b15;">Cash on Delivery</td></tr>' +
               '<tr><td style="padding: 6px 0; color: #6b5347;">Items</td><td style="padding: 6px 0; color: #2d1b15;">' + itemCount + ' item' + (itemCount === 1 ? '' : 's') + '</td></tr>' +
             '</table>' +
@@ -130,17 +214,17 @@ export async function POST(req: NextRequest) {
             '</li>' +
             '<li style="padding: 16px 0 0; display: flex; justify-content: space-between; font-size: 18px;">' +
             '<span style="color: #6b5347;">Total (COD)</span>' +
-            '<strong style="color: #8b1a1a;">Rs ' + total + '</strong>' +
+            '<strong style="color: #8b1a1a;">Rs ' + eTotal + '</strong>' +
             '</li></ul>' +
 
             '<h3 style="color: #2d1b15; font-size: 17px; margin: 32px 0 12px; border-bottom: 1px solid #e8ddd0; padding-bottom: 8px;">Shipping To</h3>' +
             '<p style="color: #6b5347; font-size: 14px; line-height: 1.7; margin: 0; background:#faf6f0; padding:14px 16px; border-radius:8px; border-left:4px solid #c9a45c;">' +
-            '<strong style="color:#2d1b15;">' + customer.firstName + ' ' + customer.lastName + '</strong><br/>' +
-            customer.address + '<br/>' +
-            (customer.landmark ? customer.landmark + '<br/>' : '') +
-            customer.city + ', ' + customer.state + ' ' + customer.pincode + '<br/>' +
-            'Phone: ' + customer.phone + '<br/>' +
-            'Email: ' + customer.email +
+            '<strong style="color:#2d1b15;">' + eFirst + ' ' + eLast + '</strong><br/>' +
+            eAddress + '<br/>' +
+            (eLandmark ? eLandmark + '<br/>' : '') +
+            eCity + ', ' + eState + ' ' + ePincode + '<br/>' +
+            'Phone: ' + ePhone + '<br/>' +
+            'Email: ' + eEmail +
             '</p>' +
 
             '<h3 style="color: #2d1b15; font-size: 17px; margin: 32px 0 12px; border-bottom: 1px solid #e8ddd0; padding-bottom: 8px;">Need to Change Something?</h3>' +
@@ -159,17 +243,17 @@ export async function POST(req: NextRequest) {
         });
 
         const adminAddressBlock =
-          customer.firstName + ' ' + customer.lastName + '<br/>' +
-          customer.address + '<br/>' +
-          (customer.landmark ? customer.landmark + '<br/>' : '') +
-          customer.city + ', ' + customer.state + ' - ' + customer.pincode + '<br/>' +
-          'Phone: ' + customer.phone + '<br/>' +
-          'Email: ' + customer.email;
+          eFirst + ' ' + eLast + '<br/>' +
+          eAddress + '<br/>' +
+          (eLandmark ? eLandmark + '<br/>' : '') +
+          eCity + ', ' + eState + ' - ' + ePincode + '<br/>' +
+          'Phone: ' + ePhone + '<br/>' +
+          'Email: ' + eEmail;
 
         const adminItemsTable = '<table style="width: 100%; border-collapse: collapse; font-size: 14px;">' +
           '<thead><tr><th align="left" style="padding:8px 0; border-bottom:1px solid #e8ddd0; color:#6b5347;">Item</th><th align="center" style="padding:8px 0; border-bottom:1px solid #e8ddd0; color:#6b5347;">Qty</th><th align="right" style="padding:8px 0; border-bottom:1px solid #e8ddd0; color:#6b5347;">Unit</th><th align="right" style="padding:8px 0; border-bottom:1px solid #e8ddd0; color:#6b5347;">Line</th></tr></thead>' +
-          '<tbody>' + items.map((i: any) =>
-            '<tr><td style="padding:8px 0; border-bottom:1px dashed #e8ddd0; color:#2d1b15;">' + i.name + '</td>' +
+          '<tbody>' + validatedItems.map((i) =>
+            '<tr><td style="padding:8px 0; border-bottom:1px dashed #e8ddd0; color:#2d1b15;">' + escapeHtml(i.name) + '</td>' +
             '<td align="center" style="padding:8px 0; border-bottom:1px dashed #e8ddd0; color:#2d1b15;">' + i.qty + '</td>' +
             '<td align="right" style="padding:8px 0; border-bottom:1px dashed #e8ddd0; color:#6b5347;">Rs ' + i.price + '</td>' +
             '<td align="right" style="padding:8px 0; border-bottom:1px dashed #e8ddd0; color:#2d1b15; font-weight:600;">Rs ' + (i.price * i.qty) + '</td></tr>'
@@ -177,43 +261,43 @@ export async function POST(req: NextRequest) {
 
         await resend.emails.send({
           from: 'Annavedah System <support@annavedahfoods.com>',
-          to: ['zyberweave@gmail.com', 'annavedahfoods@gmail.com'],
-          subject: '🚨 NEW COD ORDER - ' + orderId + ' (Rs ' + total + ' to collect)',
+          to: getAdminEmails(),
+          subject: '🚨 NEW COD ORDER - ' + orderId + ' (Rs ' + numericTotal + ' to collect)',
           replyTo: customer.email,
           html: '<div style="font-family: \'Helvetica Neue\', Arial, sans-serif; max-width: 680px; margin: 0 auto; background-color: #ffffff; border: 2px solid #8b1a1a; border-radius: 12px; overflow: hidden;">' +
             '<div style="background-color: #8b1a1a; padding: 24px; text-align: center;">' +
             '<h1 style="color: #ffffff; margin: 0; font-size: 24px;">New COD Order Alert 🚨</h1>' +
-            '<p style="color: #ffe4e6; font-size: 13px; margin: 6px 0 0;">' + orderId + ' &middot; ' + placedAt + '</p>' +
+            '<p style="color: #ffe4e6; font-size: 13px; margin: 6px 0 0;">' + eOrderId + ' &middot; ' + placedAt + '</p>' +
             '</div>' +
             '<div style="padding: 28px 32px;">' +
               '<div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:14px 16px; margin-bottom:20px;">' +
-                '<p style="margin:0; color:#78350f; font-size:13px; font-weight:bold;">⚠️ COD — Rs ' + total + ' to be collected on delivery</p>' +
+                '<p style="margin:0; color:#78350f; font-size:13px; font-weight:bold;">⚠️ COD — Rs ' + eTotal + ' to be collected on delivery</p>' +
               '</div>' +
 
               '<h3 style="color: #8b1a1a; border-bottom: 1px solid #e8ddd0; padding-bottom: 8px; margin-top:0;">Order Details</h3>' +
               '<table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">' +
-                '<tr><td style="padding: 6px 0; color: #6b5347; width: 140px;">Order ID:</td><td style="padding: 6px 0; font-weight: bold; color: #2d1b15;">' + orderId + '</td></tr>' +
+                '<tr><td style="padding: 6px 0; color: #6b5347; width: 140px;">Order ID:</td><td style="padding: 6px 0; font-weight: bold; color: #2d1b15;">' + eOrderId + '</td></tr>' +
                 '<tr><td style="padding: 6px 0; color: #6b5347;">Payment Method:</td><td style="padding: 6px 0; color: #2d1b15;">Cash on Delivery</td></tr>' +
-                '<tr><td style="padding: 6px 0; color: #6b5347;">Total to Collect:</td><td style="padding: 6px 0; font-weight: bold; color: #8b1a1a; font-size: 18px;">Rs ' + total + '</td></tr>' +
+                '<tr><td style="padding: 6px 0; color: #6b5347;">Total to Collect:</td><td style="padding: 6px 0; font-weight: bold; color: #8b1a1a; font-size: 18px;">Rs ' + eTotal + '</td></tr>' +
                 '<tr><td style="padding: 6px 0; color: #6b5347;">Placed at:</td><td style="padding: 6px 0; color: #2d1b15;">' + placedAt + '</td></tr>' +
-                (shiprocketResponse?.shipment_id ? '<tr><td style="padding: 6px 0; color: #6b5347;">Shiprocket Shipment:</td><td style="padding: 6px 0; color: #2d1b15;">' + shiprocketResponse.shipment_id + '</td></tr>' : '') +
+                (eShipmentId ? '<tr><td style="padding: 6px 0; color: #6b5347;">Shiprocket Shipment:</td><td style="padding: 6px 0; color: #2d1b15;">' + eShipmentId + '</td></tr>' : '') +
               '</table>' +
 
               '<h3 style="color: #8b1a1a; border-bottom: 1px solid #e8ddd0; padding-bottom: 8px; margin-top: 24px;">Customer</h3>' +
               '<table style="width: 100%; border-collapse: collapse;">' +
-                '<tr><td style="padding: 6px 0; color: #6b5347; width: 140px;">Name:</td><td style="padding: 6px 0; font-weight: bold; color: #2d1b15;">' + customer.firstName + ' ' + customer.lastName + '</td></tr>' +
-                '<tr><td style="padding: 6px 0; color: #6b5347;">Email:</td><td style="padding: 6px 0;"><a href="mailto:' + customer.email + '" style="color:#8b1a1a;">' + customer.email + '</a></td></tr>' +
-                '<tr><td style="padding: 6px 0; color: #6b5347;">Phone:</td><td style="padding: 6px 0;"><a href="tel:' + customer.phone + '" style="color:#8b1a1a;">' + customer.phone + '</a></td></tr>' +
+                '<tr><td style="padding: 6px 0; color: #6b5347; width: 140px;">Name:</td><td style="padding: 6px 0; font-weight: bold; color: #2d1b15;">' + eFirst + ' ' + eLast + '</td></tr>' +
+                '<tr><td style="padding: 6px 0; color: #6b5347;">Email:</td><td style="padding: 6px 0;"><a href="mailto:' + eEmail + '" style="color:#8b1a1a;">' + eEmail + '</a></td></tr>' +
+                '<tr><td style="padding: 6px 0; color: #6b5347;">Phone:</td><td style="padding: 6px 0;"><a href="tel:' + ePhone + '" style="color:#8b1a1a;">' + ePhone + '</a></td></tr>' +
               '</table>' +
 
               '<h3 style="color: #8b1a1a; border-bottom: 1px solid #e8ddd0; padding-bottom: 8px; margin-top: 24px;">Shipping Address</h3>' +
               '<p style="color: #2d1b15; font-size: 14px; line-height: 1.7; margin: 0; background:#faf6f0; padding:14px 16px; border-radius:8px; border-left:4px solid #c9a45c;">' + adminAddressBlock + '</p>' +
 
-              '<h3 style="color: #8b1a1a; border-bottom: 1px solid #e8ddd0; padding-bottom: 8px; margin-top: 24px;">Items Ordered (' + itemCount + ' units across ' + items.length + ' SKUs)</h3>' +
+              '<h3 style="color: #8b1a1a; border-bottom: 1px solid #e8ddd0; padding-bottom: 8px; margin-top: 24px;">Items Ordered (' + itemCount + ' units across ' + validatedItems.length + ' SKUs)</h3>' +
               adminItemsTable +
 
               '<div style="text-align: center; margin-top: 32px;">' +
-              '<a href="https://annavedahfoods.com/n7xk2mq9pf" style="display: inline-block; background-color: #2d1b15; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">View in Dashboard</a>' +
+              '<a href="https://annavedahfoods.com/' + (process.env.NEXT_PUBLIC_ADMIN_SLUG || 'n7xk2mq9pf') + '" style="display: inline-block; background-color: #2d1b15; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">View in Dashboard</a>' +
               '</div></div></div>',
         });
       } catch (emailErr) {
@@ -229,6 +313,7 @@ export async function POST(req: NextRequest) {
         payment_id: paymentId ?? null,
         shippingSyncFailed: Boolean(shiprocketError),
         shippingSyncError: shiprocketError,
+        duplicate: codAlreadyProcessed,
       },
       { status: shiprocketError ? 202 : 201 },
     )

@@ -5,17 +5,11 @@ import { refundRequests, users, orders } from '@/lib/schema';
 import { eq } from 'drizzle-orm';
 import { put } from '@vercel/blob';
 import { Resend } from 'resend';
+import { escapeHtml, getAdminEmails } from '@/lib/email-utils';
+import { rateLimitOr429 } from '@/lib/rate-limit';
+import { userOwnsOrder } from '@/lib/order-records';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-
-function escapeHtml(input: string): string {
-  return String(input)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
 
 export async function POST(req: Request) {
   const session = await verifySession();
@@ -23,6 +17,9 @@ export async function POST(req: Request) {
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const block = await rateLimitOr429(`refund:user:${session.userId}`, 5, 600);
+  if (block) return block;
 
   try {
     const formData = await req.formData();
@@ -33,9 +30,30 @@ export async function POST(req: Request) {
     if (!orderId || !reason) {
       return NextResponse.json({ error: 'Order ID and Reason are required' }, { status: 400 });
     }
+    if (typeof reason !== 'string' || reason.trim().length < 10 || reason.length > 2000) {
+      return NextResponse.json({ error: 'Reason must be 10–2000 characters' }, { status: 400 });
+    }
+
+    // Ownership check BEFORE the blob upload — prevents storage-cost abuse via
+    // unauthorized refund attempts on someone else's order.
+    const [user] = await db.select().from(users).where(eq(users.id, session.userId)).limit(1);
+    const [order] = await db.select().from(orders).where(eq(orders.orderId, orderId)).limit(1);
+
+    if (!order) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+    if (!userOwnsOrder(order, { userId: session.userId }, user?.email ?? null)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     let imageUrl: string | null = null;
     if (file && file.size > 0) {
+      if (file.size > 5 * 1024 * 1024) {
+        return NextResponse.json({ error: 'Image must be under 5 MB' }, { status: 400 });
+      }
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        return NextResponse.json({ error: 'Image must be JPEG, PNG, or WebP' }, { status: 400 });
+      }
       const blob = await put('refunds/' + Date.now() + '-' + file.name, file, {
         access: 'public',
       });
@@ -48,12 +66,6 @@ export async function POST(req: Request) {
       reason,
       imageUrl,
     }).returning();
-
-    // Look up user email for notifications
-    const [user] = await db.select().from(users).where(eq(users.id, session.userId)).limit(1);
-
-    // Look up the original order so we can include richer context in emails
-    const [order] = await db.select().from(orders).where(eq(orders.orderId, orderId)).limit(1);
 
     let orderItems: Array<{ name: string; qty: number; price: number }> = [];
     if (order?.items) {
@@ -146,7 +158,7 @@ export async function POST(req: Request) {
 
         await resend.emails.send({
           from: 'Annavedah System <support@annavedahfoods.com>',
-          to: ['zyberweave@gmail.com', 'annavedahfoods@gmail.com'],
+          to: getAdminEmails(),
           subject: '⚠️ ACTION REQUIRED: Refund Request ' + refundIdStr + ' on Order ' + orderId,
           replyTo: user.email,
           html: '<div style="font-family: \'Helvetica Neue\', Arial, sans-serif; max-width: 680px; margin: 0 auto; background-color: #ffffff; border: 2px solid #d97706; border-radius: 12px; overflow: hidden;">' +
@@ -158,8 +170,8 @@ export async function POST(req: Request) {
               '<h3 style="color: #d97706; border-bottom: 1px solid #e8ddd0; padding-bottom: 8px; margin-top:0;">Refund Details</h3>' +
               '<table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">' +
                 '<tr><td style="padding: 6px 0; color: #6b5347; width: 160px;">Refund Reference:</td><td style="padding: 6px 0; font-weight: bold; color: #2d1b15;">' + refundIdStr + '</td></tr>' +
-                '<tr><td style="padding: 6px 0; color: #6b5347;">Order ID:</td><td style="padding: 6px 0; font-weight: bold; color: #2d1b15;">' + orderId + '</td></tr>' +
-                (orderPaymentId ? '<tr><td style="padding: 6px 0; color: #6b5347;">Payment ID:</td><td style="padding: 6px 0; color: #2d1b15;">' + orderPaymentId + '</td></tr>' : '') +
+                '<tr><td style="padding: 6px 0; color: #6b5347;">Order ID:</td><td style="padding: 6px 0; font-weight: bold; color: #2d1b15;">' + safeOrderId + '</td></tr>' +
+                (orderPaymentId ? '<tr><td style="padding: 6px 0; color: #6b5347;">Payment ID:</td><td style="padding: 6px 0; color: #2d1b15;">' + escapeHtml(orderPaymentId) + '</td></tr>' : '') +
                 (orderTotal !== null ? '<tr><td style="padding: 6px 0; color: #6b5347;">Order Total:</td><td style="padding: 6px 0; color: #8b1a1a; font-weight: bold; font-size: 16px;">Rs ' + orderTotal + '</td></tr>' : '<tr><td style="padding: 6px 0; color: #6b5347;">Order Total:</td><td style="padding: 6px 0; color: #a39189; font-style: italic;">Order not found in DB</td></tr>') +
                 '<tr><td style="padding: 6px 0; color: #6b5347;">Order Placed:</td><td style="padding: 6px 0; color: #2d1b15;">' + orderPlacedAt + '</td></tr>' +
                 '<tr><td style="padding: 6px 0; color: #6b5347;">Submitted:</td><td style="padding: 6px 0; color: #2d1b15;">' + submittedAt + '</td></tr>' +
@@ -169,7 +181,7 @@ export async function POST(req: Request) {
               '<h3 style="color: #d97706; border-bottom: 1px solid #e8ddd0; padding-bottom: 8px; margin-top: 24px;">Customer</h3>' +
               '<table style="width: 100%; border-collapse: collapse;">' +
                 '<tr><td style="padding: 6px 0; color: #6b5347; width: 160px;">Name:</td><td style="padding: 6px 0; font-weight: bold; color: #2d1b15;">' + safeUserName + '</td></tr>' +
-                '<tr><td style="padding: 6px 0; color: #6b5347;">Email:</td><td style="padding: 6px 0; color: #2d1b15;"><a href="mailto:' + user.email + '" style="color: #8b1a1a;">' + user.email + '</a></td></tr>' +
+                '<tr><td style="padding: 6px 0; color: #6b5347;">Email:</td><td style="padding: 6px 0; color: #2d1b15;"><a href="mailto:' + encodeURIComponent(user.email) + '" style="color: #8b1a1a;">' + escapeHtml(user.email) + '</a></td></tr>' +
                 '<tr><td style="padding: 6px 0; color: #6b5347;">Account ID:</td><td style="padding: 6px 0; color: #2d1b15;">#' + user.id + '</td></tr>' +
               '</table>' +
 
@@ -183,8 +195,8 @@ export async function POST(req: Request) {
               attachmentBlock +
 
               '<div style="text-align: center; margin-top: 32px; display:flex; gap:12px; justify-content:center;">' +
-              '<a href="https://annavedahfoods.com/n7xk2mq9pf" style="display: inline-block; background-color: #2d1b15; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Review in Dashboard</a>' +
-              '<a href="mailto:' + user.email + '?subject=Re%3A%20Refund%20' + encodeURIComponent(refundIdStr) + '%20%E2%80%94%20Order%20' + encodeURIComponent(orderId) + '" style="display: inline-block; background-color: #ffffff; color: #2d1b15; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; border: 1px solid #2d1b15; margin-left:8px;">Reply to Customer</a>' +
+              '<a href="https://annavedahfoods.com/' + (process.env.NEXT_PUBLIC_ADMIN_SLUG || 'n7xk2mq9pf') + '" style="display: inline-block; background-color: #2d1b15; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Review in Dashboard</a>' +
+              '<a href="mailto:' + encodeURIComponent(user.email) + '?subject=Re%3A%20Refund%20' + encodeURIComponent(refundIdStr) + '%20%E2%80%94%20Order%20' + encodeURIComponent(orderId) + '" style="display: inline-block; background-color: #ffffff; color: #2d1b15; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; border: 1px solid #2d1b15; margin-left:8px;">Reply to Customer</a>' +
               '</div>' +
             '</div></div>',
         });

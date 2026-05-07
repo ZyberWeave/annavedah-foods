@@ -59,6 +59,10 @@ export async function middleware(req: NextRequest) {
   }
 }
 
+// Note: Next.js requires `matcher` to be a static literal — it cannot read
+// process.env at runtime. If you change NEXT_PUBLIC_ADMIN_SLUG, update the
+// pattern below to match. The runtime guard above also enforces auth on the
+// configured slug.
 export const config = {
   matcher: ['/dashboard/:path*', '/n7xk2mq9pf/:path*'],
 };

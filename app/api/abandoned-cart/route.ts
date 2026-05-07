@@ -2,20 +2,37 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { abandonedCarts } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
+import { getClientIp, rateLimitOr429 } from '@/lib/rate-limit'
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = getClientIp(req)
+    const block = await rateLimitOr429(`abandoned:ip:${ip}`, 10, 600)
+    if (block) return block
+
     const { email, phone, name, items } = await req.json()
 
-    if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 })
+    if (!email || typeof email !== 'string' || !EMAIL_RE.test(email) || email.length > 200) {
+      return NextResponse.json({ error: 'Valid email is required' }, { status: 400 })
     }
 
-    if (!items || items.length === 0) {
-      return NextResponse.json({ error: 'Cart is empty' }, { status: 400 })
+    if (!Array.isArray(items) || items.length === 0 || items.length > 50) {
+      return NextResponse.json({ error: 'Cart is empty or too large' }, { status: 400 })
+    }
+
+    if (name && (typeof name !== 'string' || name.length > 100)) {
+      return NextResponse.json({ error: 'Name too long' }, { status: 400 })
+    }
+    if (phone && (typeof phone !== 'string' || phone.length > 20)) {
+      return NextResponse.json({ error: 'Phone too long' }, { status: 400 })
     }
 
     const cartItemsString = JSON.stringify(items)
+    if (cartItemsString.length > 50000) {
+      return NextResponse.json({ error: 'Cart payload too large' }, { status: 400 })
+    }
 
     // Check if an active abandoned cart exists for this email
     const existing = await db
