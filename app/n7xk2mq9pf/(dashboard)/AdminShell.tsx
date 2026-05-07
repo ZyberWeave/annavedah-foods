@@ -128,8 +128,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         </div>
       )}
 
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-muted/20">
-        <header className="h-16 flex items-center justify-between px-6 border-b border-border bg-card/80 backdrop-blur-md">
+      <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-muted/20">
+        <header className="sticky top-0 z-10 h-16 flex items-center justify-between px-6 border-b border-border bg-card/80 backdrop-blur-md">
           <div className="flex items-center gap-4">
             <button onClick={() => setMobileNavOpen(true)} className="md:hidden p-2 rounded-md hover:bg-muted text-muted-foreground">
               <Menu className="w-5 h-5" />
@@ -172,7 +172,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 scroll-smooth">
+        <div className="p-4 sm:p-6 lg:p-8 scroll-smooth">
           {children}
         </div>
       </main>
