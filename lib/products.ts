@@ -215,6 +215,16 @@ export async function getNextProductDisplayOrder() {
   return Number(row?.maxOrder ?? -1) + 1;
 }
 
+export async function syncProductIdSequence() {
+  await db.execute(sql`
+    select setval(
+      pg_get_serial_sequence('products', 'id'),
+      coalesce((select max(id) from products), 0) + 1,
+      false
+    )
+  `);
+}
+
 export async function seedCurrentProducts() {
   for (const [index, product] of staticProducts.entries()) {
     const values = buildProductInsertValues(
@@ -254,6 +264,8 @@ export async function seedCurrentProducts() {
         },
       });
   }
+
+  await syncProductIdSequence();
 
   return staticProducts.length;
 }

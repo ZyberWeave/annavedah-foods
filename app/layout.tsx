@@ -18,6 +18,20 @@ import { MapPin, Phone, Mail, Instagram, Facebook, Globe } from 'lucide-react'
 import { getProducts } from '@/lib/products'
 import './globals.css'
 
+const footerProductLinks = [
+  { label: 'Vegetable Powders', href: '/products/tomato-powder' },
+  { label: 'Greens & Superfoods', href: '/products/moringa-powder' },
+  { label: 'Functional Mixes', href: '/products/mix-dried-vegetables-peri-peri' },
+  { label: 'Heritage Grains', href: '/products/indrayani-rice' },
+]
+
+const footerCompanyLinks = [
+  { label: 'About Us', href: '/heritage' },
+  { label: 'Our Story', href: '/heritage#story' },
+  { label: 'Sustainability', href: '/blog/sustainable-eating-with-millets' },
+  { label: 'Careers', href: '/contact' },
+]
+
 export const metadata: Metadata = {
   title: 'Annavedah Foods | सात्विक, पौष्टिक आणि परिपूर्ण',
   description: 'Traditional nutrition brand offering pure farm-sourced grains, pulses, and premium dehydrated powders for holistic wellness. Pure, authentic, and nutrient-rich.',
@@ -139,9 +153,9 @@ export default async function RootLayout({
               <div>
                 <h4 className="font-bold text-[#c9a45c] mb-6 text-lg">Products</h4>
                 <ul className="space-y-3 text-sm text-[#faf6f0]/70">
-                  {['Vegetable Powders', 'Greens & Superfoods', 'Functional Mixes', 'Heritage Grains'].map((item) => (
-                    <li key={item}>
-                      <a href="/products" className="hover:text-[#c9a45c] transition-colors">{item}</a>
+                  {footerProductLinks.map((item) => (
+                    <li key={item.label}>
+                      <Link href={item.href} className="hover:text-[#c9a45c] transition-colors">{item.label}</Link>
                     </li>
                   ))}
                 </ul>
@@ -151,9 +165,9 @@ export default async function RootLayout({
               <div>
                 <h4 className="font-bold text-[#c9a45c] mb-6 text-lg">Company</h4>
                 <ul className="space-y-3 text-sm text-[#faf6f0]/70">
-                  {['About Us', 'Our Story', 'Sustainability', 'Careers'].map((item) => (
-                    <li key={item}>
-                      <a href="/heritage" className="hover:text-[#c9a45c] transition-colors">{item}</a>
+                  {footerCompanyLinks.map((item) => (
+                    <li key={item.label}>
+                      <Link href={item.href} className="hover:text-[#c9a45c] transition-colors">{item.label}</Link>
                     </li>
                   ))}
                 </ul>

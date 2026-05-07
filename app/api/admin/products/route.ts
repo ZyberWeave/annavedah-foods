@@ -11,6 +11,7 @@ import {
   isProductCategory,
   normalizePackPrices,
   normalizeStringList,
+  syncProductIdSequence,
   type ProductMutationInput,
 } from '@/lib/products';
 import { productReviews, products } from '@/lib/schema';
@@ -101,6 +102,8 @@ export async function POST(req: NextRequest) {
     if (existing) {
       return NextResponse.json({ error: 'A product with this slug already exists.' }, { status: 409 });
     }
+
+    await syncProductIdSequence();
 
     const displayOrder = await getNextProductDisplayOrder();
     const [created] = await db

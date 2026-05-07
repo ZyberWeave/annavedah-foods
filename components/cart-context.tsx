@@ -7,6 +7,7 @@ import { useProductsData } from '@/components/products-context'
 import { toast } from 'sonner'
 
 export const CART_LIMIT = 10
+const AUTH_CHANGED_EVENT = 'auth-changed'
 
 type CartItem = {
   product: Product
@@ -64,7 +65,6 @@ function mergeCartItems(serverItems: CartItem[], localItems: CartItem[]): CartIt
     if (!serverKeys.has(key)) {
       merged.push(localItem)
     }
-    // If duplicate, server version already in merged — skip
   }
 
   return merged.slice(0, CART_LIMIT)
@@ -100,21 +100,141 @@ function hydrateCartItems(items: CartItem[], productMap: Map<number, Product>): 
   return hydrated
 }
 
+function getCartSignature(items: CartItem[]): string {
+  return JSON.stringify(
+    items
+      .map((item) => ({
+        id: item.product.id,
+        size: item.selectedPack?.size ?? '',
+        qty: item.qty,
+      }))
+      .sort((a, b) => {
+        if (a.id !== b.id) return a.id - b.id
+        return a.size.localeCompare(b.size)
+      }),
+  )
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const { productMap } = useProductsData()
   const [items, setItems] = useState<CartItem[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null)
   const isFirstRender = useRef(true)
-  const initialProductMap = useRef(productMap)
+  const itemsRef = useRef<CartItem[]>([])
+  const productMapRef = useRef(productMap)
+  const syncInFlight = useRef(false)
+  const pendingSyncRef = useRef(false)
+  const pendingSyncToastRef = useRef(false)
+
+  useEffect(() => {
+    itemsRef.current = items
+  }, [items])
+
+  useEffect(() => {
+    productMapRef.current = productMap
+  }, [productMap])
+
+  const writeLocalCart = useCallback((nextItems: CartItem[]) => {
+    localStorage.setItem('annavedah_cart', JSON.stringify(nextItems))
+  }, [])
+
+  const persistServerCart = useCallback(async (nextItems: CartItem[]) => {
+    const res = await fetch('/api/cart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: nextItems }),
+      cache: 'no-store',
+    })
+
+    return res.ok
+  }, [])
+
+  const replaceCart = useCallback((nextItems: CartItem[]) => {
+    setItems(nextItems)
+    writeLocalCart(nextItems)
+  }, [writeLocalCart])
+
+  const syncAccountCart = useCallback(async ({
+    baseItems,
+    mergeLocal = true,
+    showMergeToast = false,
+  }: {
+    baseItems?: CartItem[]
+    mergeLocal?: boolean
+    showMergeToast?: boolean
+  } = {}) => {
+    if (syncInFlight.current) {
+      pendingSyncRef.current = true
+      pendingSyncToastRef.current = pendingSyncToastRef.current || showMergeToast
+      return
+    }
+    syncInFlight.current = true
+
+    try {
+      const authRes = await fetch('/api/auth/me', { cache: 'no-store' })
+      if (!authRes.ok) return
+
+      const cartRes = await fetch('/api/cart', { cache: 'no-store' })
+      if (!cartRes.ok) return
+
+      const data = await cartRes.json()
+      const localItems = baseItems ?? itemsRef.current
+      const serverItems = Array.isArray(data.cart)
+        ? hydrateCartItems(data.cart, productMapRef.current).slice(0, CART_LIMIT)
+        : []
+
+      if (serverItems.length > 0 && mergeLocal && localItems.length > 0) {
+        const merged = mergeCartItems(serverItems, localItems)
+        const mergedSignature = getCartSignature(merged)
+        const localSignature = getCartSignature(localItems)
+        const serverSignature = getCartSignature(serverItems)
+
+        if (mergedSignature !== localSignature) {
+          replaceCart(merged)
+        }
+
+        if (mergedSignature !== serverSignature) {
+          await persistServerCart(merged)
+          if (showMergeToast) {
+            toast.info('Cart synced', {
+              description: 'Your account cart was combined with this device cart.',
+            })
+          }
+        }
+
+        return
+      }
+
+      if (serverItems.length > 0) {
+        if (getCartSignature(serverItems) !== getCartSignature(localItems)) {
+          replaceCart(serverItems)
+        }
+        return
+      }
+
+      if (localItems.length > 0) {
+        await persistServerCart(localItems)
+      }
+    } catch {
+      // Best-effort sync only. Local cart stays usable even if auth or network fails.
+    } finally {
+      syncInFlight.current = false
+      if (pendingSyncRef.current) {
+        pendingSyncRef.current = false
+        const showQueuedToast = pendingSyncToastRef.current
+        pendingSyncToastRef.current = false
+        void syncAccountCart({ showMergeToast: showQueuedToast })
+      }
+    }
+  }, [persistServerCart, replaceCart])
 
   useEffect(() => {
     let localItems: CartItem[] = []
     const localCart = localStorage.getItem('annavedah_cart')
     if (localCart) {
       try {
-        localItems = hydrateCartItems(JSON.parse(localCart), initialProductMap.current)
-        // Enforce limit on stale localStorage data
+        localItems = hydrateCartItems(JSON.parse(localCart), productMapRef.current)
         if (localItems.length > CART_LIMIT) {
           localItems = localItems.slice(0, CART_LIMIT)
         }
@@ -122,48 +242,37 @@ export function CartProvider({ children }: { children: ReactNode }) {
       } catch {}
     }
 
-    fetch('/api/cart')
-      .then(res => res.json())
-      .then(data => {
-        if (data.cart && data.cart.length > 0) {
-          const serverItems: CartItem[] = hydrateCartItems(data.cart, initialProductMap.current)
+    void syncAccountCart({
+      baseItems: localItems,
+      showMergeToast: localItems.length > 0,
+    })
+  }, [syncAccountCart])
 
-          if (localItems.length > 0) {
-            // --- Smart Merge: combine server + local, capped at CART_LIMIT ---
-            const merged = mergeCartItems(serverItems, localItems)
+  useEffect(() => {
+    const handleAuthChanged = () => {
+      void syncAccountCart({ showMergeToast: true })
+    }
 
-            const localOnlyCount = merged.length - serverItems.length
-            if (localOnlyCount > 0 && localItems.length > localOnlyCount) {
-              toast.info('Cart merged', {
-                description: `Your saved cart was combined with your browsing cart. Max ${CART_LIMIT} items kept.`,
-              })
-            }
+    const handleFocus = () => {
+      void syncAccountCart()
+    }
 
-            setItems(merged)
-            localStorage.setItem('annavedah_cart', JSON.stringify(merged))
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void syncAccountCart()
+      }
+    }
 
-            // Persist merged result to server
-            fetch('/api/cart', {
-              method: 'POST',
-              body: JSON.stringify({ items: merged }),
-              headers: { 'Content-Type': 'application/json' }
-            }).catch(() => {})
-          } else {
-            // No local cart — just use server
-            setItems(serverItems.slice(0, CART_LIMIT))
-            localStorage.setItem('annavedah_cart', JSON.stringify(serverItems.slice(0, CART_LIMIT)))
-          }
-        } else if (localItems.length > 0) {
-          // Server empty, push local to server
-          fetch('/api/cart', {
-            method: 'POST',
-            body: JSON.stringify({ items: localItems }),
-            headers: { 'Content-Type': 'application/json' }
-          }).catch(() => {})
-        }
-      })
-      .catch(() => {})
-  }, [])
+    window.addEventListener(AUTH_CHANGED_EVENT, handleAuthChanged)
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener(AUTH_CHANGED_EVENT, handleAuthChanged)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [syncAccountCart])
 
   useEffect(() => {
     setItems((prev) => hydrateCartItems(prev, productMap))
@@ -175,18 +284,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    localStorage.setItem('annavedah_cart', JSON.stringify(items))
+    writeLocalCart(items)
 
     const timer = setTimeout(() => {
-      fetch('/api/cart', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items })
-      }).catch(() => {})
+      persistServerCart(items).catch(() => {})
     }, 1000)
 
     return () => clearTimeout(timer)
-  }, [items])
+  }, [items, persistServerCart, writeLocalCart])
 
   const openCart = useCallback(() => setIsOpen(true), [])
   const closeCart = useCallback(() => setIsOpen(false), [])
@@ -195,24 +300,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((prev) => {
       const existing = prev.find((item) => item.product.id === id && item.selectedPack?.size === pack?.size)
       if (existing) {
-        // Updating quantity of existing item — always allowed
         return prev.map((item) =>
           item.product.id === id && item.selectedPack?.size === pack?.size
             ? { ...item, qty: item.qty + qty }
             : item,
         )
       }
-      // Adding new line item — check limit
+
       if (uniqueItemCount(prev) >= CART_LIMIT) {
         toast.warning('Cart is full', {
           description: `You can have up to ${CART_LIMIT} different items in your cart. Remove an item to add more.`,
         })
         return prev
       }
+
       const product = productMap.get(id)
       if (!product || product.price <= 0) return prev
       return [...prev, { product, qty, selectedPack: pack }]
     })
+
     if (!opts?.silent) {
       setIsOpen(true)
     }
@@ -228,7 +334,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (!target) return prev
       if (newPack.size === currentSize) return prev
 
-      // If a line with the new size already exists, merge quantities and drop the old line
       const existingNewSize = prev.find((item) => item.product.id === id && item.selectedPack?.size === newPack.size)
       if (existingNewSize) {
         return prev
@@ -253,6 +358,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setItems((prev) => prev.filter((item) => !(item.product.id === id && item.selectedPack?.size === size)))
       return
     }
+
     setItems((prev) =>
       prev.map((item) =>
         item.product.id === id && item.selectedPack?.size === size ? { ...item, qty } : item,
@@ -264,24 +370,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems([])
     setAppliedCoupon(null)
     localStorage.removeItem('annavedah_cart')
-    fetch('/api/cart', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: [] })
-    }).catch(() => {})
-  }, [])
+    persistServerCart([]).catch(() => {})
+  }, [persistServerCart])
 
   const total = items.reduce((sum, item) => sum + (item.selectedPack ? item.selectedPack.price : item.product.price) * item.qty, 0)
   const count = items.reduce((sum, item) => sum + item.qty, 0)
 
-  // Re-validate coupon when cart total changes
   useEffect(() => {
     if (appliedCoupon) {
       const result = validateCoupon(appliedCoupon.code, total)
       if (!result.valid) {
         setAppliedCoupon(null)
       } else {
-        // Update discount in case cart total changed
         setAppliedCoupon((prev) => prev ? { ...prev, discount: result.discount } : null)
       }
     }
@@ -292,6 +392,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!result.valid) {
       return { success: false, error: result.error }
     }
+
     setAppliedCoupon({
       code: result.coupon.code,
       description: result.coupon.description,
@@ -299,6 +400,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       type: result.coupon.type,
       value: result.coupon.value,
     })
+
     return { success: true }
   }, [total])
 

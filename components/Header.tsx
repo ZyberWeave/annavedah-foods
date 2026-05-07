@@ -96,6 +96,7 @@ export default function Header() {
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
     setUser(null)
+    window.dispatchEvent(new Event('auth-changed'))
     window.location.href = '/'
   }
 

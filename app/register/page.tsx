@@ -116,6 +116,8 @@ export default function RegisterPage() {
         return;
       }
 
+      window.dispatchEvent(new Event('auth-changed'));
+
       const params = new URLSearchParams(window.location.search);
       const redirectPath = params.get('redirect');
       if (redirectPath) {

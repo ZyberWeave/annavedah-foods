@@ -67,6 +67,8 @@ export default function LoginPage() {
         throw new Error(data.error || 'Failed to login');
       }
 
+      window.dispatchEvent(new Event('auth-changed'));
+
       // All users go to dashboard from the regular login
       const params = new URLSearchParams(window.location.search);
       const redirectPath = params.get('redirect');
