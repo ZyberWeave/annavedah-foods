@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"c:/Users/rroha/Downloads/annavedah-foods-website\" status)",
+      "Bash(git -C \"c:/Users/rroha/Downloads/annavedah-foods-website\" diff lib/content.ts)",
+      "Bash(git -C \"c:/Users/rroha/Downloads/annavedah-foods-website\" add lib/content.ts)",
+      "Bash(git -C c:/Users/rroha/Downloads/annavedah-foods-website commit -m ' *)",
+      "Bash(git -C \"c:/Users/rroha/Downloads/annavedah-foods-website\" push)",
+      "Bash(git -C \"c:/Users/rroha/Downloads/annavedah-foods-website\" add components/Header.tsx)"
+    ]
+  }
+}
