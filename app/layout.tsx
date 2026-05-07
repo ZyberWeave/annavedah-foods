@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { Analytics } from '@vercel/analytics/next'
 import { CartProvider } from '@/components/cart-context'
+import { ProductsProvider } from '@/components/products-context'
 import { WishlistProvider } from '@/components/wishlist-context'
 import { RecentlyViewedProvider } from '@/components/recently-viewed-context'
 import Header from '@/components/Header'
@@ -14,6 +15,7 @@ import { Toaster } from 'sonner'
 import Image from 'next/image'
 import Link from 'next/link'
 import { MapPin, Phone, Mail, Instagram, Facebook, Globe } from 'lucide-react'
+import { getProducts } from '@/lib/products'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -38,11 +40,13 @@ export const metadata: Metadata = {
     locale: 'en_IN',
   },
 }
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const initialProducts = await getProducts()
+
   return (
     <html lang="en">
       <head>
@@ -57,17 +61,21 @@ export default function RootLayout({
         className="antialiased"
         style={{ fontFamily: "'Outfit', 'Cormorant Garamond', Georgia, serif" }}
       >
-        <WishlistProvider>
-          <RecentlyViewedProvider>
-            <CartProvider>
-              <Header />
-              {children}
-              <SlideCart />
-              <NewsletterPopup />
-              <FloatingWhatsApp />
-            </CartProvider>
-          </RecentlyViewedProvider>
-        </WishlistProvider>
+        <ProductsProvider initialProducts={initialProducts}>
+          <WishlistProvider>
+            <RecentlyViewedProvider>
+              <CartProvider>
+                <Header />
+                <main className="site-main">
+                  {children}
+                </main>
+                <SlideCart />
+                <NewsletterPopup />
+                <FloatingWhatsApp />
+              </CartProvider>
+            </RecentlyViewedProvider>
+          </WishlistProvider>
+        </ProductsProvider>
         <Suspense fallback={null}>
           <FacebookPixel />
         </Suspense>
@@ -188,4 +196,3 @@ export default function RootLayout({
     </html>
   )
 }
-

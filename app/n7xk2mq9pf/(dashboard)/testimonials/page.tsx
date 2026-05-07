@@ -149,8 +149,8 @@ export default function AdminTestimonialsPage() {
         body: JSON.stringify({ id: prev.id, displayOrder: current.displayOrder }),
       }),
     ]);
-    setTestimonials((prev) =>
-      prev.map((r) => {
+    setTestimonials((items) =>
+      items.map((r) => {
         if (r.id === current.id) return { ...r, displayOrder: prev.displayOrder };
         if (r.id === prev.id) return { ...r, displayOrder: current.displayOrder };
         return r;
@@ -175,8 +175,8 @@ export default function AdminTestimonialsPage() {
         body: JSON.stringify({ id: next.id, displayOrder: current.displayOrder }),
       }),
     ]);
-    setTestimonials((prev) =>
-      prev.map((r) => {
+    setTestimonials((items) =>
+      items.map((r) => {
         if (r.id === current.id) return { ...r, displayOrder: next.displayOrder };
         if (r.id === next.id) return { ...r, displayOrder: current.displayOrder };
         return r;

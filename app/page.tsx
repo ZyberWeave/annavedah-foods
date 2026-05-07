@@ -5,9 +5,10 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { products, banners, testimonials, categories } from '@/lib/content'
+import { banners, testimonials, categories } from '@/lib/content'
 import { Search, Leaf, Heart, Star, ShoppingCart, Package, Users, Shield, Check, Sparkles, ChevronDown } from 'lucide-react'
 import { useCart } from '@/components/cart-context'
+import { useProductsData } from '@/components/products-context'
 import {
   Carousel,
   CarouselContent,
@@ -417,6 +418,7 @@ function PLPProductCard({ product, index, add }: any) {
 
 export default function HomePage() {
   const router = useRouter()
+  const { products } = useProductsData()
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [currentBanner, setCurrentBanner] = useState(0)
@@ -445,7 +447,7 @@ export default function HomePage() {
   const prevBanner = () => setCurrentBanner((prev) => (prev - 1 + banners.length) % banners.length)
 
   return (
-    <div className="min-h-screen bg-[#faf6f0] text-[#2d1b15] pt-[130px] lg:pt-[172px]">
+    <div className="min-h-screen bg-[#faf6f0] text-[#2d1b15] site-page-gap-home">
       
 
       {/* Hero Section - Banner Slideshow */}

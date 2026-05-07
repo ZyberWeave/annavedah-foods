@@ -4,8 +4,9 @@ import { useMemo, useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { categories, products, type Product } from '@/lib/content'
+import { categories, type Product } from '@/lib/content'
 import { useCart } from '@/components/cart-context'
+import { useProductsData } from '@/components/products-context'
 import { ShoppingCart, Check, Search, SlidersHorizontal, X, ArrowUpDown, ChevronDown } from 'lucide-react'
 import Breadcrumbs from '@/components/Breadcrumbs'
 import WishlistButton from '@/components/WishlistButton'
@@ -118,6 +119,7 @@ function PLPProductCard({ product, add }: { product: Product; add: (id: number, 
 }
 
 export default function ProductsPage() {
+  const { products } = useProductsData()
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<SortKey>('featured')
@@ -176,7 +178,7 @@ export default function ProductsPage() {
         })
     }
     return sorted
-  }, [selectedCategory, searchQuery, sortBy, minPrice, maxPrice, activeTags])
+  }, [products, selectedCategory, searchQuery, sortBy, minPrice, maxPrice, activeTags])
 
   const toggleTag = (tag: string) => {
     setActiveTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
@@ -402,7 +404,7 @@ export default function ProductsPage() {
       </section>
 
       {/* ══════════════ MAIN CONTENT ══════════════ */}
-      <div id="shop-grid" className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
+      <div id="shop-grid" className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8 scroll-mt-[calc(var(--site-header-offset)+1rem)]">
       <Breadcrumbs items={[{ label: 'Products' }]} />
 
       <div className="rounded-3xl bg-gradient-to-r from-[#8b1a1a] via-[#8b1a1a] to-[#6d1414] text-white px-6 py-6 md:py-5 flex flex-col md:flex-row items-center justify-between gap-5 shadow-xl overflow-hidden">
@@ -417,7 +419,7 @@ export default function ProductsPage() {
 
       <div className="flex flex-col lg:flex-row gap-12">
         {/* Desktop sidebar */}
-        <div className="hidden lg:block lg:w-1/4 flex-shrink-0 lg:sticky lg:top-48 lg:self-start lg:max-h-[calc(100vh-13rem)] lg:overflow-y-auto z-10 scrollbar-thin scrollbar-thumb-[#e8ddd0] scrollbar-track-transparent pr-2">
+        <div className="hidden lg:block lg:w-1/4 flex-shrink-0 lg:sticky lg:self-start lg:max-h-[calc(100vh-13rem)] lg:overflow-y-auto z-10 scrollbar-thin scrollbar-thumb-[#e8ddd0] scrollbar-track-transparent pr-2 site-sticky-top">
           {FilterPanel}
         </div>
 

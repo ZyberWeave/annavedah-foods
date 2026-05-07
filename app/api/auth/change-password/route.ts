@@ -21,6 +21,15 @@ export async function PUT(req: Request) {
     if (newPassword.length < 8) {
       return NextResponse.json({ error: 'New password must be at least 8 characters' }, { status: 400 });
     }
+    if (!/[A-Z]/.test(newPassword)) {
+      return NextResponse.json({ error: 'New password must include an uppercase letter' }, { status: 400 });
+    }
+    if (!/[a-z]/.test(newPassword)) {
+      return NextResponse.json({ error: 'New password must include a lowercase letter' }, { status: 400 });
+    }
+    if (!/\d/.test(newPassword)) {
+      return NextResponse.json({ error: 'New password must include a number' }, { status: 400 });
+    }
 
     const [user] = await db
       .select({ id: users.id, password: users.password })

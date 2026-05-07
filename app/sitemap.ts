@@ -1,10 +1,12 @@
-import { products, blogPosts } from '@/lib/content'
+import { blogPosts } from '@/lib/content'
+import { getProducts } from '@/lib/products'
 import type { MetadataRoute } from 'next'
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://annavedahfoods.com'
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
+  const products = await getProducts()
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [

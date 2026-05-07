@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { products, type Product, type ProductCategory } from '@/lib/content';
+import { type Product, type ProductCategory } from '@/lib/content';
 import { Button } from '@/components/ui/button';
 import {
   Loader2, ShieldCheck, LogOut, ArrowLeft,
@@ -13,8 +13,10 @@ import { ADMIN_SLUG } from '@/lib/admin-config';
 
 type SortKey = 'name' | 'sellPrice' | 'buyPrice' | 'margin' | 'marginPct';
 type SortDir = 'asc' | 'desc';
+type AdminProduct = Product & { active: boolean };
 
 export default function ProfitabilityPage() {
+  const [products, setProducts] = useState<AdminProduct[]>([]);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -25,17 +27,31 @@ export default function ProfitabilityPage() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data.user || data.user.role !== 'admin') {
+    const load = async () => {
+      try {
+        const authRes = await fetch('/api/auth/me');
+        const authData = await authRes.json();
+
+        if (!authData.user || authData.user.role !== 'admin') {
           router.push(`/${ADMIN_SLUG}/login`);
-        } else {
-          setUser(data.user);
+          return;
         }
-      })
-      .catch(() => router.push(`/${ADMIN_SLUG}/login`))
-      .finally(() => setLoading(false));
+
+        setUser(authData.user);
+
+        const productsRes = await fetch('/api/admin/products');
+        const productsData = await productsRes.json();
+        if (Array.isArray(productsData.products)) {
+          setProducts(productsData.products);
+        }
+      } catch {
+        router.push(`/${ADMIN_SLUG}/login`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
   }, [router]);
 
   const handleLogout = async () => {
@@ -46,7 +62,7 @@ export default function ProfitabilityPage() {
   // Only products with prices
   const pricedProducts = useMemo(() =>
     products.filter(p => p.packPrices.length > 0 && p.price > 0),
-    []
+    [products]
   );
 
   const categories = useMemo(() => {
@@ -138,7 +154,7 @@ export default function ProfitabilityPage() {
   }
 
   return (
-    <div className="min-h-screen pt-[120px] lg:pt-[190px] pb-16 bg-[#faf6f0]">
+    <div className="min-h-screen site-page-gap pb-16 bg-[#faf6f0]">
       <div className="container mx-auto px-4 max-w-7xl">
 
         {/* Header */}

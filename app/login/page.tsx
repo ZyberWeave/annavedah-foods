@@ -95,7 +95,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen pt-[120px] lg:pt-[190px] pb-16 flex items-center justify-center bg-[#faf6f0] px-4">
+    <div className="min-h-screen site-page-gap pb-16 flex items-center justify-center bg-[#faf6f0] px-4">
       <div className="max-w-md w-full bg-white p-8 rounded-3xl border border-[#e8ddd0] shadow-xl">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-[#8b1a1a] mb-2">Welcome Back</h1>

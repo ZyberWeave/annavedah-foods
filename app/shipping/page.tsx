@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function ShippingPage() {
   return (
-    <div className="bg-[#faf6f0] min-h-screen pt-[120px] lg:pt-[190px] pb-20">
+    <div className="bg-[#faf6f0] min-h-screen site-page-gap pb-20">
       <div className="container mx-auto px-4 max-w-4xl">
         <div className="bg-white rounded-3xl shadow-xl border border-[#e8ddd0] overflow-hidden">
           {/* Header */}

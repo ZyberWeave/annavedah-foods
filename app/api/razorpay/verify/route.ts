@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { Resend } from 'resend'
-import { db } from '@/lib/db'
-import { orders, abandonedCarts, users } from '@/lib/schema'
-import { eq, and } from 'drizzle-orm'
+import { persistOrderRecord } from '@/lib/order-records'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -26,25 +24,14 @@ export async function POST(req: NextRequest) {
     // Payment Verified! 
     if (customer && items && total) {
       try {
-        // Find user by email to link order
-        const userRecords = await db.select().from(users).where(eq(users.email, customer.email)).limit(1)
-        const userId = userRecords.length > 0 ? userRecords[0].id : null
-
-        // Save Order
-        await db.insert(orders).values({
+        await persistOrderRecord({
           orderId,
           paymentId: razorpay_payment_id,
-          userId,
           customerEmail: customer.email,
-          total: parseInt(total),
-          items: JSON.stringify(items),
-          status: 'success'
+          total: Number(total),
+          items,
+          status: 'success',
         })
-
-        // Mark abandoned cart as recovered
-        await db.update(abandonedCarts)
-          .set({ status: 'recovered' })
-          .where(and(eq(abandonedCarts.email, customer.email), eq(abandonedCarts.status, 'pending')))
       } catch (dbErr) {
         console.error('Failed to save order or update abandoned cart:', dbErr)
       }

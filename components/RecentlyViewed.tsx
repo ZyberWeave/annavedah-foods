@@ -4,11 +4,12 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useMemo } from 'react'
 import { useRecentlyViewed } from '@/components/recently-viewed-context'
-import { products } from '@/lib/content'
+import { useProductsData } from '@/components/products-context'
 import { Clock } from 'lucide-react'
 
 export default function RecentlyViewed({ excludeId }: { excludeId?: number }) {
   const { ids } = useRecentlyViewed()
+  const { products } = useProductsData()
 
   const list = useMemo(() => {
     return ids
@@ -16,7 +17,7 @@ export default function RecentlyViewed({ excludeId }: { excludeId?: number }) {
       .map((id) => products.find((p) => p.id === id))
       .filter(Boolean)
       .slice(0, 8)
-  }, [ids, excludeId])
+  }, [ids, excludeId, products])
 
   if (list.length === 0) return null
 

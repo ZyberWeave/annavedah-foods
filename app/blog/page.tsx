@@ -23,7 +23,7 @@ export default function BlogIndexPage() {
     <div className="min-h-screen" style={{ background: '#faf6f0' }}>
       {/* Hero Header */}
       <div
-        className="relative overflow-hidden pt-[120px] lg:pt-[190px] pb-16"
+        className="relative overflow-hidden site-page-gap pb-16"
         style={{
           background: 'linear-gradient(135deg, #2d1b15 0%, #8b1a1a 50%, #6d1414 100%)',
         }}
@@ -199,4 +199,3 @@ export default function BlogIndexPage() {
     </div>
   )
 }
-

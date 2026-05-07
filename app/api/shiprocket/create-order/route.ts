@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createShiprocketOrder, type ShiprocketOrderPayload } from '@/lib/shiprocket'
 import { Resend } from 'resend'
-import { db } from '@/lib/db'
-import { orders, abandonedCarts, users } from '@/lib/schema'
-import { eq, and } from 'drizzle-orm'
+import { persistOrderRecord } from '@/lib/order-records'
+import { verifySession } from '@/lib/auth'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -11,6 +10,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { orderId, paymentId, customer, items, total, paymentMethod = 'Prepaid' } = body
+    const session = await verifySession()
 
     if (!orderId || !customer || !items?.length) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -50,33 +50,33 @@ export async function POST(req: NextRequest) {
       weight: 0.5,
     }
 
-    const shiprocketResponse = await createShiprocketOrder(payload)
+    if (paymentMethod === 'COD') {
+      await persistOrderRecord({
+        orderId,
+        paymentId: paymentId || 'COD',
+        customerEmail: customer.email,
+        total: Number(total),
+        items,
+        status: 'success',
+        userId: session?.userId ?? null,
+      })
+    }
+
+    let shiprocketResponse: Awaited<ReturnType<typeof createShiprocketOrder>> | null = null
+    let shiprocketError: string | null = null
+
+    try {
+      shiprocketResponse = await createShiprocketOrder(payload)
+    } catch (shiprocketErr) {
+      shiprocketError = shiprocketErr instanceof Error ? shiprocketErr.message : 'Shiprocket sync failed'
+      console.error('[shiprocket/create-order] sync failure', shiprocketErr)
+
+      if (paymentMethod !== 'COD') {
+        throw shiprocketErr
+      }
+    }
 
     if (paymentMethod === 'COD') {
-      try {
-        // Find user by email to link order
-        const userRecords = await db.select().from(users).where(eq(users.email, customer.email)).limit(1)
-        const userId = userRecords.length > 0 ? userRecords[0].id : null
-
-        // Save Order
-        await db.insert(orders).values({
-          orderId,
-          paymentId: paymentId || 'COD',
-          userId,
-          customerEmail: customer.email,
-          total: parseInt(total),
-          items: JSON.stringify(items),
-          status: 'success'
-        })
-
-        // Mark abandoned cart as recovered
-        await db.update(abandonedCarts)
-          .set({ status: 'recovered' })
-          .where(and(eq(abandonedCarts.email, customer.email), eq(abandonedCarts.status, 'pending')))
-      } catch (dbErr) {
-        console.error('Failed to save COD order or update abandoned cart:', dbErr)
-      }
-
       try {
         const orderItemsHtml = items.map((i: any) =>
           '<li style="padding: 12px 0; border-bottom: 1px dashed #e8ddd0; display: flex; justify-content: space-between; color: #6b5347;">' +
@@ -224,11 +224,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        shipment_id: shiprocketResponse.shipment_id,
-        order_id: shiprocketResponse.order_id,
-        payment_id: paymentId,
+        shipment_id: shiprocketResponse?.shipment_id ?? null,
+        order_id: shiprocketResponse?.order_id ?? orderId,
+        payment_id: paymentId ?? null,
+        shippingSyncFailed: Boolean(shiprocketError),
+        shippingSyncError: shiprocketError,
       },
-      { status: 201 },
+      { status: shiprocketError ? 202 : 201 },
     )
   } catch (err: unknown) {
     console.error('[shiprocket/create-order]', err)

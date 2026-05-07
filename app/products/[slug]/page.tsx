@@ -5,8 +5,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { products } from '@/lib/content'
 import { useCart } from '@/components/cart-context'
+import { useProductsData } from '@/components/products-context'
 import { useRecentlyViewed } from '@/components/recently-viewed-context'
 import { ShoppingCart, Check, Truck, ShieldCheck, RefreshCcw, Star } from 'lucide-react'
 import Breadcrumbs from '@/components/Breadcrumbs'
@@ -23,6 +23,7 @@ type ProductPageProps = {
 
 export default function ProductDetailPage(props: ProductPageProps) {
   const params = use(props.params)
+  const { products } = useProductsData()
   const product = products.find((item) => item.slug === params.slug)
   if (!product) {
     notFound()
@@ -44,7 +45,7 @@ export default function ProductDetailPage(props: ProductPageProps) {
     .slice(0, 4)
 
   return (
-    <div className="container mx-auto px-4 pt-[120px] lg:pt-[190px] pb-20 lg:pb-16 space-y-12">
+    <div className="container mx-auto px-4 site-page-gap pb-20 lg:pb-16 space-y-12">
       <Breadcrumbs
         items={[
           { label: 'Products', href: '/products' },

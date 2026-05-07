@@ -37,6 +37,19 @@
   --sidebar-accent-foreground: oklch(0.97 0.01 60);
   --sidebar-border: oklch(0.4 0.05 40);
   --sidebar-ring: oklch(0.75 0.12 75);
+  --site-header-offset: 116px;
+  --site-page-gap: 4px;
+  --site-page-gap-home: 14px;
+  --site-page-gap-wide: 24px;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --site-header-offset: 172px;
+    --site-page-gap: 18px;
+    --site-page-gap-home: 0px;
+    --site-page-gap-wide: 28px;
+  }
 }
 
 .dark {
@@ -247,6 +260,31 @@
 }
 
 /* Utility Classes */
+.site-main {
+  min-height: 100vh;
+  padding-top: var(--site-header-offset);
+}
+
+.site-page-gap {
+  padding-top: var(--site-page-gap);
+}
+
+.site-page-gap-home {
+  padding-top: var(--site-page-gap-home);
+}
+
+.site-page-gap-wide {
+  padding-top: var(--site-page-gap-wide);
+}
+
+.site-sticky-top {
+  top: calc(var(--site-header-offset) + 1rem);
+}
+
+html {
+  scroll-padding-top: calc(var(--site-header-offset) + 1rem);
+}
+
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }

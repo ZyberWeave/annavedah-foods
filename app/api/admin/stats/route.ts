@@ -3,7 +3,7 @@ import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { orders, users, refundRequests } from '@/lib/schema';
 import { sql, eq, desc, ne } from 'drizzle-orm';
-import { products } from '@/lib/content';
+import { getProducts } from '@/lib/products';
 
 export async function GET() {
   const { response } = await requireAdmin();
@@ -49,6 +49,8 @@ export async function GET() {
       .orderBy(desc(orders.createdAt))
       .limit(5);
 
+    const activeProducts = await getProducts();
+
     const recentOrders = recentRows.map((r) => {
       let parsed: Array<{ qty: number }> = [];
       try { parsed = JSON.parse(r.items); } catch { parsed = []; }
@@ -72,7 +74,7 @@ export async function GET() {
       activeOrders: Number(activeOrders) || 0,
       userCount: Number(userCount) || 0,
       pendingRefunds: Number(pendingRefunds) || 0,
-      productCount: products.length,
+      productCount: activeProducts.length,
       recentOrders,
     });
   } catch (error) {

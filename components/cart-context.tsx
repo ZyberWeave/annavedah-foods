@@ -1,8 +1,9 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
-import { products, type Product } from '@/lib/content'
+import { type Product } from '@/lib/content'
 import { validateCoupon } from '@/lib/coupons'
+import { useProductsData } from '@/components/products-context'
 import { toast } from 'sonner'
 
 export const CART_LIMIT = 10
@@ -69,18 +70,50 @@ function mergeCartItems(serverItems: CartItem[], localItems: CartItem[]): CartIt
   return merged.slice(0, CART_LIMIT)
 }
 
+function hydrateCartItems(items: CartItem[], productMap: Map<number, Product>): CartItem[] {
+  const hydrated: CartItem[] = []
+
+  for (const item of items) {
+    const product = productMap.get(item.product.id)
+    if (!product) continue
+
+    const matchedPack = item.selectedPack?.size
+      ? product.packPrices.find((pack) => pack.size === item.selectedPack?.size)
+      : undefined
+
+    const fallbackPack = product.packPrices[0]
+    const selectedPack = matchedPack
+      ? { size: matchedPack.size, price: matchedPack.price }
+      : fallbackPack
+        ? { size: fallbackPack.size, price: fallbackPack.price }
+        : undefined
+
+    if (product.price <= 0 && !selectedPack) continue
+
+    hydrated.push({
+      product,
+      qty: Math.max(1, Number(item.qty) || 1),
+      selectedPack,
+    })
+  }
+
+  return hydrated
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { productMap } = useProductsData()
   const [items, setItems] = useState<CartItem[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null)
   const isFirstRender = useRef(true)
+  const initialProductMap = useRef(productMap)
 
   useEffect(() => {
     let localItems: CartItem[] = []
     const localCart = localStorage.getItem('annavedah_cart')
     if (localCart) {
       try {
-        localItems = JSON.parse(localCart)
+        localItems = hydrateCartItems(JSON.parse(localCart), initialProductMap.current)
         // Enforce limit on stale localStorage data
         if (localItems.length > CART_LIMIT) {
           localItems = localItems.slice(0, CART_LIMIT)
@@ -93,7 +126,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       .then(res => res.json())
       .then(data => {
         if (data.cart && data.cart.length > 0) {
-          const serverItems: CartItem[] = data.cart
+          const serverItems: CartItem[] = hydrateCartItems(data.cart, initialProductMap.current)
 
           if (localItems.length > 0) {
             // --- Smart Merge: combine server + local, capped at CART_LIMIT ---
@@ -131,6 +164,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => {})
   }, [])
+
+  useEffect(() => {
+    setItems((prev) => hydrateCartItems(prev, productMap))
+  }, [productMap])
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -172,14 +209,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
         })
         return prev
       }
-      const product = products.find((p) => p.id === id)
+      const product = productMap.get(id)
       if (!product || product.price <= 0) return prev
       return [...prev, { product, qty, selectedPack: pack }]
     })
     if (!opts?.silent) {
       setIsOpen(true)
     }
-  }, [])
+  }, [productMap])
 
   const remove = useCallback((id: number, size?: string) => {
     setItems((prev) => prev.filter((item) => !(item.product.id === id && item.selectedPack?.size === size)))

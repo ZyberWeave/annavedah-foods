@@ -5,9 +5,11 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronDown } from 'lucide-react'
-import { categories, products, banners } from '@/lib/content'
+import { categories, banners } from '@/lib/content'
+import { useProductsData } from '@/components/products-context'
 
 export default function MegaMenu() {
+  const { products } = useProductsData()
   const [open, setOpen] = useState(false)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pathname = usePathname()

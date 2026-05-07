@@ -1,29 +1,19 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-
-let cachedKey: Uint8Array | null = null;
-function getEncodedKey(): Uint8Array {
-  if (cachedKey) return cachedKey;
-  const secretKey = process.env.SESSION_SECRET;
-  if (!secretKey || secretKey.length < 32) {
-    throw new Error('SESSION_SECRET env var must be set to a value of at least 32 characters');
-  }
-  cachedKey = new TextEncoder().encode(secretKey);
-  return cachedKey;
-}
+import { getSessionSecretKey } from './session-secret';
 
 export async function encrypt(payload: any) {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
-    .sign(getEncodedKey());
+    .sign(getSessionSecretKey());
 }
 
 export async function decrypt(session: string | undefined = '') {
   try {
-    const { payload } = await jwtVerify(session, getEncodedKey(), {
+    const { payload } = await jwtVerify(session, getSessionSecretKey(), {
       algorithms: ['HS256'],
     });
     return payload;

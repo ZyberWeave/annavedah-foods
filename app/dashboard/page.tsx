@@ -16,7 +16,7 @@ type Tab = 'overview' | 'orders' | 'settings';
 export default function DashboardPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen pt-32 pb-16 flex items-center justify-center bg-[#faf6f0]">
+      <div className="min-h-screen site-page-gap pb-16 flex items-center justify-center bg-[#faf6f0]">
         <Loader2 className="w-8 h-8 animate-spin text-[#c9a45c]" />
       </div>
     }>
@@ -92,6 +92,9 @@ function DashboardContent() {
   const handlePasswordChange = async () => {
     if (!currentPw || !newPw) { toast.error('Please fill in all password fields'); return; }
     if (newPw.length < 8) { toast.error('New password must be at least 8 characters'); return; }
+    if (!/[A-Z]/.test(newPw)) { toast.error('New password must include an uppercase letter'); return; }
+    if (!/[a-z]/.test(newPw)) { toast.error('New password must include a lowercase letter'); return; }
+    if (!/\d/.test(newPw)) { toast.error('New password must include a number'); return; }
     if (newPw !== confirmPw) { toast.error('Passwords do not match'); return; }
     setPwSaving(true);
     try {
@@ -109,7 +112,7 @@ function DashboardContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-32 pb-16 flex items-center justify-center bg-[#faf6f0]">
+      <div className="min-h-screen site-page-gap pb-16 flex items-center justify-center bg-[#faf6f0]">
         <Loader2 className="w-8 h-8 animate-spin text-[#c9a45c]" />
       </div>
     );
@@ -134,7 +137,7 @@ function DashboardContent() {
   };
 
   return (
-    <div className="min-h-screen pt-[120px] lg:pt-[190px] pb-16 bg-[#faf6f0]">
+    <div className="min-h-screen site-page-gap pb-16 bg-[#faf6f0]">
       {/* Full-bleed Hero Banner */}
       <div className="relative overflow-hidden mb-10 bg-gradient-to-br from-[#2d1b15] via-[#3d2520] to-[#1a0f0a]">
         <div className="absolute inset-0 pattern-overlay opacity-20" />
@@ -358,7 +361,7 @@ function DashboardContent() {
                     <label className="text-xs font-semibold text-[#6b5347] uppercase tracking-wider mb-2 block">New Password</label>
                     <div className="relative">
                       <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#a39189]" />
-                      <input type={showNewPw ? 'text' : 'password'} value={newPw} onChange={(e) => setNewPw(e.target.value)} className={`${inputCls} pl-10 pr-10`} placeholder="Minimum 8 characters" />
+                      <input type={showNewPw ? 'text' : 'password'} value={newPw} onChange={(e) => setNewPw(e.target.value)} className={`${inputCls} pl-10 pr-10`} placeholder="Create a strong password" />
                       <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#a39189] hover:text-[#6b5347]">
                         {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -375,6 +378,29 @@ function DashboardContent() {
                     </div>
                   </div>
                 </div>
+
+                {newPw && (() => {
+                  const checks = [
+                    { label: '8+ characters', ok: newPw.length >= 8 },
+                    { label: 'Uppercase letter', ok: /[A-Z]/.test(newPw) },
+                    { label: 'Lowercase letter', ok: /[a-z]/.test(newPw) },
+                    { label: 'A number', ok: /\d/.test(newPw) },
+                  ];
+                  return (
+                    <div className="rounded-xl border border-[#e8ddd0] bg-[#faf6f0]/60 p-4">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#6b5347] mb-2">Password requirements</p>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+                        {checks.map((c) => (
+                          <div key={c.label} className={`flex items-center gap-1.5 ${c.ok ? 'text-green-600' : 'text-[#a39189]'}`}>
+                            {c.ok ? <CheckCircle2 className="w-3.5 h-3.5" /> : <span className="w-3.5 h-3.5 rounded-full border border-[#a39189] inline-block" />}
+                            {c.label}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="flex justify-end">
                   <Button onClick={handlePasswordChange} disabled={pwSaving} className="bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-bold rounded-xl px-6">
                     {pwSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Shield className="w-4 h-4 mr-2" />}

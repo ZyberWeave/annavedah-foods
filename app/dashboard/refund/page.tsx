@@ -129,7 +129,7 @@ export default function RefundRequestPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen pt-32 pb-16 bg-[#faf6f0] flex items-center justify-center px-4">
+      <div className="min-h-screen site-page-gap pb-16 bg-[#faf6f0] flex items-center justify-center px-4">
         <div className="bg-white p-8 rounded-3xl border border-[#e8ddd0] shadow-sm max-w-md w-full text-center">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="w-8 h-8 text-green-600" />
@@ -145,7 +145,7 @@ export default function RefundRequestPage() {
   }
 
   return (
-    <div className="min-h-screen pt-[120px] lg:pt-[190px] pb-16 bg-[#faf6f0]">
+    <div className="min-h-screen site-page-gap pb-16 bg-[#faf6f0]">
       <div className="container mx-auto px-4 max-w-2xl">
         <div className="mb-8">
           <Link href="/dashboard" className="text-sm font-semibold text-[#c9a45c] hover:text-[#8b1a1a] mb-4 inline-block">&larr; Back to Dashboard</Link>

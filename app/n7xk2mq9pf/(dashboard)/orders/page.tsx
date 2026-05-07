@@ -20,7 +20,7 @@ interface AdminOrder {
   createdAt: string
 }
 
-const STATUS_TABS = ['All', 'processing', 'shipped', 'delivered', 'cancelled'] as const
+const STATUS_TABS = ['All', 'success', 'processing', 'shipped', 'delivered', 'cancelled'] as const
 type Tab = typeof STATUS_TABS[number]
 
 const formatINR = (n: number) => '₹' + n.toLocaleString('en-IN')

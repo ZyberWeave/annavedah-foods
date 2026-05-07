@@ -20,7 +20,7 @@ export default function AnnouncementBar() {
   const current = messages[idx]
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[60] bg-[#8b1a1a] text-white">
+    <div className="bg-[#8b1a1a] text-white">
       <div className="container mx-auto px-4 h-9 flex items-center justify-between text-[10px] tracking-widest uppercase font-semibold">
         <span className="hidden sm:block text-[#f5e6c8] font-medium tracking-normal">
           {current.tag}

@@ -73,7 +73,7 @@ export default function DonationCommitmentPage() {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0])
 
   return (
-    <div className="bg-[#faf6f0] min-h-screen pb-0 pt-[116px] lg:pt-[172px]">
+    <div className="bg-[#faf6f0] min-h-screen pb-0 pt-0">
 
       {/* ══════ HERO ══════ */}
       <section ref={heroRef} className="relative h-[70vh] md:h-[80vh] overflow-hidden">

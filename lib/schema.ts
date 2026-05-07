@@ -1,5 +1,28 @@
 import { pgTable, serial, text, timestamp, varchar, integer, boolean, decimal } from 'drizzle-orm/pg-core';
 
+export const products = pgTable('products', {
+  id: serial('id').primaryKey(),
+  slug: text('slug').notNull().unique(),
+  name: text('name').notNull(),
+  nameHindi: text('name_hindi').notNull(),
+  localName: text('local_name').notNull(),
+  category: varchar('category', { length: 50 }).notNull(),
+  price: integer('price').default(0).notNull(),
+  originalPrice: integer('original_price').default(0).notNull(),
+  costPrice: integer('cost_price').default(0).notNull(),
+  image: text('image').notNull(),
+  description: text('description').notNull(),
+  benefits: text('benefits').notNull(), // stored as JSON string
+  usage: text('usage').notNull(),
+  highlights: text('highlights').notNull(), // stored as JSON string
+  packPrices: text('pack_prices').notNull(), // stored as JSON string
+  badge: text('badge'),
+  active: boolean('active').default(true).notNull(),
+  displayOrder: integer('display_order').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 export const testimonials = pgTable('testimonials', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),

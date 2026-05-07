@@ -30,7 +30,7 @@ export default function TestimonialsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#faf6f0] via-white to-[#faf6f0]">
-      <div className="container mx-auto px-4 pt-[120px] lg:pt-[190px] pb-16 space-y-12">
+      <div className="container mx-auto px-4 site-page-gap pb-16 space-y-12">
         {/* Hero Header */}
         <div className="relative text-center space-y-5">
           <div className="absolute inset-0 -top-8 pointer-events-none overflow-hidden">

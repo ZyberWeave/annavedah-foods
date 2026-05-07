@@ -108,7 +108,7 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 pt-[120px] lg:pt-[190px] pb-16 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] md:items-start">
+    <div className="container mx-auto px-4 site-page-gap pb-16 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] md:items-start">
       <div className="space-y-8">
         <div className="space-y-4">
           <div className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-accent">

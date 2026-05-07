@@ -80,7 +80,7 @@ export default async function BlogPostPage({ params }: BlogPageProps) {
 
       {/* Hero banner */}
       <div
-        className={`relative overflow-hidden pt-[120px] lg:pt-[190px] pb-20 bg-gradient-to-br ${tagStyle.hero}`}
+        className={`relative overflow-hidden site-page-gap pb-20 bg-gradient-to-br ${tagStyle.hero}`}
         style={{ backgroundImage: `linear-gradient(135deg, #2d1b15 0%, #8b1a1a 100%)` }}
       >
         {/* Dot grid decoration */}
@@ -242,7 +242,7 @@ export default async function BlogPostPage({ params }: BlogPageProps) {
           </article>
 
           {/* Sidebar */}
-          <aside className="space-y-6 lg:sticky lg:top-48">
+          <aside className="space-y-6 lg:sticky site-sticky-top">
             {/* About this topic */}
             <div
               className="rounded-2xl p-6"

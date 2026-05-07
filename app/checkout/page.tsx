@@ -9,6 +9,7 @@ import Image from 'next/image'
 import { CheckCircle2, Loader2, MapPin, ShieldCheck, Truck, ChevronRight, AlertCircle, Tag, X, Ticket, ChevronDown, ChevronUp } from 'lucide-react'
 import { validateEmail, validatePhone, validateName, validateRequired } from '@/lib/validations'
 import Breadcrumbs from '@/components/Breadcrumbs'
+import { toast } from 'sonner'
 
 declare global {
   interface Window {
@@ -37,6 +38,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false)
   const [serviceability, setServiceability] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle')
   const [orderId, setOrderId] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [form, setForm] = useState<FormData>({
     firstName: '', lastName: '', email: '', phone: '',
     address: '', city: '', state: '', pincode: '',
@@ -116,7 +118,7 @@ export default function CheckoutPage() {
 
   if (isAuthChecking && step !== 'success') {
     return (
-      <div className="min-h-screen pt-[120px] lg:pt-[190px] pb-16 flex items-center justify-center bg-[#faf6f0]">
+      <div className="min-h-screen site-page-gap pb-16 flex items-center justify-center bg-[#faf6f0]">
         <Loader2 className="w-8 h-8 animate-spin text-[#c9a45c]" />
       </div>
     );
@@ -178,27 +180,56 @@ export default function CheckoutPage() {
     if (!validate()) return
     setLoading(true)
     try {
+      const orderItems = items.map(i => ({
+        name: `${i.product.name}${i.selectedPack ? ` (${i.selectedPack.size})` : ''}`,
+        qty: i.qty,
+        price: i.selectedPack ? i.selectedPack.price : i.product.price,
+      }))
+
       if (paymentMethod === 'COD') {
         const generatedOrderId = `COD_${Date.now()}`
-        
-        // Create Shiprocket order for COD directly
-        await fetch('/api/shiprocket/create-order', {
+
+        const persistRes = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: generatedOrderId,
+            paymentId: 'COD',
+            customerEmail: form.email,
+            items: orderItems,
+            total: finalTotal,
+            status: 'success',
+          }),
+        })
+
+        const persistData = await persistRes.json().catch(() => null)
+        if (!persistRes.ok) {
+          throw new Error(persistData?.error || 'Could not save COD order')
+        }
+
+        const shiprocketRes = await fetch('/api/shiprocket/create-order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             orderId: generatedOrderId,
             paymentId: 'COD',
             customer: form,
-            items: items.map(i => ({ 
-              name: `${i.product.name}${i.selectedPack ? ` (${i.selectedPack.size})` : ''}`, 
-              qty: i.qty, 
-              price: i.selectedPack ? i.selectedPack.price : i.product.price 
-            })),
+            items: orderItems,
             total: finalTotal,
             paymentMethod: 'COD',
           }),
         })
 
+        const shiprocketData = await shiprocketRes.json().catch(() => null)
+        if (!shiprocketRes.ok) {
+          throw new Error(shiprocketData?.error || 'Could not finalize COD order')
+        }
+
+        setSuccessMessage(
+          shiprocketData?.shippingSyncFailed
+            ? 'Your order is confirmed and saved. Shipping sync needs manual review, and our team will process dispatch shortly.'
+            : ''
+        )
         setOrderId(generatedOrderId)
         items.forEach(i => remove(i.product.id, i.selectedPack?.size))
         setStep('success')
@@ -241,11 +272,7 @@ export default function CheckoutPage() {
             body: JSON.stringify({ 
               ...response,
               customer: form,
-              items: items.map(i => ({ 
-                name: `${i.product.name}${i.selectedPack ? ` (${i.selectedPack.size})` : ''}`, 
-                qty: i.qty, 
-                price: i.selectedPack ? i.selectedPack.price : i.product.price 
-              })),
+              items: orderItems,
               total: finalTotal,
               orderId: order.id
             }),
@@ -254,22 +281,25 @@ export default function CheckoutPage() {
           if (!verify.verified) throw new Error('Payment verification failed')
 
           // 4. Create Shiprocket order
-          await fetch('/api/shiprocket/create-order', {
+          const shiprocketRes = await fetch('/api/shiprocket/create-order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               orderId: order.id,
               paymentId: response.razorpay_payment_id,
               customer: form,
-              items: items.map(i => ({ 
-                name: `${i.product.name}${i.selectedPack ? ` (${i.selectedPack.size})` : ''}`, 
-                qty: i.qty, 
-                price: i.selectedPack ? i.selectedPack.price : i.product.price 
-              })),
+              items: orderItems,
               total: finalTotal,
               paymentMethod: 'Prepaid',
             }),
           })
+
+          const shiprocketData = await shiprocketRes.json().catch(() => null)
+          setSuccessMessage(
+            !shiprocketRes.ok || shiprocketData?.shippingSyncFailed
+              ? 'Payment is confirmed. Shipping sync needs manual review, and our team will update dispatch shortly.'
+              : ''
+          )
 
           setOrderId(order.id)
           // Clear cart items
@@ -284,6 +314,7 @@ export default function CheckoutPage() {
       rzp.open()
     } catch (err) {
       console.error(err)
+      toast.error(err instanceof Error ? err.message : 'Could not place your order')
       setLoading(false)
     }
   }
@@ -300,8 +331,12 @@ export default function CheckoutPage() {
           </div>
           <h1 className="text-2xl font-bold text-foreground">Order Placed!</h1>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Your order <span className="font-semibold text-foreground">{orderId}</span> has been confirmed.
-            We've notified our shipping partner and will send tracking details to <span className="font-semibold">{form.email}</span>.
+            {successMessage || (
+              <>
+                Your order <span className="font-semibold text-foreground">{orderId}</span> has been confirmed.
+                We've notified our shipping partner and will send tracking details to <span className="font-semibold">{form.email}</span>.
+              </>
+            )}
           </p>
           <Button
             className="w-full h-12 font-semibold"
@@ -329,7 +364,7 @@ export default function CheckoutPage() {
   const currentStepIdx = steps.findIndex((s) => s.id === step)
 
   return (
-    <div className="min-h-screen pt-[120px] lg:pt-[190px] pb-12 px-4" style={{ background: 'var(--background)' }}>
+    <div className="min-h-screen site-page-gap pb-12 px-4" style={{ background: 'var(--background)' }}>
       <div className="max-w-5xl mx-auto">
 
         <div className="mb-6">
@@ -481,7 +516,7 @@ export default function CheckoutPage() {
 
           {/* ── RIGHT: Order Summary ── */}
           <div className="space-y-4">
-            <div className="rounded-2xl border border-border bg-card p-6 space-y-4 sticky top-24">
+            <div className="rounded-2xl border border-border bg-card p-6 space-y-4 sticky site-sticky-top">
               <h2 className="text-lg font-semibold text-foreground">Order Summary</h2>
 
               <div className="space-y-3 max-h-60 overflow-y-auto pr-1">

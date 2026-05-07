@@ -7,12 +7,13 @@ import { Heart, ShoppingCart, X, Trash2, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useWishlist, WISHLIST_LIMIT } from '@/components/wishlist-context'
 import { useCart } from '@/components/cart-context'
-import { products } from '@/lib/content'
+import { useProductsData } from '@/components/products-context'
 import Breadcrumbs from '@/components/Breadcrumbs'
 
 export default function WishlistPage() {
   const { ids, toggle, count, clear, isFull } = useWishlist()
   const { add } = useCart()
+  const { products } = useProductsData()
   const [showClearModal, setShowClearModal] = useState(false)
 
   const handleClearAll = useCallback(() => {
@@ -22,11 +23,11 @@ export default function WishlistPage() {
 
   const items = useMemo(
     () => ids.map((id) => products.find((p) => p.id === id)).filter(Boolean) as typeof products,
-    [ids],
+    [ids, products],
   )
 
   return (
-    <div className="container mx-auto px-4 pt-[120px] lg:pt-[190px] pb-16 space-y-8">
+    <div className="container mx-auto px-4 site-page-gap pb-16 space-y-8">
       <Breadcrumbs items={[{ label: 'Wishlist' }]} />
 
       <div className="flex items-center justify-between flex-wrap gap-3">

@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { products, categories } from '@/lib/content'
+import { categories } from '@/lib/content'
+import { useProductsData } from '@/components/products-context'
 import { Search, X, ArrowRight, TrendingUp, Sparkles, CornerDownLeft, ArrowUp, ArrowDown, Tag, Flame } from 'lucide-react'
 
 interface SearchResult {
@@ -43,6 +44,7 @@ const categoryDot: Record<string, string> = {
 }
 
 export default function SearchOverlay({ onClose }: { onClose: () => void }) {
+  const { products } = useProductsData()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [active, setActive] = useState(0)
@@ -52,7 +54,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
 
   const bestsellers = useMemo(
     () => products.filter((p) => p.badge === 'Bestseller' || p.badge === 'Popular' || p.badge === 'New').slice(0, 4),
-    [],
+    [products],
   )
 
   useEffect(() => {
@@ -101,7 +103,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
         badge: p.badge,
       }))
     setResults(matched)
-  }, [])
+  }, [products])
 
   const persistRecent = useCallback((term: string) => {
     const next = [term, ...recent.filter((r) => r.toLowerCase() !== term.toLowerCase())].slice(0, RECENT_MAX)

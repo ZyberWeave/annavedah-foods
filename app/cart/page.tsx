@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { useCart, CART_LIMIT } from '@/components/cart-context'
-import { products } from '@/lib/content'
+import { useProductsData } from '@/components/products-context'
 import { Plus, Minus, Trash2, ArrowRight, Tag, X, CheckCircle2, Loader2, AlertTriangle } from 'lucide-react'
 import Breadcrumbs from '@/components/Breadcrumbs'
 import TrustBadges from '@/components/TrustBadges'
@@ -16,6 +16,7 @@ const FREE_SHIPPING_THRESHOLD = 999
 
 export default function CartPage() {
   const { items, remove, updateQty, total, add, changePack, clearCart, appliedCoupon, applyCoupon, removeCoupon, isFull } = useCart()
+  const { products } = useProductsData()
   const router = useRouter()
   const [promoCode, setPromoCode] = useState('')
   const [promoError, setPromoError] = useState('')
@@ -34,7 +35,7 @@ export default function CartPage() {
     return products
       .filter((p) => p.price > 0 && !inCart.has(p.id) && (p.badge === 'Bestseller' || p.badge === 'Popular' || p.badge === 'New'))
       .slice(0, 4)
-  }, [items])
+  }, [items, products])
 
   const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - total)
   const progress = Math.min(100, (total / FREE_SHIPPING_THRESHOLD) * 100)
@@ -53,7 +54,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 pt-[120px] lg:pt-[190px] pb-16 space-y-8">
+    <div className="container mx-auto px-4 site-page-gap pb-16 space-y-8">
       <Breadcrumbs items={[{ label: 'Cart' }]} />
 
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -216,7 +217,7 @@ export default function CartPage() {
             )}
           </div>
 
-          <div className="space-y-4 lg:sticky lg:top-48 lg:self-start">
+          <div className="space-y-4 lg:sticky lg:self-start site-sticky-top">
             <div className="rounded-2xl border-2 border-[#e8ddd0] bg-white p-6 space-y-4">
               <h3 className="text-xl font-bold text-[#2d1b15]">Order Summary</h3>
               <div className="space-y-2">

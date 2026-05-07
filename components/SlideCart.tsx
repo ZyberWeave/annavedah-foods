@@ -5,11 +5,12 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { X, ShoppingCart, Plus, Minus, Trash2, ShieldCheck, Truck, Tag } from 'lucide-react'
 import { useCart, CART_LIMIT } from '@/components/cart-context'
-import { products } from '@/lib/content'
+import { useProductsData } from '@/components/products-context'
 
 const FREE_SHIPPING_THRESHOLD = 999
 
 export default function SlideCart() {
+  const { products } = useProductsData()
   const { items, isOpen, closeCart, total, count, remove, updateQty, add, changePack, appliedCoupon, isFull } = useCart()
 
   const upsells = useMemo(() => {
@@ -17,7 +18,7 @@ export default function SlideCart() {
     return products
       .filter((p) => p.price > 0 && !inCart.has(p.id) && (p.badge === 'Bestseller' || p.badge === 'Popular' || p.badge === 'New'))
       .slice(0, 6)
-  }, [items])
+  }, [items, products])
 
   const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - total)
   const progress = Math.min(100, (total / FREE_SHIPPING_THRESHOLD) * 100)

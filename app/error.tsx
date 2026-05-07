@@ -14,7 +14,7 @@ export default function Error({
   }, [error])
 
   return (
-    <div className="min-h-screen pt-[120px] lg:pt-[190px] pb-16 flex items-center justify-center bg-[#faf6f0] px-4">
+    <div className="min-h-screen site-page-gap pb-16 flex items-center justify-center bg-[#faf6f0] px-4">
       <div className="max-w-lg w-full text-center">
         <h1 className="text-6xl font-bold text-[#c9a45c] mb-4">Oops!</h1>
         <h2 className="text-2xl font-bold text-[#2d1b15] mb-4">Something went wrong</h2>

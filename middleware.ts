@@ -1,18 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
+import { getSessionSecretKey } from './lib/session-secret';
 
 const ADMIN_SLUG = process.env.NEXT_PUBLIC_ADMIN_SLUG || 'n7xk2mq9pf';
-
-let cachedKey: Uint8Array | null = null;
-function getEncodedKey(): Uint8Array {
-  if (cachedKey) return cachedKey;
-  const secretKey = process.env.SESSION_SECRET;
-  if (!secretKey || secretKey.length < 32) {
-    throw new Error('SESSION_SECRET env var must be set to a value of at least 32 characters');
-  }
-  cachedKey = new TextEncoder().encode(secretKey);
-  return cachedKey;
-}
 
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
@@ -29,7 +19,7 @@ export async function middleware(req: NextRequest) {
     const cookie = req.cookies.get('session')?.value;
     if (cookie) {
       try {
-        const { payload } = await jwtVerify(cookie, getEncodedKey(), {
+        const { payload } = await jwtVerify(cookie, getSessionSecretKey(), {
           algorithms: ['HS256'],
         });
         if (payload.role === 'admin') {
@@ -52,7 +42,7 @@ export async function middleware(req: NextRequest) {
   }
 
   try {
-    const { payload } = await jwtVerify(cookie, getEncodedKey(), {
+    const { payload } = await jwtVerify(cookie, getSessionSecretKey(), {
       algorithms: ['HS256'],
     });
 

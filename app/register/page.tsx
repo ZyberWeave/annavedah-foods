@@ -154,7 +154,7 @@ export default function RegisterPage() {
   ];
 
   return (
-    <div className="min-h-screen pt-[100px] lg:pt-[140px] pb-12 flex items-center justify-center px-4"
+    <div className="min-h-screen pt-0 pb-12 flex items-center justify-center px-4"
       style={{
         background: 'linear-gradient(135deg, #faf6f0 0%, #f5ede3 40%, #faf6f0 100%)',
       }}
