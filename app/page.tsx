@@ -720,6 +720,25 @@ export default function HomePage() {
               </Carousel>
             )}
           </AnimatePresence>
+
+          {/* View all CTA */}
+          <motion.div
+            className="mt-10 md:mt-14 flex justify-center"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <Link
+              href="/products"
+              className="group inline-flex items-center gap-3 px-8 py-4 rounded-full bg-[#8b1a1a] text-white font-semibold tracking-[0.18em] uppercase text-sm shadow-lg hover:bg-[#6d1414] hover:shadow-xl transition-all"
+              style={{ fontFamily: "'Cinzel', 'Cormorant Garamond', serif" }}
+            >
+              <span aria-hidden className="text-[#c9a45c]">✦</span>
+              View All Products
+              <span aria-hidden className="transition-transform group-hover:translate-x-1">→</span>
+            </Link>
+          </motion.div>
         </div>
       </section>
 

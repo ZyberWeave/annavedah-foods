@@ -105,9 +105,29 @@ export default function Header() {
       <div ref={headerShellRef} className="fixed inset-x-0 top-0 z-[60]">
         <AnnouncementBar />
 
-        <header className="transition-all duration-500 flex flex-col bg-[#faf6f0]/95 backdrop-blur-lg shadow-lg">
+        <header
+          className="transition-all duration-500 flex flex-col backdrop-blur-lg shadow-lg relative"
+          style={{
+            background:
+              'linear-gradient(180deg,#fbf6ec 0%, #f7efdf 55%, #f3e7ce 100%)',
+            borderTop: '1px solid rgba(201,164,92,0.55)',
+            borderBottom: '1px solid rgba(201,164,92,0.35)',
+            boxShadow:
+              '0 1px 0 rgba(255,255,255,0.6) inset, 0 -1px 0 rgba(139,26,26,0.08) inset, 0 10px 28px -16px rgba(45,27,21,0.35)',
+          }}
+        >
+          {/* Ornamental gold hairline */}
+          <div
+            aria-hidden
+            className="absolute inset-x-0 top-0 h-px"
+            style={{
+              background:
+                'linear-gradient(90deg, transparent 0%, #c9a45c 20%, #e6c884 50%, #c9a45c 80%, transparent 100%)',
+            }}
+          />
+
           <div className="container mx-auto px-4">
-            <div className="flex h-20 items-center justify-between">
+            <div className="flex h-24 lg:h-28 items-center justify-between">
 
               {/* Left */}
               <div className="flex-1 flex items-center justify-start gap-6">
@@ -119,25 +139,91 @@ export default function Header() {
                   <Menu className="w-6 h-6 text-[#8b1a1a]" />
                 </button>
 
-                <div className="hidden lg:flex items-center gap-8 text-[10px] font-bold tracking-[0.15em] uppercase">
+                <div
+                  className="hidden lg:flex items-center gap-8 text-[11px] tracking-[0.32em] uppercase"
+                  style={{ fontFamily: "'Cinzel', 'Cormorant Garamond', serif", fontWeight: 600 }}
+                >
                   <Link href="/heritage" className={`transition-colors duration-300 hover:text-[#c9a45c] ${pathname === '/heritage' ? 'text-[#c9a45c]' : 'text-[#2d1b15]'}`}>
                     Heritage
                   </Link>
+                  <span aria-hidden className="text-[#c9a45c] text-xs">✦</span>
                   <Link href="/contact" className={`transition-colors duration-300 hover:text-[#c9a45c] ${pathname === '/contact' ? 'text-[#c9a45c]' : 'text-[#2d1b15]'}`}>
-                    Contact Us
+                    Contact
                   </Link>
                 </div>
               </div>
 
-              {/* Center: Logo */}
+              {/* Center: Royal brand mark */}
               <div className="flex-1 flex justify-center">
-                <Link href="/" className="flex items-center gap-3">
-                  <div className="relative w-12 h-12 lg:w-14 lg:h-14 rounded-full overflow-hidden border-2 border-[#c9a45c]/50 shadow-lg">
-                    <Image src="/Logo.webp" alt="Annavedah Foods" fill sizes="56px" className="object-cover" priority />
+                <Link href="/" className="group flex items-center gap-3 sm:gap-5">
+                  {/* Left ornament */}
+                  <span
+                    aria-hidden
+                    className="hidden sm:flex items-center gap-2 text-[#c9a45c] select-none"
+                    style={{ fontFamily: "'Cormorant Garamond', serif" }}
+                  >
+                    <span className="block h-px w-8 lg:w-12" style={{ background: 'linear-gradient(90deg, transparent, #c9a45c)' }} />
+                    <span className="text-base leading-none">❦</span>
+                  </span>
+
+                  {/* Logo medallion: double gold ring */}
+                  <span
+                    className="relative inline-flex items-center justify-center rounded-full p-[3px] shadow-[0_4px_18px_-6px_rgba(139,26,26,0.45)]"
+                    style={{
+                      background:
+                        'conic-gradient(from 210deg, #d8b46a, #f4dba0, #b88a3f, #efd393, #c9a45c, #d8b46a)',
+                    }}
+                  >
+                    <span
+                      className="relative block rounded-full overflow-hidden ring-1 ring-[#8b1a1a]/20"
+                      style={{ width: 56, height: 56, background: '#faf6f0' }}
+                    >
+                      <Image
+                        src="/Logo.webp"
+                        alt="Annavedah Foods"
+                        fill
+                        sizes="56px"
+                        className="object-cover"
+                        priority
+                      />
+                    </span>
+                  </span>
+
+                  {/* Wordmark */}
+                  <div className="hidden sm:block text-center leading-none">
+                    <div
+                      className="text-[10px] tracking-[0.45em] uppercase text-[#c9a45c]"
+                      style={{ fontFamily: "'Cinzel', 'Cormorant Garamond', serif", fontWeight: 600 }}
+                    >
+                      ✦  Est. Heritage  ✦
+                    </div>
+                    <h1
+                      className="mt-1.5 whitespace-nowrap text-[20px] lg:text-[28px] tracking-[0.22em] uppercase"
+                      style={{
+                        fontFamily: "'Cinzel', 'Cormorant Garamond', serif",
+                        fontWeight: 700,
+                        color: '#6d1414',
+                        textShadow: '0 1px 0 rgba(255,255,255,0.55), 0 2px 4px rgba(109,20,20,0.18)',
+                      }}
+                    >
+                      Annavedah <span style={{ color: '#c9a45c' }}>Foods</span>
+                    </h1>
+                    <div
+                      className="mt-2 text-[10px] lg:text-[11px] italic tracking-[0.18em] text-[#6b5347] whitespace-nowrap"
+                      style={{ fontFamily: "'Cormorant Garamond', serif" }}
+                    >
+                      अन्नवेद &middot; सात्विक · पौष्टिक · परिपूर्ण
+                    </div>
                   </div>
-                  <div className="hidden sm:block text-center">
-                    <h1 className="text-xl lg:text-2xl font-bold tracking-widest uppercase text-[#8b1a1a]">Annavedah Foods</h1>
-                  </div>
+
+                  {/* Right ornament */}
+                  <span
+                    aria-hidden
+                    className="hidden sm:flex items-center gap-2 text-[#c9a45c] select-none"
+                  >
+                    <span className="text-base leading-none">❦</span>
+                    <span className="block h-px w-8 lg:w-12" style={{ background: 'linear-gradient(90deg, #c9a45c, transparent)' }} />
+                  </span>
                 </Link>
               </div>
 
@@ -269,9 +355,31 @@ export default function Header() {
           </div>
 
           {/* Bottom Tier: Main Navigation (Desktop Only) */}
-          <div className="hidden lg:block border-t border-[#e8ddd0]">
+          <div className="hidden lg:block relative">
+            {/* Gold double-rule with center diamond */}
+            <div
+              aria-hidden
+              className="absolute inset-x-0 top-0 h-px"
+              style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(201,164,92,0.55) 25%, #c9a45c 50%, rgba(201,164,92,0.55) 75%, transparent 100%)' }}
+            />
+            <div
+              aria-hidden
+              className="absolute inset-x-0 top-[3px] h-px"
+              style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(201,164,92,0.25) 30%, rgba(201,164,92,0.5) 50%, rgba(201,164,92,0.25) 70%, transparent 100%)' }}
+            />
+            <div
+              aria-hidden
+              className="absolute left-1/2 -translate-x-1/2 top-[-5px] w-2.5 h-2.5 rotate-45"
+              style={{
+                background: 'linear-gradient(135deg, #efd393, #c9a45c)',
+                boxShadow: '0 0 0 2px #fbf6ec, 0 1px 4px rgba(109,20,20,0.35)',
+              }}
+            />
             <div className="container mx-auto px-4">
-              <nav className="flex justify-center items-center h-14 gap-12 text-[11px] font-bold tracking-[0.2em] uppercase">
+              <nav
+                className="flex justify-center items-center h-14 gap-10 xl:gap-14 text-[12px] tracking-[0.32em] uppercase"
+                style={{ fontFamily: "'Cinzel', 'Cormorant Garamond', serif", fontWeight: 600 }}
+              >
                 <Link href="/" className={`relative py-2 transition-colors duration-300 hover:text-[#c9a45c] group ${pathname === '/' ? 'text-[#c9a45c]' : 'text-[#2d1b15]'}`}>
                   Home
                   <span className={`absolute bottom-0 left-0 h-0.5 bg-[#c9a45c] transition-all duration-300 ${pathname === '/' ? 'w-full' : 'w-0 group-hover:w-full'}`} />
@@ -304,7 +412,12 @@ export default function Header() {
               <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-[#c9a45c]/50">
                 <Image src="/Logo.webp" alt="Annavedah Foods" fill sizes="40px" className="object-cover" priority />
               </div>
-              <span className="text-lg font-bold text-[#8b1a1a] uppercase tracking-widest">Annavedah Foods</span>
+              <span
+                className="text-lg uppercase tracking-[0.2em]"
+                style={{ fontFamily: "'Cinzel', 'Cormorant Garamond', serif", fontWeight: 700, color: '#6d1414' }}
+              >
+                Annavedah <span style={{ color: '#c9a45c' }}>Foods</span>
+              </span>
             </Link>
             <button onClick={() => setMobileMenuOpen(false)} className="p-2 bg-[#f0e8dc] rounded-full text-[#8b1a1a]" aria-label="Close menu">
               <X className="w-6 h-6" />
