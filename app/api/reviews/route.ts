@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { productReviews, orders } from '@/lib/schema';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { verifySession } from '@/lib/auth';
+import { PAID_ORDER_STATUSES } from '@/lib/order-status';
 
 // Public GET — approved reviews for a product
 export async function GET(request: NextRequest) {
@@ -63,16 +64,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Review must be at least 20 characters' }, { status: 400 });
     }
 
-    // Verified badge: requires a successful order belonging to this user that
-    // was paid via Razorpay (i.e. paymentId present and not 'COD'). COD is
+    // Verified badge: requires a paid order belonging to this user that was
+    // paid via Razorpay (i.e. paymentId present and not 'COD'). COD is
     // self-declared at checkout time and could be cancelled — don't trust it
-    // for social proof.
+    // for social proof. Counts any paid fulfillment state, not just 'success',
+    // because an admin moving the order to 'shipped' shouldn't strip the badge.
     let isVerified = false;
     try {
       const userOrders = await db
         .select({ items: orders.items, paymentId: orders.paymentId })
         .from(orders)
-        .where(and(eq(orders.userId, session.userId), eq(orders.status, 'success')));
+        .where(and(eq(orders.userId, session.userId), inArray(orders.status, [...PAID_ORDER_STATUSES])));
 
       for (const order of userOrders) {
         if (!order.paymentId || order.paymentId === 'COD') continue;

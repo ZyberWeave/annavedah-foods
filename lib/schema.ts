@@ -51,6 +51,10 @@ export const users = pgTable('users', {
   role: varchar('role', { length: 20 }).default('user').notNull(),
   avatarUrl: text('avatar_url'),
   cartData: text('cart_data'), // JSON string of saved cart
+  // Bumped on every password change. JWTs minted before this timestamp are
+  // rejected by verifySession() so a stolen cookie loses validity the moment
+  // the user resets their password.
+  passwordChangedAt: timestamp('password_changed_at').defaultNow().notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -61,6 +65,10 @@ export const refundRequests = pgTable('refund_requests', {
   reason: text('reason').notNull(),
   imageUrl: text('image_url'),
   status: varchar('status', { length: 50 }).default('pending').notNull(), // pending, approved, rejected
+  // Idempotency for the Razorpay refund call. Filled in BEFORE the gateway
+  // call (with a sentinel) and replaced with the real refund id on success.
+  // If non-null, no gateway re-call is allowed for this row.
+  razorpayRefundId: text('razorpay_refund_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -91,8 +99,15 @@ export const orders = pgTable('orders', {
   userId: integer('user_id').references(() => users.id),
   customerEmail: text('customer_email').notNull(),
   total: integer('total').notNull(),
-  status: varchar('status', { length: 50 }).default('success').notNull(),
+  // Default 'pending' so a row that's inserted without an explicit status is
+  // not auto-promoted to success. Authoritative writes (Razorpay verify,
+  // shiprocket COD) set this explicitly.
+  status: varchar('status', { length: 50 }).default('pending').notNull(),
   items: text('items').notNull(), // JSON string of items
+  // Set when the Shiprocket order has been created — used as an idempotency
+  // gate so a re-POST to /api/shiprocket/create-order does not produce a
+  // duplicate fulfillment side effect.
+  shippingId: text('shipping_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

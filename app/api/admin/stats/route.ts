@@ -2,21 +2,25 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { orders, users, refundRequests } from '@/lib/schema';
-import { sql, eq, desc, ne } from 'drizzle-orm';
+import { sql, eq, desc, inArray } from 'drizzle-orm';
 import { getProducts } from '@/lib/products';
+import { PAID_ORDER_STATUSES } from '@/lib/order-status';
 
 export async function GET() {
   const { response } = await requireAdmin();
   if (response) return response;
 
   try {
+    // Revenue and total order count include only PAID orders. 'pending' rows
+    // are abandoned Razorpay create-order leftovers and must NOT count as
+    // revenue. 'cancelled' rows are also excluded.
     const [{ totalRevenue, totalOrders }] = await db
       .select({
         totalRevenue: sql<number>`COALESCE(SUM(${orders.total}), 0)`,
         totalOrders: sql<number>`COUNT(*)`,
       })
       .from(orders)
-      .where(ne(orders.status, 'cancelled'));
+      .where(inArray(orders.status, [...PAID_ORDER_STATUSES]));
 
     const [{ activeOrders }] = await db
       .select({ activeOrders: sql<number>`COUNT(*)` })
@@ -56,6 +60,9 @@ export async function GET() {
       try { parsed = JSON.parse(r.items); } catch { parsed = []; }
       const itemCount = parsed.reduce((s, i) => s + (i.qty || 0), 0);
       const isCod = r.paymentId === 'COD' || (r.paymentId ?? '').startsWith('COD');
+      // Without a paymentId the row is a not-yet-paid Razorpay create-order
+      // leftover. Don't mislabel that as 'Paid'.
+      const paymentLabel = !r.paymentId ? 'Pending' : (isCod ? 'COD' : 'Paid');
       return {
         orderId: r.orderId,
         customerName: r.userName || r.customerEmail.split('@')[0],
@@ -63,7 +70,7 @@ export async function GET() {
         total: r.total,
         items: itemCount,
         status: r.status,
-        payment: isCod ? 'COD' : 'Paid',
+        payment: paymentLabel,
         createdAt: r.createdAt,
       };
     });

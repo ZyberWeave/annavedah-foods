@@ -106,7 +106,7 @@ export default async function RootLayout({
         />
 
         {/* Footer */}
-        <footer id="contact" className="bg-[#2d1b15] text-[#faf6f0] py-16">
+        <footer id="contact" className="bg-[#2d1b15] text-[#faf6f0] pt-16 pb-24 md:pb-16">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
               {/* Brand */}
@@ -194,13 +194,13 @@ export default async function RootLayout({
             </div>
 
             <div className="border-t border-[#faf6f0]/10 pt-8">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-[#faf6f0]/60">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-[#faf6f0]/60 md:pr-24 lg:pr-0">
                 <p>© 2026 Annavedah Foods. All rights reserved.</p>
-                <div className="flex gap-6">
+                <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
                   <Link href="/privacy" className="hover:text-[#c9a45c] transition-colors">Privacy Policy</Link>
-                  <Link href="/terms" className="hover:text-[#c9a45c] transition-colors">Terms & Conditions</Link>
+                  <Link href="/terms" className="hover:text-[#c9a45c] transition-colors">Terms &amp; Conditions</Link>
                   <Link href="/shipping" className="hover:text-[#c9a45c] transition-colors">Shipping Policy</Link>
-                  <Link href="/returns" className="hover:text-[#c9a45c] transition-colors">Cancellation, Return & Refund Policy</Link>
+                  <Link href="/returns" className="hover:text-[#c9a45c] transition-colors">Cancellation, Return &amp; Refund Policy</Link>
                 </div>
               </div>
             </div>

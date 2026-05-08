@@ -4,23 +4,34 @@ import { users, otps } from '@/lib/schema';
 import { eq, and, gt, desc } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { getClientIp, rateLimitOr429 } from '@/lib/rate-limit';
+import { normalizeEmail } from '@/lib/normalize-email';
 
 export async function POST(req: Request) {
   try {
-    const { email, otp, newPassword } = await req.json();
+    const { email: rawEmail, otp, newPassword } = await req.json();
+    const email = normalizeEmail(rawEmail);
 
     if (!email || !otp || !newPassword) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
     }
 
-    if (newPassword.length < 6) {
-      return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
+    if (typeof newPassword !== 'string' || newPassword.length < 8) {
+      return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 });
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      return NextResponse.json({ error: 'Password must include an uppercase letter' }, { status: 400 });
+    }
+    if (!/[a-z]/.test(newPassword)) {
+      return NextResponse.json({ error: 'Password must include a lowercase letter' }, { status: 400 });
+    }
+    if (!/\d/.test(newPassword)) {
+      return NextResponse.json({ error: 'Password must include a number' }, { status: 400 });
     }
 
     const ip = getClientIp(req);
     const ipBlock = await rateLimitOr429(`reset:ip:${ip}`, 10, 600);
     if (ipBlock) return ipBlock;
-    const emailBlock = await rateLimitOr429(`reset:email:${String(email).toLowerCase()}`, 5, 600);
+    const emailBlock = await rateLimitOr429(`reset:email:${email}`, 5, 600);
     if (emailBlock) return emailBlock;
 
     // OTPs are stored hashed (bcrypt). Pull all unexpired OTPs for the email
@@ -45,13 +56,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid or expired code' }, { status: 400 });
     }
 
-    // Hash new password
+    // Hash new password and bump the password-change stamp so existing JWTs
+    // for this user are immediately invalidated by verifySession().
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update user password
     await db
       .update(users)
-      .set({ password: hashedPassword })
+      .set({ password: hashedPassword, passwordChangedAt: new Date() })
       .where(eq(users.email, email));
 
     // Delete used OTP (and any other OTPs for this email)

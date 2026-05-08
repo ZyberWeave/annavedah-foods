@@ -6,16 +6,21 @@ import { Resend } from 'resend';
 import { getClientIp, rateLimitOr429 } from '@/lib/rate-limit';
 import { escapeHtml } from '@/lib/email-utils';
 import bcrypt from 'bcryptjs';
+import { normalizeEmail } from '@/lib/normalize-email';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+import { randomInt } from 'node:crypto';
+
 function generateOTP(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  // crypto-strong 6-digit OTP — Math.random() is not suitable for auth secrets.
+  return randomInt(100000, 1000000).toString();
 }
 
 export async function POST(req: Request) {
   try {
-    const { email } = await req.json();
+    const { email: rawEmail } = await req.json();
+    const email = normalizeEmail(rawEmail);
 
     if (!email) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
@@ -24,7 +29,7 @@ export async function POST(req: Request) {
     const clientIp = getClientIp(req);
     const ipBlock = await rateLimitOr429(`forgot:ip:${clientIp}`, 5, 600);
     if (ipBlock) return ipBlock;
-    const emailBlock = await rateLimitOr429(`forgot:email:${String(email).toLowerCase()}`, 3, 900);
+    const emailBlock = await rateLimitOr429(`forgot:email:${email}`, 3, 900);
     if (emailBlock) return emailBlock;
 
     // Check if user exists

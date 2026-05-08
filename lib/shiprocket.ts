@@ -81,6 +81,7 @@ export async function checkServiceability(
   pickupPincode: string,
   deliveryPincode: string,
   weight: number,
+  cod: 0 | 1 = 0,
 ) {
   const token = await getShiprocketToken()
   const { data } = await axios.get(`${SHIPROCKET_BASE}/courier/serviceability/`, {
@@ -88,7 +89,7 @@ export async function checkServiceability(
       pickup_postcode: pickupPincode,
       delivery_postcode: deliveryPincode,
       weight,
-      cod: 0,
+      cod,
     },
     headers: { Authorization: `Bearer ${token}` },
   })

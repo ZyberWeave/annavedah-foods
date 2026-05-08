@@ -5,10 +5,12 @@ import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { createSession } from '@/lib/auth';
 import { getClientIp, rateLimitOr429 } from '@/lib/rate-limit';
+import { normalizeEmail } from '@/lib/normalize-email';
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
+    const { email: rawEmail, password } = await req.json();
+    const email = normalizeEmail(rawEmail);
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -22,7 +24,7 @@ export async function POST(req: Request) {
     const ip = getClientIp(req);
     const ipBlock = await rateLimitOr429(`login:ip:${ip}`, 10, 60);
     if (ipBlock) return ipBlock;
-    const emailBlock = await rateLimitOr429(`login:email:${String(email).toLowerCase()}`, 5, 60);
+    const emailBlock = await rateLimitOr429(`login:email:${email}`, 5, 60);
     if (emailBlock) return emailBlock;
 
     const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);

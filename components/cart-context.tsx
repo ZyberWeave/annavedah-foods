@@ -388,20 +388,30 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [total, appliedCoupon?.code])
 
   const applyCoupon = useCallback(async (code: string): Promise<{ success: boolean; error?: string }> => {
-    const result = validateCoupon(code, total)
-    if (!result.valid) {
-      return { success: false, error: result.error }
+    // Server-side validation — checks first-order eligibility against the
+    // logged-in user, so the UI never shows an applied coupon that the
+    // payment route will later reject.
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, cartTotal: total }),
+      })
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !data?.valid) {
+        return { success: false, error: data?.error || 'Invalid coupon' }
+      }
+      setAppliedCoupon({
+        code: data.code,
+        description: data.description,
+        discount: data.discount,
+        type: data.type,
+        value: data.value,
+      })
+      return { success: true }
+    } catch {
+      return { success: false, error: 'Could not validate coupon. Please try again.' }
     }
-
-    setAppliedCoupon({
-      code: result.coupon.code,
-      description: result.coupon.description,
-      discount: result.discount,
-      type: result.coupon.type,
-      value: result.coupon.value,
-    })
-
-    return { success: true }
   }, [total])
 
   const removeCoupon = useCallback(() => {

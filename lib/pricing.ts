@@ -1,5 +1,5 @@
 import { getProductBySlug } from './products';
-import { validateCoupon } from './coupons';
+import { validateCouponForUser } from './coupons';
 
 export type CartLineInput = { slug: unknown; packSize?: unknown; qty: unknown };
 
@@ -29,7 +29,7 @@ const COD_CHARGE = 99;
  */
 export async function priceCart(
   rawCart: unknown,
-  opts: { couponCode?: string | null; paymentMethod?: 'Prepaid' | 'COD' } = {},
+  opts: { couponCode?: string | null; paymentMethod?: 'Prepaid' | 'COD'; userId?: number | null } = {},
 ): Promise<PricingResult> {
   if (!Array.isArray(rawCart) || rawCart.length === 0) {
     throw new Error('cart must be a non-empty array');
@@ -81,7 +81,7 @@ export async function priceCart(
   let appliedCode: string | null = null;
   const couponCode = typeof opts.couponCode === 'string' ? opts.couponCode.trim() : '';
   if (couponCode) {
-    const result = validateCoupon(couponCode, subtotal);
+    const result = await validateCouponForUser(couponCode, subtotal, opts.userId ?? null);
     if (!result.valid) throw new Error(result.error);
     discount = result.discount;
     appliedCode = result.coupon.code;

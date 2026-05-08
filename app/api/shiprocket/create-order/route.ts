@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createShiprocketOrder, type ShiprocketOrderPayload } from '@/lib/shiprocket'
+import { checkServiceability, createShiprocketOrder, type ShiprocketOrderPayload } from '@/lib/shiprocket'
 import { Resend } from 'resend'
 import { findOrderByOrderId, persistOrderRecord, userOwnsOrder } from '@/lib/order-records'
 import { verifySession } from '@/lib/auth'
-import { escapeHtml, getAdminEmails, validateOrderItems } from '@/lib/email-utils'
+import { escapeHtml, getAdminEmails, isSafeHeaderValue, validateOrderItems } from '@/lib/email-utils'
 import { db } from '@/lib/db'
-import { users } from '@/lib/schema'
+import { orders, users } from '@/lib/schema'
 import { eq } from 'drizzle-orm'
 import { getClientIp, rateLimitOr429 } from '@/lib/rate-limit'
 import { priceCart } from '@/lib/pricing'
+import { PAID_ORDER_STATUSES } from '@/lib/order-status'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -30,6 +31,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    if (!/^\d{6}$/.test(String(customer.pincode ?? ''))) {
+      return NextResponse.json({ error: 'A valid 6-digit pincode is required' }, { status: 400 })
+    }
+
+    // Server-side serviceability check. The client already gates the pay
+    // button on this, but a determined caller can submit anyway. Do the
+    // authoritative check here against the *correct* COD flag for the
+    // chosen payment method.
+    try {
+      const codFlag = paymentMethod === 'COD' ? 1 : 0
+      const svc = await checkServiceability('411001', String(customer.pincode), 0.5, codFlag)
+      const couriers = svc?.data?.available_courier_companies ?? []
+      if (!Array.isArray(couriers) || couriers.length === 0) {
+        return NextResponse.json(
+          { error: paymentMethod === 'COD'
+              ? 'Cash on Delivery is not available at this pincode.'
+              : 'Sorry, we don\'t deliver to this pincode yet.' },
+          { status: 400 },
+        )
+      }
+    } catch (svcErr) {
+      // Don't block the order on a Shiprocket API outage — log and continue.
+      // The actual createShiprocketOrder call below will fail loudly if the
+      // pincode is truly bad, and the COD path soft-fails to manual review.
+      console.error('[shiprocket/create-order] serviceability precheck failed', svcErr)
+    }
+
     // Server-priced lines/total. For Prepaid, this is overwritten below by
     // whatever was persisted at razorpay/verify time (defense in depth).
     let validatedItems: { name: string; qty: number; price: number; slug?: string }[]
@@ -38,7 +66,7 @@ export async function POST(req: NextRequest) {
     if (paymentMethod === 'COD') {
       if (!cart) return NextResponse.json({ error: 'cart is required' }, { status: 400 })
       try {
-        const pricing = await priceCart(cart, { couponCode, paymentMethod: 'COD' })
+        const pricing = await priceCart(cart, { couponCode, paymentMethod: 'COD', userId: session.userId })
         validatedItems = pricing.items
         numericTotal = pricing.total
       } catch (err) {
@@ -61,7 +89,9 @@ export async function POST(req: NextRequest) {
     const existing = await findOrderByOrderId(orderId)
 
     if (paymentMethod !== 'COD') {
-      if (!existing || existing.status !== 'success') {
+      // Treat any paid fulfillment state as eligible — admin advancing the
+      // order to processing/shipped/delivered shouldn't break a re-sync.
+      if (!existing || !(PAID_ORDER_STATUSES as readonly string[]).includes(existing.status)) {
         return NextResponse.json({ error: 'Order not found or unverified' }, { status: 404 })
       }
       if (!userOwnsOrder(existing, session, sessionEmail)) {
@@ -83,8 +113,25 @@ export async function POST(req: NextRequest) {
         if (!userOwnsOrder(existing, session, sessionEmail)) {
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
-        if (existing.status === 'success') codAlreadyProcessed = true
+        if ((PAID_ORDER_STATUSES as readonly string[]).includes(existing.status)) {
+          codAlreadyProcessed = true
+        }
       }
+    }
+
+    // Idempotency for the Shiprocket call itself: if we've already synced this
+    // order to Shiprocket, return the existing shipment id without re-calling.
+    if (existing?.shippingId) {
+      return NextResponse.json(
+        {
+          success: true,
+          shipment_id: existing.shippingId,
+          order_id: orderId,
+          payment_id: existing.paymentId ?? null,
+          duplicate: true,
+        },
+        { status: 200 },
+      )
     }
 
     const now = new Date()
@@ -144,6 +191,18 @@ export async function POST(req: NextRequest) {
 
       if (paymentMethod !== 'COD') {
         throw shiprocketErr
+      }
+    }
+
+    // Stamp the shipment id so future requests for the same order short-circuit.
+    if (shiprocketResponse?.shipment_id) {
+      try {
+        await db
+          .update(orders)
+          .set({ shippingId: String(shiprocketResponse.shipment_id) })
+          .where(eq(orders.orderId, orderId))
+      } catch (stampErr) {
+        console.error('[shiprocket/create-order] failed to stamp shipping id', stampErr)
       }
     }
 
@@ -263,7 +322,7 @@ export async function POST(req: NextRequest) {
           from: 'Annavedah System <support@annavedahfoods.com>',
           to: getAdminEmails(),
           subject: '🚨 NEW COD ORDER - ' + orderId + ' (Rs ' + numericTotal + ' to collect)',
-          replyTo: customer.email,
+          ...(isSafeHeaderValue(customer.email) ? { replyTo: customer.email } : {}),
           html: '<div style="font-family: \'Helvetica Neue\', Arial, sans-serif; max-width: 680px; margin: 0 auto; background-color: #ffffff; border: 2px solid #8b1a1a; border-radius: 12px; overflow: hidden;">' +
             '<div style="background-color: #8b1a1a; padding: 24px; text-align: center;">' +
             '<h1 style="color: #ffffff; margin: 0; font-size: 24px;">New COD Order Alert 🚨</h1>' +

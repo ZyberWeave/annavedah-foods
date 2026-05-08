@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { instagramReels } from '@/lib/schema';
 import { requireAdmin } from '@/lib/auth';
 import { eq, asc } from 'drizzle-orm';
+import { toPositiveInt } from '@/lib/validate-id';
 
 // GET all reels (admin view - includes inactive)
 export async function GET() {
@@ -51,10 +52,11 @@ export async function PATCH(req: NextRequest) {
   if (response) return response;
 
   const body = await req.json();
-  const { id, active, displayOrder, permalink, caption } = body;
+  const { id: rawId, active, displayOrder, permalink, caption } = body;
 
+  const id = toPositiveInt(rawId);
   if (!id) {
-    return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    return NextResponse.json({ error: 'Valid ID is required' }, { status: 400 });
   }
 
   const updateData: Record<string, any> = {};
@@ -69,6 +71,10 @@ export async function PATCH(req: NextRequest) {
     .where(eq(instagramReels.id, id))
     .returning();
 
+  if (!updated) {
+    return NextResponse.json({ error: 'Reel not found' }, { status: 404 });
+  }
+
   return NextResponse.json({ reel: updated });
 }
 
@@ -78,13 +84,13 @@ export async function DELETE(req: NextRequest) {
   if (response) return response;
 
   const { searchParams } = new URL(req.url);
-  const id = searchParams.get('id');
+  const id = toPositiveInt(searchParams.get('id'));
 
   if (!id) {
-    return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    return NextResponse.json({ error: 'Valid ID is required' }, { status: 400 });
   }
 
-  await db.delete(instagramReels).where(eq(instagramReels.id, parseInt(id)));
+  await db.delete(instagramReels).where(eq(instagramReels.id, id));
 
   return NextResponse.json({ success: true });
 }

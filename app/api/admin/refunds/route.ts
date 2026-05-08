@@ -33,7 +33,7 @@ export async function GET() {
       createdAt: r.createdAt,
       user: {
         name: r.userName ?? '(deleted user)',
-        email: r.userEmail ?? '',
+        email: r.userEmail ?? '(deleted user)',
       },
     }));
 

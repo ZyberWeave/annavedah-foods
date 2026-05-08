@@ -49,8 +49,12 @@ export async function PUT(req: Request) {
     const hashedNew = await bcrypt.hash(newPassword, 10);
     await db
       .update(users)
-      .set({ password: hashedNew })
+      .set({ password: hashedNew, passwordChangedAt: new Date() })
       .where(eq(users.id, session.userId));
+
+    // Note: this invalidates the *current* session too. The caller will
+    // need to re-authenticate on the next request. That's deliberate — it's
+    // the safest default after a password change.
 
     return NextResponse.json({ success: true });
   } catch (error) {

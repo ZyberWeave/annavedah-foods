@@ -35,6 +35,9 @@ export async function GET(req: NextRequest) {
   }
 }
 
+const CART_MAX_ITEMS = 50
+const CART_MAX_BYTES = 16 * 1024 // 16 KB serialized — plenty for any real cart
+
 export async function POST(req: NextRequest) {
   try {
     const session = await verifySession()
@@ -44,9 +47,27 @@ export async function POST(req: NextRequest) {
 
     const { items } = await req.json()
 
+    if (!Array.isArray(items)) {
+      return NextResponse.json({ error: 'items must be an array' }, { status: 400 })
+    }
+    if (items.length > CART_MAX_ITEMS) {
+      return NextResponse.json({ error: 'Cart has too many items' }, { status: 400 })
+    }
+    // Loose shape check — we don't know the full client item shape, but each
+    // entry should at least be an object. Reject obvious junk.
+    for (const it of items) {
+      if (!it || typeof it !== 'object') {
+        return NextResponse.json({ error: 'Cart contains invalid entries' }, { status: 400 })
+      }
+    }
+    const serialized = JSON.stringify(items)
+    if (serialized.length > CART_MAX_BYTES) {
+      return NextResponse.json({ error: 'Cart payload too large' }, { status: 400 })
+    }
+
     await db
       .update(users)
-      .set({ cartData: JSON.stringify(items) })
+      .set({ cartData: serialized })
       .where(eq(users.id, session.userId))
 
     return NextResponse.json({ success: true }, { status: 200 })

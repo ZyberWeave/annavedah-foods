@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { escapeHtml, getAdminEmails } from '@/lib/email-utils';
+import { escapeHtml, getAdminEmails, isSafeHeaderValue } from '@/lib/email-utils';
 import { getClientIp, rateLimitOr429 } from '@/lib/rate-limit';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     if (typeof name !== 'string' || name.length > 100) {
       return NextResponse.json({ error: 'Name must be under 100 characters' }, { status: 400 });
     }
-    if (typeof email !== 'string' || !EMAIL_RE.test(email) || email.length > 200) {
+    if (typeof email !== 'string' || !EMAIL_RE.test(email) || email.length > 200 || !isSafeHeaderValue(email)) {
       return NextResponse.json({ error: 'Please enter a valid email address' }, { status: 400 });
     }
     if (typeof message !== 'string' || message.length > 5000) {

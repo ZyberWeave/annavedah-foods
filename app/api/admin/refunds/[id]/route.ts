@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { refundRequests, users, orders } from '@/lib/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { Resend } from 'resend';
 import { getRazorpay } from '@/lib/razorpay';
+import { toPositiveInt } from '@/lib/validate-id';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -24,7 +25,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   try {
     const { status } = await req.json();
     const resolvedParams = await params;
-    const refundId = parseInt(resolvedParams.id);
+    const refundId = toPositiveInt(resolvedParams.id);
+    if (!refundId) {
+      return NextResponse.json({ error: 'Valid refund id required' }, { status: 400 });
+    }
 
     if (!['approved', 'rejected'].includes(status)) {
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
@@ -48,8 +52,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       );
     }
 
-    // If approving, attempt Razorpay refund BEFORE flipping the DB state so
-    // we never tell the customer "approved" without the money actually moving.
+    // Concurrency guard for the gateway call. We claim the refund row by
+    // atomically setting razorpay_refund_id from NULL to an IN_PROGRESS
+    // sentinel. If the WHERE clause matches zero rows, another concurrent
+    // approval already claimed it — return 409 instead of double-charging.
     let razorpayRefundId: string | null = null;
     if (status === 'approved') {
       const [order] = await db
@@ -59,18 +65,55 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         .limit(1);
 
       const isCod = order?.paymentId === 'COD' || (order?.paymentId ?? '').startsWith('COD');
+      const needsGatewayCall = !!(order && order.paymentId && !isCod);
 
-      if (order && order.paymentId && !isCod) {
+      if (needsGatewayCall) {
+        const sentinel = 'IN_PROGRESS_' + crypto.randomUUID();
+        // Claim must require BOTH "no gateway call yet" AND "still pending".
+        // Without the status check, a concurrent reject could flip status to
+        // 'rejected' first, and we'd then call Razorpay anyway.
+        const claim = await db
+          .update(refundRequests)
+          .set({ razorpayRefundId: sentinel })
+          .where(and(
+            eq(refundRequests.id, refundId),
+            eq(refundRequests.status, 'pending'),
+            isNull(refundRequests.razorpayRefundId),
+          ))
+          .returning({ id: refundRequests.id });
+        if (claim.length === 0) {
+          return NextResponse.json(
+            { error: 'Refund is already being processed. Please refresh.' },
+            { status: 409 },
+          );
+        }
+
         try {
           const razorpay = getRazorpay();
           // amount in paise; orders.total is stored in rupees
-          const refund = await razorpay.payments.refund(order.paymentId, {
-            amount: Math.round(order.total * 100),
+          const refund = await razorpay.payments.refund(order!.paymentId!, {
+            amount: Math.round(order!.total * 100),
             speed: 'normal',
             notes: { refundRequestId: String(refundId), orderId: existing.orderId },
           });
           razorpayRefundId = refund.id;
+          // Replace the sentinel with the real refund id, but only if it's
+          // still our sentinel — defends against a foreign rollback flipping
+          // it back to NULL between our gateway success and this update.
+          await db
+            .update(refundRequests)
+            .set({ razorpayRefundId })
+            .where(and(
+              eq(refundRequests.id, refundId),
+              eq(refundRequests.razorpayRefundId, sentinel),
+            ));
         } catch (rzpErr: any) {
+          // Roll the sentinel back so the next attempt isn't permanently blocked.
+          await db
+            .update(refundRequests)
+            .set({ razorpayRefundId: null })
+            .where(and(eq(refundRequests.id, refundId), eq(refundRequests.razorpayRefundId, sentinel)))
+            .catch(() => {});
           console.error('Razorpay refund failed:', rzpErr);
           return NextResponse.json(
             { error: 'Payment gateway refund failed. Refund not approved.', detail: rzpErr?.error?.description || rzpErr?.message },
@@ -81,10 +124,40 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       // For COD or missing paymentId, no gateway call — operator handles cash-side.
     }
 
-    const [updatedRefund] = await db.update(refundRequests)
-      .set({ status })
-      .where(eq(refundRequests.id, refundId))
-      .returning();
+    // Final state flip is atomic. We additionally refuse to flip if a
+    // gateway refund is already in flight or completed (razorpayRefundId set
+    // to something OTHER than null). For the gateway-approval path above, we
+    // already populated razorpayRefundId — match against the value we just
+    // wrote so the flip and the gateway record stay coherent. For the no-
+    // gateway path (COD / rejected), require razorpayRefundId IS NULL so a
+    // concurrent reject can't blow away an in-flight approval.
+    let updateQuery
+    if (razorpayRefundId) {
+      // Gateway-approval path: bind to the refund id we just stored.
+      updateQuery = db.update(refundRequests)
+        .set({ status })
+        .where(and(
+          eq(refundRequests.id, refundId),
+          eq(refundRequests.status, 'pending'),
+          eq(refundRequests.razorpayRefundId, razorpayRefundId),
+        ))
+    } else {
+      // Reject path or COD-approval path: nothing should be in flight.
+      updateQuery = db.update(refundRequests)
+        .set({ status })
+        .where(and(
+          eq(refundRequests.id, refundId),
+          eq(refundRequests.status, 'pending'),
+          isNull(refundRequests.razorpayRefundId),
+        ))
+    }
+    const [updatedRefund] = await updateQuery.returning();
+    if (!updatedRefund) {
+      return NextResponse.json(
+        { error: 'Refund state changed concurrently. Please refresh.' },
+        { status: 409 },
+      );
+    }
 
     // Look up user email to send notification
     const [user] = await db.select().from(users).where(eq(users.id, updatedRefund.userId)).limit(1);

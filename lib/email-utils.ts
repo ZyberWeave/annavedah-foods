@@ -1,3 +1,12 @@
+/**
+ * Reject email values that would let the caller smuggle CR/LF or commas into
+ * downstream mail headers. Resend likely sanitizes already, but cheap to be
+ * defensive at the boundary.
+ */
+export function isSafeHeaderValue(value: unknown): value is string {
+  return typeof value === 'string' && !/[\r\n,;]/.test(value);
+}
+
 export function escapeHtml(input: unknown): string {
   return String(input ?? '')
     .replace(/&/g, '&amp;')

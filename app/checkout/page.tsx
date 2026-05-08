@@ -49,6 +49,7 @@ export default function CheckoutPage() {
   const [promoError, setPromoError] = useState('')
   const [promoLoading, setPromoLoading] = useState(false)
   const [showAvailableCoupons, setShowAvailableCoupons] = useState(false)
+  const [hasPriorOrders, setHasPriorOrders] = useState(false)
 
   const codCharge = paymentMethod === 'COD' ? 99 : 0
   const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0
@@ -77,6 +78,14 @@ export default function CheckoutPage() {
             email: data.user.email || '',
           }));
           setIsAuthChecking(false);
+          // Check if the user has any prior successful orders — used to hide
+          // first-order-only coupons (e.g. WELCOME10) for returning customers.
+          fetch('/api/orders')
+            .then((res) => res.ok ? res.json() : { orders: [] })
+            .then((data) => {
+              setHasPriorOrders(Array.isArray(data?.orders) && data.orders.length > 0)
+            })
+            .catch(() => {})
         }
       })
       .catch(() => {
@@ -116,6 +125,16 @@ export default function CheckoutPage() {
     }
   }, [form.email, form.phone, form.firstName, form.lastName, items, step])
 
+  // Re-check serviceability when the payment method flips, since COD coverage
+  // is often narrower than prepaid coverage. Must live above any early-return
+  // so the hook order stays stable across renders.
+  useEffect(() => {
+    if (/^\d{6}$/.test(form.pincode)) {
+      checkPin(form.pincode, paymentMethod)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentMethod])
+
   if (isAuthChecking && step !== 'success') {
     return (
       <div className="min-h-screen site-page-gap pb-16 flex items-center justify-center bg-[#faf6f0]">
@@ -127,13 +146,14 @@ export default function CheckoutPage() {
   function set(field: keyof FormData, value: string) {
     setForm(f => ({ ...f, [field]: value }))
     setErrors(e => ({ ...e, [field]: '' }))
-    if (field === 'pincode' && value.length === 6) checkPin(value)
+    if (field === 'pincode' && value.length === 6) checkPin(value, paymentMethod)
   }
 
-  async function checkPin(pin: string) {
+  async function checkPin(pin: string, method: 'Prepaid' | 'COD' = paymentMethod) {
     setServiceability('checking')
     try {
-      const res = await fetch(`/api/shiprocket/serviceability?delivery=${pin}`)
+      const codFlag = method === 'COD' ? 1 : 0
+      const res = await fetch(`/api/shiprocket/serviceability?delivery=${pin}&cod=${codFlag}`)
       const data = await res.json()
       const available = data?.data?.available_courier_companies?.length > 0
       setServiceability(available ? 'available' : 'unavailable')
@@ -141,6 +161,7 @@ export default function CheckoutPage() {
       setServiceability('unavailable')
     }
   }
+
 
   function validate(): boolean {
     const errs: Partial<FormData> = {}
@@ -156,8 +177,13 @@ export default function CheckoutPage() {
     if (!cityResult.valid) errs.city = cityResult.message
     const stateResult = validateRequired(form.state, 'State')
     if (!stateResult.valid) errs.state = stateResult.message
-    // TODO: Add pincode validation back in the future when shiprocket is setting up
-    // if (!form.pincode.match(/^\d{6}$/)) errs.pincode = 'Invalid pincode'
+    if (!/^\d{6}$/.test(form.pincode)) {
+      errs.pincode = 'Enter a valid 6-digit pincode'
+    } else if (serviceability === 'unavailable') {
+      errs.pincode = 'Sorry, we don\'t deliver to this pincode yet'
+    } else if (serviceability === 'checking') {
+      errs.pincode = 'Please wait — checking serviceability'
+    }
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -256,8 +282,8 @@ export default function CheckoutPage() {
             body: JSON.stringify({
               ...response,
               customer: form,
-              cart,
-              couponCode,
+              // cart/couponCode are NOT sent: the server uses the priced row
+              // it locked in at /api/razorpay/create-order time.
             }),
           })
           const verify = await verifyRes.json().catch(() => null)
@@ -460,7 +486,6 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* TODO: Add Pincode field back in the future when Shiprocket is setting up
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Pincode *</label>
                 <div className="relative">
@@ -479,9 +504,8 @@ export default function CheckoutPage() {
                     <span className="absolute right-3 top-3 text-xs text-red-500">Not serviceable</span>
                   )}
                 </div>
-                {errors.pincode && <p className="text-red-500 text-xs mt-1">{errors.pincode}</p>}
+                {errors.pincode && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.pincode}</p>}
               </div>
-              */}
             </div>
 
             {/* Trust badges */}
@@ -595,7 +619,7 @@ export default function CheckoutPage() {
 
                     {showAvailableCoupons && (
                       <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
-                        {coupons.filter(c => c.active).map((c) => {
+                        {coupons.filter(c => c.active && !(c.firstOrderOnly && hasPriorOrders)).map((c) => {
                           const result = validateCoupon(c.code, total)
                           const isEligible = result.valid
                           return (
@@ -693,7 +717,7 @@ export default function CheckoutPage() {
                 className="w-full h-12 font-semibold text-base"
                 style={{ background: '#c9a45c', color: '#2d1b15' }}
                 onClick={handlePayment}
-                disabled={loading} // Temporarily removed serviceability check while pincode is disabled
+                disabled={loading || serviceability === 'checking' || serviceability === 'unavailable'}
               >
                 {loading ? (
                   <span className="flex items-center gap-2">

@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { testimonials } from '@/lib/schema';
 import { requireAdmin } from '@/lib/auth';
 import { eq, asc } from 'drizzle-orm';
+import { toPositiveInt } from '@/lib/validate-id';
 
 // GET all testimonials (admin view — includes inactive)
 export async function GET() {
@@ -53,10 +54,11 @@ export async function PATCH(req: NextRequest) {
   if (response) return response;
 
   const body = await req.json();
-  const { id, active, displayOrder, name, location, text, rating } = body;
+  const { id: rawId, active, displayOrder, name, location, text, rating } = body;
 
+  const id = toPositiveInt(rawId);
   if (!id) {
-    return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    return NextResponse.json({ error: 'Valid ID is required' }, { status: 400 });
   }
 
   const updateData: Record<string, any> = {};
@@ -73,6 +75,10 @@ export async function PATCH(req: NextRequest) {
     .where(eq(testimonials.id, id))
     .returning();
 
+  if (!updated) {
+    return NextResponse.json({ error: 'Testimonial not found' }, { status: 404 });
+  }
+
   return NextResponse.json({ testimonial: updated });
 }
 
@@ -82,13 +88,13 @@ export async function DELETE(req: NextRequest) {
   if (response) return response;
 
   const { searchParams } = new URL(req.url);
-  const id = searchParams.get('id');
+  const id = toPositiveInt(searchParams.get('id'));
 
   if (!id) {
-    return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    return NextResponse.json({ error: 'Valid ID is required' }, { status: 400 });
   }
 
-  await db.delete(testimonials).where(eq(testimonials.id, parseInt(id)));
+  await db.delete(testimonials).where(eq(testimonials.id, id));
 
   return NextResponse.json({ success: true });
 }

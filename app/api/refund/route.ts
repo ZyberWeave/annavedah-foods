@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { refundRequests, users, orders } from '@/lib/schema';
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { put } from '@vercel/blob';
 import { Resend } from 'resend';
-import { escapeHtml, getAdminEmails } from '@/lib/email-utils';
+import { escapeHtml, getAdminEmails, isSafeHeaderValue } from '@/lib/email-utils';
 import { rateLimitOr429 } from '@/lib/rate-limit';
 import { userOwnsOrder } from '@/lib/order-records';
 
@@ -45,6 +45,34 @@ export async function POST(req: Request) {
     if (!userOwnsOrder(order, { userId: session.userId }, user?.email ?? null)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+    // Only allow refund requests against orders that actually completed.
+    // 'success' is set by Razorpay verify and the Shiprocket-COD path; admin
+    // fulfillment transitions (processing/shipped/delivered) also count as
+    // paid. 'pending' and 'cancelled' orders are not refundable.
+    const refundableStatuses = ['success', 'processing', 'shipped', 'delivered'];
+    if (!refundableStatuses.includes(order.status)) {
+      return NextResponse.json(
+        { error: 'This order is not eligible for a refund.' },
+        { status: 400 },
+      );
+    }
+
+    // One open refund per order. Reject if there's already a pending or
+    // approved request for this order.
+    const openRefunds = await db
+      .select({ id: refundRequests.id, status: refundRequests.status })
+      .from(refundRequests)
+      .where(and(
+        eq(refundRequests.orderId, orderId),
+        inArray(refundRequests.status, ['pending', 'approved']),
+      ))
+      .limit(1);
+    if (openRefunds.length > 0) {
+      return NextResponse.json(
+        { error: 'A refund request for this order is already in progress.' },
+        { status: 409 },
+      );
+    }
 
     let imageUrl: string | null = null;
     if (file && file.size > 0) {
@@ -54,18 +82,41 @@ export async function POST(req: Request) {
       if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
         return NextResponse.json({ error: 'Image must be JPEG, PNG, or WebP' }, { status: 400 });
       }
-      const blob = await put('refunds/' + Date.now() + '-' + file.name, file, {
+      // Strip path separators / control chars from the filename, prepend a
+      // UUID so concurrent uploads can't collide, and clamp the length.
+      const safeName = (file.name || 'image').replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
+      const blob = await put('refunds/' + crypto.randomUUID() + '-' + safeName, file, {
         access: 'public',
       });
       imageUrl = blob.url;
     }
 
-    const [newRefund] = await db.insert(refundRequests).values({
-      userId: session.userId,
-      orderId,
-      reason,
-      imageUrl,
-    }).returning();
+    let newRefund: typeof refundRequests.$inferSelect | null = null;
+    try {
+      const inserted = await db.insert(refundRequests).values({
+        userId: session.userId,
+        orderId,
+        reason,
+        imageUrl,
+      }).returning();
+      newRefund = inserted[0] ?? null;
+    } catch (insertErr: any) {
+      // Partial unique index `refund_requests_open_per_order_idx` enforces
+      // "one pending/approved refund per order" at the DB layer. Translate
+      // the race-condition collision into the same 409 the application
+      // check returns above.
+      const msg = String(insertErr?.message ?? '');
+      if (msg.includes('refund_requests_open_per_order_idx') || insertErr?.code === '23505') {
+        return NextResponse.json(
+          { error: 'A refund request for this order is already in progress.' },
+          { status: 409 },
+        );
+      }
+      throw insertErr;
+    }
+    if (!newRefund) {
+      return NextResponse.json({ error: 'Could not create refund request' }, { status: 500 });
+    }
 
     let orderItems: Array<{ name: string; qty: number; price: number }> = [];
     if (order?.items) {
@@ -160,7 +211,7 @@ export async function POST(req: Request) {
           from: 'Annavedah System <support@annavedahfoods.com>',
           to: getAdminEmails(),
           subject: '⚠️ ACTION REQUIRED: Refund Request ' + refundIdStr + ' on Order ' + orderId,
-          replyTo: user.email,
+          ...(isSafeHeaderValue(user.email) ? { replyTo: user.email } : {}),
           html: '<div style="font-family: \'Helvetica Neue\', Arial, sans-serif; max-width: 680px; margin: 0 auto; background-color: #ffffff; border: 2px solid #d97706; border-radius: 12px; overflow: hidden;">' +
             '<div style="background-color: #d97706; padding: 24px; text-align: center;">' +
             '<h1 style="color: #ffffff; margin: 0; font-size: 24px;">New Refund Request ⚠️</h1>' +

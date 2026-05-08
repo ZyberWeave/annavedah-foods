@@ -7,12 +7,15 @@ import { createSession } from '@/lib/auth';
 import { Resend } from 'resend';
 import { getClientIp, rateLimitOr429 } from '@/lib/rate-limit';
 import { escapeHtml } from '@/lib/email-utils';
+import { claimGuestOrders } from '@/lib/order-records';
+import { normalizeEmail } from '@/lib/normalize-email';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, otp } = await req.json();
+    const { name, email: rawEmail, password, otp } = await req.json();
+    const email = normalizeEmail(rawEmail);
 
     if (!name || !email || !password) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -21,7 +24,7 @@ export async function POST(req: Request) {
     const ip = getClientIp(req);
     const ipBlock = await rateLimitOr429(`register:ip:${ip}`, 5, 600);
     if (ipBlock) return ipBlock;
-    const emailBlock = await rateLimitOr429(`register:email:${String(email).toLowerCase()}`, 3, 600);
+    const emailBlock = await rateLimitOr429(`register:email:${email}`, 3, 600);
     if (emailBlock) return emailBlock;
 
     // Server-side validation
@@ -54,7 +57,9 @@ export async function POST(req: Request) {
 
     // If no OTP provided, generate one and send it
     if (!otp) {
-      const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      // crypto-strong 6-digit OTP — Math.random() is not suitable for auth secrets.
+      const { randomInt } = await import('node:crypto');
+      const generatedOtp = randomInt(100000, 1000000).toString();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
       await db.insert(otps).values({
@@ -121,12 +126,20 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const [newUser] = await db.insert(users).values({
-      name,
+      name: name.trim(),
       email,
       password: hashedPassword,
     }).returning({ id: users.id, name: users.name, email: users.email, role: users.role });
 
     await createSession(newUser.id, newUser.role);
+
+    // Stamp any pre-existing guest orders (userId IS NULL) for this email
+    // with the new account id, so they show up in the dashboard.
+    try {
+      await claimGuestOrders(newUser.id, newUser.email);
+    } catch (claimErr) {
+      console.error('Failed to claim guest orders:', claimErr);
+    }
 
     // Send Welcome Email via Resend
     try {

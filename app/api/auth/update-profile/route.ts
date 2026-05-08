@@ -3,6 +3,7 @@ import { verifySession } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { users } from '@/lib/schema';
 import { eq } from 'drizzle-orm';
+import { normalizeEmail } from '@/lib/normalize-email';
 
 export async function PUT(req: Request) {
   try {
@@ -11,7 +12,8 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { name, email } = await req.json();
+    const { name, email: rawEmail } = await req.json();
+    const email = normalizeEmail(rawEmail);
 
     if (!name || !email) {
       return NextResponse.json({ error: 'Name and email are required' }, { status: 400 });
@@ -39,7 +41,7 @@ export async function PUT(req: Request) {
 
     await db
       .update(users)
-      .set({ name: name.trim(), email: email.trim() })
+      .set({ name: name.trim(), email })
       .where(eq(users.id, session.userId));
 
     return NextResponse.json({ success: true });

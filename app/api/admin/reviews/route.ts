@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { productReviews } from '@/lib/schema';
 import { requireAdmin } from '@/lib/auth';
 import { eq, desc, sql } from 'drizzle-orm';
+import { toPositiveInt } from '@/lib/validate-id';
 
 // Admin GET — all reviews (with optional status filter)
 export async function GET(request: NextRequest) {
@@ -43,15 +44,21 @@ export async function PUT(request: NextRequest) {
     const { response } = await requireAdmin();
     if (response) return response;
 
-    const { id, status } = await request.json();
+    const { id: rawId, status } = await request.json();
+    const id = toPositiveInt(rawId);
     if (!id || !['approved', 'rejected', 'pending'].includes(status)) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 
-    await db
+    const [updated] = await db
       .update(productReviews)
       .set({ status })
-      .where(eq(productReviews.id, id));
+      .where(eq(productReviews.id, id))
+      .returning();
+
+    if (!updated) {
+      return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {
@@ -66,9 +73,10 @@ export async function DELETE(request: NextRequest) {
     const { response } = await requireAdmin();
     if (response) return response;
 
-    const { id } = await request.json();
+    const { id: rawId } = await request.json();
+    const id = toPositiveInt(rawId);
     if (!id) {
-      return NextResponse.json({ error: 'Review ID required' }, { status: 400 });
+      return NextResponse.json({ error: 'Valid review ID required' }, { status: 400 });
     }
 
     await db.delete(productReviews).where(eq(productReviews.id, id));

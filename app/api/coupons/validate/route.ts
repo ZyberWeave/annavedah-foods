@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { validateCoupon } from '@/lib/coupons';
+import { validateCouponForUser } from '@/lib/coupons';
+import { verifySession } from '@/lib/auth';
 
 export async function POST(req: Request) {
   try {
@@ -9,7 +10,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Coupon code and cart total are required' }, { status: 400 });
     }
 
-    const result = validateCoupon(code, cartTotal);
+    const session = await verifySession();
+    const result = await validateCouponForUser(code, cartTotal, session?.userId ?? null);
 
     if (!result.valid) {
       return NextResponse.json({ error: result.error }, { status: 400 });

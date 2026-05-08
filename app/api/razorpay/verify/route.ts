@@ -3,12 +3,12 @@ import crypto from 'crypto'
 import { Resend } from 'resend'
 import { db } from '@/lib/db'
 import { orders } from '@/lib/schema'
-import { eq } from 'drizzle-orm'
-import { findOrderByOrderId, persistOrderRecord } from '@/lib/order-records'
+import { and, eq } from 'drizzle-orm'
+import { findOrderByOrderId } from '@/lib/order-records'
 import { escapeHtml, getAdminEmails } from '@/lib/email-utils'
 import { getClientIp, rateLimitOr429 } from '@/lib/rate-limit'
-import { priceCart } from '@/lib/pricing'
 import { verifySession } from '@/lib/auth'
+import { PAID_ORDER_STATUSES } from '@/lib/order-status'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     const block = await rateLimitOr429(`rzp-verify:ip:${ip}`, 30, 60)
     if (block) return block
 
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, customer, cart, couponCode } = await req.json()
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, customer } = await req.json()
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
@@ -45,9 +45,16 @@ export async function POST(req: NextRequest) {
     // valid signature to mint multiple local "success" rows.
     const orderId = String(razorpay_order_id)
 
-    // Idempotency: same razorpay_order_id + same payment_id already saved → short-circuit.
+    // Idempotency: same razorpay_order_id + same payment_id already saved
+    // → short-circuit. Match against any paid fulfillment state, not only
+    // 'success', so an admin who's already advanced the order to processing/
+    // shipped/delivered isn't re-flipped backwards by a duplicate callback.
     const existing = await findOrderByOrderId(orderId)
-    if (existing && existing.paymentId === razorpay_payment_id && existing.status === 'success') {
+    if (
+      existing &&
+      existing.paymentId === razorpay_payment_id &&
+      (PAID_ORDER_STATUSES as readonly string[]).includes(existing.status)
+    ) {
       return NextResponse.json({ verified: true, payment_id: razorpay_payment_id, duplicate: true })
     }
     // If the row exists but with a *different* payment_id, refuse — something is wrong.
@@ -66,46 +73,62 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Payment already used for a different order' }, { status: 409 })
     }
 
-    if (customer && cart) {
-      // Server-authoritative repricing — client cannot influence amounts.
-      let pricing
-      try {
-        pricing = await priceCart(cart, { couponCode, paymentMethod: 'Prepaid' })
-      } catch (validationErr) {
-        const msg = validationErr instanceof Error ? validationErr.message : 'Invalid cart'
-        return NextResponse.json({ error: msg }, { status: 400 })
-      }
-      const numericTotal = pricing.total
-      const validatedItems = pricing.items
+    // The pending row was created by /api/razorpay/create-order with the
+    // server-priced cart locked in. We refuse to verify if it doesn't exist —
+    // and we never let the client send a fresh cart at this stage. This
+    // closes the "pay-cheap, verify-expensive" attack surface.
+    if (!existing) {
+      return NextResponse.json(
+        { error: 'Order not initialized. Restart checkout.' },
+        { status: 404 },
+      )
+    }
+    if (existing.userId !== session.userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
-      try {
-        await persistOrderRecord({
-          orderId,
-          paymentId: razorpay_payment_id,
-          customerEmail: customer.email,
-          total: numericTotal,
-          items: validatedItems,
-          status: 'success',
-          userId: session.userId,
-        })
-      } catch (dbErr) {
-        // Critical: payment was captured by Razorpay but we couldn't persist
-        // the order locally. Surface this so the client can show a "contact
-        // support with this payment id" path instead of silently advancing.
-        console.error('[razorpay/verify] persist failure', dbErr)
-        // verified is intentionally false here — the order is not in a
-        // success state from the app's perspective until it's persisted.
-        return NextResponse.json(
-          {
-            verified: false,
-            persisted: false,
-            payment_id: razorpay_payment_id,
-            error: 'Payment received but order could not be saved. Please contact support with this payment id.',
-          },
-          { status: 500 },
-        )
-      }
+    const numericTotal = existing.total
+    let validatedItems: Array<{ name: string; qty: number; price: number; slug?: string }>
+    try {
+      const parsed = JSON.parse(existing.items)
+      if (!Array.isArray(parsed) || parsed.length === 0) throw new Error('empty')
+      validatedItems = parsed
+    } catch {
+      return NextResponse.json({ error: 'Stored order items are invalid' }, { status: 500 })
+    }
 
+    let flipped: { orderId: string }[] = []
+    try {
+      // Persist the signed payment for every valid verify request. Customer
+      // details are only needed for rich emails, not for the payment state
+      // flip itself.
+      flipped = await db
+        .update(orders)
+        .set({ paymentId: razorpay_payment_id, status: 'success' })
+        .where(and(eq(orders.orderId, orderId), eq(orders.status, 'pending')))
+        .returning({ orderId: orders.orderId })
+    } catch (dbErr) {
+      console.error('[razorpay/verify] persist failure', dbErr)
+      return NextResponse.json(
+        {
+          verified: false,
+          persisted: false,
+          payment_id: razorpay_payment_id,
+          error: 'Payment received but order could not be saved. Please contact support with this payment id.',
+        },
+        { status: 500 },
+      )
+    }
+
+    if (flipped.length === 0) {
+      return NextResponse.json({
+        verified: true,
+        payment_id: razorpay_payment_id,
+        duplicate: true,
+      })
+    }
+
+    if (customer) {
       // Pre-escape all user-controlled strings used inside HTML.
       const eFirst = escapeHtml(customer.firstName)
       const eLast = escapeHtml(customer.lastName)
