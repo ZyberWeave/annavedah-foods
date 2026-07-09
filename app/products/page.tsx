@@ -358,7 +358,7 @@ export default function ProductsPage() {
   return (
     <div className="pb-16">
       {/* ══════════════ SHOP HERO BANNER ══════════════ */}
-      <section className="relative w-full h-[420px] sm:h-[480px] md:h-[520px] lg:h-[560px] overflow-hidden">
+      <section className="relative w-full min-h-[420px] sm:h-[480px] md:h-[520px] lg:h-[560px] overflow-hidden">
         {/* Background image */}
         <Image
           src="/Banners/shop-hero.png"
@@ -378,9 +378,9 @@ export default function ProductsPage() {
         <div className="absolute bottom-16 right-1/4 w-32 h-32 rounded-full bg-[#8b1a1a]/10 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
 
         {/* Content */}
-        <div className="absolute inset-0 flex items-center">
+        <div className="relative sm:absolute inset-0 flex items-center py-10 sm:py-0">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-2xl space-y-6">
+            <div className="max-w-2xl space-y-5 sm:space-y-6">
               {/* Badge */}
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-white/90 text-xs font-bold uppercase tracking-widest">
                 <span className="w-2 h-2 rounded-full bg-[#c9a45c] animate-pulse" />

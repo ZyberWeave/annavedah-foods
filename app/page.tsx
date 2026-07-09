@@ -13,6 +13,8 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
 } from "@/components/ui/carousel"
 import AutoScroll from 'embla-carousel-auto-scroll'
 import { motion, useAnimation, useInView, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion'
@@ -752,6 +754,10 @@ export default function HomePage() {
                     </CarouselItem>
                   ))}
                 </CarouselContent>
+
+                {/* Navigation arrows to guide browsing */}
+                <CarouselPrevious className="left-1 md:left-3 top-1/2 size-10 md:size-12 bg-white/90 hover:bg-white border-2 border-[#c9a45c] text-[#8b1a1a] shadow-lg backdrop-blur z-20" />
+                <CarouselNext className="right-1 md:right-3 top-1/2 size-10 md:size-12 bg-white/90 hover:bg-white border-2 border-[#c9a45c] text-[#8b1a1a] shadow-lg backdrop-blur z-20" />
               </Carousel>
             )}
           </AnimatePresence>

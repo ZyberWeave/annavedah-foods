@@ -195,7 +195,7 @@ export default async function RootLayout({
 
             <div className="border-t border-[#faf6f0]/10 pt-8">
               <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-[#faf6f0]/60 md:pr-24 2xl:pr-0">
-                <p>© 2026 Annavedah Foods. All rights reserved.</p>
+                <p>© 2026 Annavedah Foods. All rights reserved. Created by <a href="https://zyberweave.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#c9a45c] transition-colors underline">ZyberWeave</a>.</p>
                 <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
                   <Link href="/privacy" className="inline-flex min-h-8 items-center hover:text-[#c9a45c] transition-colors">Privacy Policy</Link>
                   <Link href="/terms" className="inline-flex min-h-8 items-center hover:text-[#c9a45c] transition-colors">Terms &amp; Conditions</Link>

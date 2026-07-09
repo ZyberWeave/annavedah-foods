@@ -108,12 +108,12 @@ export default function BlogIndexPage() {
               <Link
                 key={post.slug}
                 href={`/blog/${post.slug}`}
-                className={`group block rounded-3xl overflow-hidden border-2 border-transparent hover:border-[#c9a45c] transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${isFeatured ? 'md:col-span-2' : ''}`}
+                className={`group flex flex-col rounded-3xl overflow-hidden border-2 border-transparent hover:border-[#c9a45c] transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${isFeatured ? 'md:col-span-2' : ''}`}
                 style={{ background: '#fff' }}
               >
                 {/* Blog image */}
                 {post.image && (
-                  <div className={`relative w-full overflow-hidden ${isFeatured ? 'h-64 md:h-80' : 'h-48'}`}>
+                  <div className={`relative w-full shrink-0 overflow-hidden ${isFeatured ? 'h-64 md:h-80' : 'h-48'}`}>
                     <Image
                       src={post.image}
                       alt={post.title}
@@ -125,7 +125,7 @@ export default function BlogIndexPage() {
                 )}
 
                 {/* Card content */}
-                <div className="relative px-7 pt-8 pb-6 flex-1">
+                <div className="relative px-7 pt-8 pb-6 flex-1 flex flex-col">
                   {/* Reading time + date */}
                   <div className="flex items-center justify-between mb-5">
                     <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#b0a090' }}>
@@ -150,7 +150,7 @@ export default function BlogIndexPage() {
                   </p>
 
                   {/* Tags */}
-                  <div className="flex flex-wrap gap-2 mb-6">
+                  <div className="flex flex-wrap gap-2 mb-6 mt-auto">
                     {post.tags.map((tag) => (
                       <span
                         key={tag}

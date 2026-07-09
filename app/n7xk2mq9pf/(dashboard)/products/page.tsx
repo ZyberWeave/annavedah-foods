@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { upload } from '@vercel/blob/client';
 import { Button } from '@/components/ui/button';
 import { categories, type PackPrice, type ProductCategory } from '@/lib/content';
 import { ADMIN_SLUG } from '@/lib/admin-config';
@@ -15,6 +16,7 @@ import {
   Plus,
   Search,
   Trash2,
+  Upload,
   X,
 } from 'lucide-react';
 
@@ -163,6 +165,8 @@ export default function AdminProductsPage() {
   const [statusMessage, setStatusMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [form, setForm] = useState<ProductFormState>(createEmptyForm());
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -263,6 +267,35 @@ export default function AdminProductsPage() {
           ? [emptyPack()]
           : prev.packPrices.filter((_, packIndex) => packIndex !== index),
     }));
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      showError('Please choose an image file (jpeg, png, webp, or gif).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showError('Image is too large. Maximum size is 5 MB.');
+      return;
+    }
+
+    setUploading(true);
+    setErrorMessage('');
+    try {
+      const safeName = file.name.replace(/[^a-zA-Z0-9.-]+/g, '-');
+      const blob = await upload(`products/${Date.now()}-${safeName}`, file, {
+        access: 'public',
+        handleUploadUrl: '/api/upload',
+        contentType: file.type,
+      });
+      setForm((prev) => ({ ...prev, image: blob.url }));
+      showStatus('Image uploaded.');
+    } catch (error) {
+      showError((error as Error).message || 'Could not upload image.');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const startCreate = () => {
@@ -535,14 +568,63 @@ export default function AdminProductsPage() {
 
             <div className="grid lg:grid-cols-[2fr_1fr] gap-4">
               <div>
-                <label className="text-xs font-bold uppercase tracking-widest text-[#6b5347] block mb-2">Image Path / URL</label>
-                <input
-                  type="text"
-                  value={form.image}
-                  onChange={(event) => setForm((prev) => ({ ...prev, image: event.target.value }))}
-                  className="w-full px-4 py-3 border-2 border-[#e8ddd0] rounded-xl text-sm focus:outline-none focus:border-[#c9a45c]"
-                  placeholder="/Products/dried powders/Moringa powder.webp"
-                />
+                <label className="text-xs font-bold uppercase tracking-widest text-[#6b5347] block mb-2">Product Image</label>
+                <div className="flex items-start gap-3">
+                  <div className="w-20 h-20 rounded-xl bg-[#faf6f0] border border-[#e8ddd0] overflow-hidden flex-shrink-0 flex items-center justify-center">
+                    {form.image ? (
+                      <img src={form.image} alt="Product preview" className="w-full h-full object-contain p-1.5" />
+                    ) : (
+                      <Box className="w-6 h-6 text-[#e8ddd0]" />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="hidden"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) handleImageUpload(file);
+                      }}
+                    />
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                        className="border-[#c9a45c] text-[#8b1a1a]"
+                      >
+                        {uploading ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Upload className="w-4 h-4 mr-2" />
+                        )}
+                        {uploading ? 'Uploading...' : form.image ? 'Replace Image' : 'Upload Image'}
+                      </Button>
+                      {form.image && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => setForm((prev) => ({ ...prev, image: '' }))}
+                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={form.image}
+                      onChange={(event) => setForm((prev) => ({ ...prev, image: event.target.value }))}
+                      className="w-full px-4 py-2.5 border-2 border-[#e8ddd0] rounded-xl text-sm focus:outline-none focus:border-[#c9a45c]"
+                      placeholder="Or paste an image path / URL"
+                    />
+                    <p className="text-[11px] text-[#6b5347]">JPEG, PNG, WebP, or GIF · up to 5 MB.</p>
+                  </div>
+                </div>
               </div>
               <label className="flex items-center gap-3 px-4 py-3 border-2 border-[#e8ddd0] rounded-xl bg-[#faf6f0]/40 mt-6 lg:mt-0">
                 <input

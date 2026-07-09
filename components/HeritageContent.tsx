@@ -378,7 +378,7 @@ export default function HeritageContent() {
                 <div className="hidden md:block" />
 
                 <div className={`pl-20 md:pl-0 ${i % 2 === 0 ? 'md:pl-12' : 'md:pr-12 md:text-right'}`}>
-                  <div className={`absolute left-0 md:left-1/2 top-2 -translate-x-[28px] md:-translate-x-1/2 w-14 h-14 rounded-full bg-white border-4 border-[#c9a45c] flex items-center justify-center shadow-lg z-10`}>
+                  <div className={`absolute left-8 md:left-1/2 top-2 -translate-x-1/2 w-14 h-14 rounded-full bg-white border-4 border-[#c9a45c] flex items-center justify-center shadow-lg z-10`}>
                     <span className="text-xs font-bold text-[#8b1a1a]">{i + 1}</span>
                   </div>
 
