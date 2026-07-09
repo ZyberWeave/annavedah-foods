@@ -88,27 +88,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           );
         }
 
+        // Two distinct failure modes — we MUST NOT collapse them into one
+        // try/catch, because clearing the sentinel after gateway success
+        // would let the next admin retry double-charge Razorpay.
+        let gatewayRefund: { id: string } | null = null;
         try {
           const razorpay = getRazorpay();
           // amount in paise; orders.total is stored in rupees
-          const refund = await razorpay.payments.refund(order!.paymentId!, {
+          gatewayRefund = await razorpay.payments.refund(order!.paymentId!, {
             amount: Math.round(order!.total * 100),
             speed: 'normal',
             notes: { refundRequestId: String(refundId), orderId: existing.orderId },
           });
-          razorpayRefundId = refund.id;
-          // Replace the sentinel with the real refund id, but only if it's
-          // still our sentinel — defends against a foreign rollback flipping
-          // it back to NULL between our gateway success and this update.
-          await db
-            .update(refundRequests)
-            .set({ razorpayRefundId })
-            .where(and(
-              eq(refundRequests.id, refundId),
-              eq(refundRequests.razorpayRefundId, sentinel),
-            ));
         } catch (rzpErr: any) {
-          // Roll the sentinel back so the next attempt isn't permanently blocked.
+          // Gateway never moved money — clear the sentinel so the next
+          // admin attempt can retry cleanly.
           await db
             .update(refundRequests)
             .set({ razorpayRefundId: null })
@@ -118,6 +112,37 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           return NextResponse.json(
             { error: 'Payment gateway refund failed. Refund not approved.', detail: rzpErr?.error?.description || rzpErr?.message },
             { status: 502 }
+          );
+        }
+
+        // Gateway succeeded. Persist the real refund id atomically — but
+        // CRITICALLY: from this point on, a DB failure must NEVER clear
+        // the sentinel. Razorpay has already moved money; clearing would
+        // let a retry double-charge.
+        razorpayRefundId = gatewayRefund!.id;
+        try {
+          await db
+            .update(refundRequests)
+            .set({ razorpayRefundId })
+            .where(and(
+              eq(refundRequests.id, refundId),
+              eq(refundRequests.razorpayRefundId, sentinel),
+            ));
+        } catch (dbErr) {
+          console.error('[refund] DB write failed AFTER gateway success — manual reconcile required', {
+            refundId,
+            razorpayRefundId,
+            dbErr,
+          });
+          return NextResponse.json(
+            {
+              error:
+                'Refund processed at the gateway, but local record failed to save. ' +
+                'Do NOT retry. Reference id: ' + razorpayRefundId,
+              razorpayRefundId,
+              reconcile: 'manual',
+            },
+            { status: 500 },
           );
         }
       }

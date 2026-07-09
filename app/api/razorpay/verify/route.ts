@@ -121,11 +121,41 @@ export async function POST(req: NextRequest) {
     }
 
     if (flipped.length === 0) {
-      return NextResponse.json({
-        verified: true,
-        payment_id: razorpay_payment_id,
-        duplicate: true,
+      // Zero rows updated. The row's status was no longer 'pending' at the
+      // moment of UPDATE — three possibilities:
+      //   1) The webhook handler / a parallel verify already flipped to a
+      //      paid state with this same paymentId. That's a true duplicate.
+      //   2) An admin cancelled the pending order before the customer paid.
+      //      We must NOT tell the customer "verified" in that case.
+      //   3) Something else exotic.
+      // Re-read and only short-circuit as duplicate if (1).
+      const after = await findOrderByOrderId(orderId)
+      const isPaidDuplicate =
+        after &&
+        after.paymentId === razorpay_payment_id &&
+        (PAID_ORDER_STATUSES as readonly string[]).includes(after.status)
+      if (isPaidDuplicate) {
+        return NextResponse.json({
+          verified: true,
+          payment_id: razorpay_payment_id,
+          duplicate: true,
+        })
+      }
+      console.error('[razorpay/verify] zero-row flip without paid duplicate', {
+        orderId,
+        razorpay_payment_id,
+        afterStatus: after?.status,
+        afterPaymentId: after?.paymentId,
       })
+      return NextResponse.json(
+        {
+          verified: false,
+          payment_id: razorpay_payment_id,
+          error:
+            'Order is no longer in a payable state. Please contact support with this payment id.',
+        },
+        { status: 409 },
+      )
     }
 
     if (customer) {

@@ -25,20 +25,39 @@ const sortOptions: { value: SortKey; label: string }[] = [
 
 const dietaryTags = ['Pure', 'Farm-sourced', 'Traditional', 'Family-friendly', 'Gluten-free']
 
-const PRICE_MIN = 0
-const PRICE_MAX = 2500
+const FALLBACK_PRICE_MIN = 0
+const PRICE_STEP = 50
+
+function getProductPrices(product: Product): number[] {
+  const packPrices = product.packPrices
+    .map((pack) => pack.price)
+    .filter((price) => Number.isFinite(price) && price > 0)
+
+  if (packPrices.length > 0) return packPrices
+  return product.price > 0 ? [product.price] : []
+}
+
+function getLowestProductPrice(product: Product): number {
+  const prices = getProductPrices(product)
+  return prices.length > 0 ? Math.min(...prices) : Infinity
+}
+
+function getHighestProductPrice(product: Product): number {
+  const prices = getProductPrices(product)
+  return prices.length > 0 ? Math.max(...prices) : 0
+}
 
 function PLPProductCard({ product, add }: { product: Product; add: (id: number, pack?: any) => void }) {
   const [selectedPack, setSelectedPack] = useState(product.packPrices[0])
   const currentPrice = selectedPack ? selectedPack.price : product.price
 
   return (
-    <div className="group relative rounded-3xl border-2 border-[#e8ddd0] bg-white overflow-hidden hover:border-[#c9a45c] transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 flex flex-col h-full">
-      <div className="absolute top-3 right-3 z-10">
-        <WishlistButton productId={product.id} size="md" />
+    <div className="group relative rounded-2xl md:rounded-3xl border-2 border-[#e8ddd0] bg-white overflow-hidden hover:border-[#c9a45c] transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 flex flex-col h-full">
+      <div className="absolute top-2 right-2 md:top-3 md:right-3 z-10">
+        <WishlistButton productId={product.id} size="sm" />
       </div>
       {product.badge && (
-        <span className="absolute top-3 left-3 z-10 rounded-full bg-[#8b1a1a] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 shadow-md">
+        <span className="absolute top-2 left-2 md:top-3 md:left-3 z-10 rounded-full bg-[#8b1a1a] text-white text-[9px] md:text-[10px] font-bold uppercase tracking-widest px-2 md:px-3 py-1 shadow-md">
           {product.badge}
         </span>
       )}
@@ -48,30 +67,30 @@ function PLPProductCard({ product, add }: { product: Product; add: (id: number, 
             src={product.image}
             alt={product.name}
             fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-contain p-6 transition-all duration-500 group-hover:scale-105 drop-shadow-xl group-hover:drop-shadow-2xl"
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-contain p-3 md:p-6 transition-all duration-500 group-hover:scale-105 drop-shadow-xl group-hover:drop-shadow-2xl"
           />
         </Link>
       </div>
-      <div className="p-6 space-y-3 flex-1 flex flex-col">
-        <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-          <span>{product.category}</span>
+      <div className="p-3 md:p-6 space-y-2 md:space-y-3 flex-1 flex flex-col">
+        <div className="flex items-center justify-between text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          <span className="truncate">{product.category}</span>
         </div>
         <Link href={`/products/${product.slug}`} className="block space-y-1 group-hover:text-[#8b1a1a] transition-colors">
-          <h3 className="text-2xl font-bold text-[#2d1b15] group-hover:text-[#8b1a1a]">{product.name}</h3>
+          <h3 className="text-sm sm:text-base md:text-2xl leading-tight font-bold text-[#2d1b15] group-hover:text-[#8b1a1a] line-clamp-2">{product.name}</h3>
           {product.localName !== product.name && (
-            <p className="text-sm text-muted-foreground">{product.localName}</p>
+            <p className="text-xs md:text-sm text-muted-foreground line-clamp-1">{product.localName}</p>
           )}
-          <p className="text-sm text-muted-foreground line-clamp-2">{product.description}</p>
+          <p className="hidden md:block text-sm text-muted-foreground line-clamp-2">{product.description}</p>
         </Link>
 
         {product.packPrices.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-2">
+          <div className="flex flex-wrap gap-1 md:gap-2 pt-1 md:pt-2">
             {product.packPrices.map((pack) => (
               <button
                 key={`${product.id}-${pack.size}`}
                 onClick={() => setSelectedPack(pack)}
-                className={`relative px-3 py-1.5 border-2 rounded-xl text-xs font-bold transition-all duration-300 ${
+                className={`relative px-2 py-1 md:px-3 md:py-1.5 border-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-bold transition-all duration-300 ${
                   selectedPack?.size === pack.size
                     ? 'border-[#8b1a1a] bg-[#8b1a1a]/5 text-[#8b1a1a] shadow-inner ring-1 ring-[#8b1a1a]'
                     : 'border-[#e8ddd0] bg-white text-[#6b5347] hover:border-[#c9a45c] hover:shadow-sm'
@@ -88,28 +107,28 @@ function PLPProductCard({ product, add }: { product: Product; add: (id: number, 
           </div>
         )}
 
-        <div className="space-y-2 pt-2">
+        <div className="space-y-1 md:space-y-2 pt-1 md:pt-2">
           {currentPrice > 0 ? (
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-primary">Rs {currentPrice}</span>
+              <span className="text-xl md:text-3xl font-bold text-primary">Rs {currentPrice}</span>
             </div>
           ) : (
-            <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-800">
+            <span className="inline-flex rounded-full bg-amber-100 px-2 md:px-3 py-1 text-[11px] md:text-sm font-semibold text-amber-800">
               Price on request
             </span>
           )}
         </div>
 
-        <div className="flex gap-2 pt-4 mt-auto border-t border-[#e8ddd0]/50">
-          <Button asChild variant="outline" className="flex-1 h-12 border-2 border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10 font-semibold rounded-xl transition-all">
+        <div className="flex gap-1 md:gap-2 pt-3 md:pt-4 mt-auto border-t border-[#e8ddd0]/50">
+          <Button asChild variant="outline" className="flex-1 h-9 md:h-12 px-2 border-2 border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10 font-semibold rounded-lg md:rounded-xl transition-all text-xs md:text-sm">
             <Link href={`/products/${product.slug}`}>Details</Link>
           </Button>
           <Button
-            className="flex-1 h-12 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-semibold rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
+            className="flex-1 h-9 md:h-12 px-2 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-semibold rounded-lg md:rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 text-xs md:text-sm"
             onClick={() => add(product.id, selectedPack)}
             disabled={currentPrice <= 0}
           >
-            <ShoppingCart className="w-4 h-4 mr-1 md:mr-2" />
+            <ShoppingCart className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1 md:mr-2" />
             {currentPrice > 0 ? 'Add' : 'Enquire'}
           </Button>
         </div>
@@ -123,8 +142,8 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<SortKey>('featured')
-  const [minPrice, setMinPrice] = useState(PRICE_MIN)
-  const [maxPrice, setMaxPrice] = useState(PRICE_MAX)
+  const [minPrice, setMinPrice] = useState<number | null>(null)
+  const [maxPrice, setMaxPrice] = useState<number | null>(null)
   const [activeTags, setActiveTags] = useState<string[]>([])
   const [filtersOpen, setFiltersOpen] = useState(false)
   const { add } = useCart()
@@ -140,14 +159,35 @@ export default function ProductsPage() {
     if (categoryParam && categories.includes(categoryParam)) setSelectedCategory(categoryParam)
   }, [])
 
+  const priceBounds = useMemo(() => {
+    const prices = products.flatMap(getProductPrices)
+    if (prices.length === 0) {
+      return { min: FALLBACK_PRICE_MIN, max: FALLBACK_PRICE_MIN }
+    }
+
+    return {
+      min: Math.min(...prices),
+      max: Math.max(...prices),
+    }
+  }, [products])
+
+  const rawMinPrice = minPrice ?? priceBounds.min
+  const rawMaxPrice = maxPrice ?? priceBounds.max
+  const boundedMinPrice = Math.min(Math.max(rawMinPrice, priceBounds.min), priceBounds.max)
+  const boundedMaxPrice = Math.min(Math.max(rawMaxPrice, priceBounds.min), priceBounds.max)
+  const currentMinPrice = Math.min(boundedMinPrice, boundedMaxPrice)
+  const currentMaxPrice = Math.max(boundedMinPrice, boundedMaxPrice)
+
   const filteredProducts = useMemo(() => {
     const filtered = products.filter((product) => {
       const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory
       const matchesSearch =
         product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         product.description.toLowerCase().includes(searchQuery.toLowerCase())
-      const price = product.price
-      const matchesPrice = price === 0 || (price >= minPrice && price <= maxPrice)
+      const prices = getProductPrices(product)
+      const matchesPrice =
+        prices.length === 0 ||
+        prices.some((price) => price >= currentMinPrice && price <= currentMaxPrice)
       const matchesTags =
         activeTags.length === 0 ||
         activeTags.some((tag) => product.benefits.some((b) => b.toLowerCase().includes(tag.toLowerCase())))
@@ -157,10 +197,10 @@ export default function ProductsPage() {
     const sorted = [...filtered]
     switch (sortBy) {
       case 'price-asc':
-        sorted.sort((a, b) => (a.price || Infinity) - (b.price || Infinity))
+        sorted.sort((a, b) => getLowestProductPrice(a) - getLowestProductPrice(b))
         break
       case 'price-desc':
-        sorted.sort((a, b) => b.price - a.price)
+        sorted.sort((a, b) => getHighestProductPrice(b) - getHighestProductPrice(a))
         break
       case 'name-asc':
         sorted.sort((a, b) => a.name.localeCompare(b.name))
@@ -178,7 +218,7 @@ export default function ProductsPage() {
         })
     }
     return sorted
-  }, [products, selectedCategory, searchQuery, sortBy, minPrice, maxPrice, activeTags])
+  }, [products, selectedCategory, searchQuery, sortBy, currentMinPrice, currentMaxPrice, activeTags])
 
   const toggleTag = (tag: string) => {
     setActiveTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
@@ -188,17 +228,22 @@ export default function ProductsPage() {
     setSelectedCategory('All')
     setSearchQuery('')
     setSortBy('featured')
-    setMinPrice(PRICE_MIN)
-    setMaxPrice(PRICE_MAX)
+    setMinPrice(null)
+    setMaxPrice(null)
     setActiveTags([])
   }
 
   const hasActiveFilters =
-    selectedCategory !== 'All' || searchQuery !== '' || minPrice !== PRICE_MIN || maxPrice !== PRICE_MAX || activeTags.length > 0
+    selectedCategory !== 'All' ||
+    searchQuery !== '' ||
+    minPrice !== null ||
+    maxPrice !== null ||
+    activeTags.length > 0
 
   // Percentages for the coloured track bar
-  const minPercent = ((minPrice - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100
-  const maxPercent = ((maxPrice - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100
+  const priceSpan = Math.max(1, priceBounds.max - priceBounds.min)
+  const minPercent = ((currentMinPrice - priceBounds.min) / priceSpan) * 100
+  const maxPercent = ((currentMaxPrice - priceBounds.min) / priceSpan) * 100
 
   const FilterPanel = (
     <div className="space-y-8">
@@ -249,12 +294,12 @@ export default function ProductsPage() {
           {/* Min thumb */}
           <input
             type="range"
-            min={PRICE_MIN}
-            max={PRICE_MAX}
-            step={50}
-            value={minPrice}
+            min={priceBounds.min}
+            max={priceBounds.max}
+            step={PRICE_STEP}
+            value={currentMinPrice}
             onChange={(e) => {
-              const val = Math.min(Number(e.target.value), maxPrice - 50)
+              const val = Math.min(Number(e.target.value), currentMaxPrice)
               setMinPrice(val)
             }}
             aria-label="Minimum price"
@@ -262,12 +307,12 @@ export default function ProductsPage() {
           {/* Max thumb */}
           <input
             type="range"
-            min={PRICE_MIN}
-            max={PRICE_MAX}
-            step={50}
-            value={maxPrice}
+            min={priceBounds.min}
+            max={priceBounds.max}
+            step={PRICE_STEP}
+            value={currentMaxPrice}
             onChange={(e) => {
-              const val = Math.max(Number(e.target.value), minPrice + 50)
+              const val = Math.max(Number(e.target.value), currentMinPrice)
               setMaxPrice(val)
             }}
             className="thumb-upper"
@@ -275,8 +320,8 @@ export default function ProductsPage() {
           />
         </div>
         <div className="flex justify-between mt-2 text-sm font-semibold text-[#6b5347]">
-          <span>₹{minPrice}</span>
-          <span className="text-[#8b1a1a]">₹{maxPrice}</span>
+          <span>₹{currentMinPrice}</span>
+          <span className="text-[#8b1a1a]">₹{currentMaxPrice}</span>
         </div>
       </div>
 
@@ -472,7 +517,7 @@ export default function ProductsPage() {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 md:gap-8 xl:grid-cols-3">
               {filteredProducts.map((product) => (
                 <PLPProductCard key={product.id} product={product} add={add} />
               ))}

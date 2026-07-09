@@ -25,13 +25,13 @@ export default function FloatingWhatsApp() {
 
   return (
     <div
-      className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 transition-all duration-700 ${
+      className={`pointer-events-none fixed bottom-6 right-6 z-50 flex items-center gap-3 transition-all duration-700 ${
         isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'
       }`}
     >
       {/* Tooltip */}
       <div
-        className={`hidden sm:block bg-white text-[#2d1b15] text-sm font-medium px-4 py-2.5 rounded-xl shadow-lg transition-all duration-500 whitespace-nowrap ${
+        className={`pointer-events-none hidden sm:block bg-white text-[#2d1b15] text-sm font-medium px-4 py-2.5 rounded-xl shadow-lg transition-all duration-500 whitespace-nowrap ${
           showTooltip
             ? 'translate-x-0 opacity-100 scale-100'
             : 'translate-x-4 opacity-0 scale-95 pointer-events-none'
@@ -55,7 +55,7 @@ export default function FloatingWhatsApp() {
         rel="noopener noreferrer"
         id="floating-whatsapp-btn"
         aria-label="Chat on WhatsApp"
-        className="group relative flex items-center justify-center w-[60px] h-[60px] rounded-full shadow-2xl transition-all duration-300 hover:scale-110 hover:shadow-[0_8px_30px_rgba(37,211,102,0.5)]"
+        className="pointer-events-auto group relative flex items-center justify-center w-[60px] h-[60px] rounded-full shadow-2xl transition-all duration-300 hover:scale-110 hover:shadow-[0_8px_30px_rgba(37,211,102,0.5)]"
         style={{
           background: '#25D366',
         }}

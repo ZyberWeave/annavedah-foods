@@ -271,6 +271,7 @@ export default function AdminProductsPage() {
     setShowForm(true);
     setSlugTouched(false);
     setErrorMessage('');
+    setStatusMessage('');
   };
 
   const startEdit = (product: AdminProduct) => {
@@ -424,7 +425,7 @@ export default function AdminProductsPage() {
               {errorMessage}
             </span>
           )}
-          <Button onClick={startCreate} className="bg-[#8b1a1a] hover:bg-[#6d1414] text-white">
+          <Button type="button" onClick={startCreate} className="relative z-10 bg-[#8b1a1a] hover:bg-[#6d1414] text-white">
             <Plus className="w-4 h-4 mr-2" />
             Add Product
           </Button>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkServiceability } from '@/lib/shiprocket'
 import { getClientIp, rateLimitOr429 } from '@/lib/rate-limit'
+import { getTestServiceabilityResponse, isTestServiceablePincode } from '@/lib/serviceability-overrides'
 
 export async function GET(req: NextRequest) {
   const ip = getClientIp(req)
@@ -21,6 +22,12 @@ export async function GET(req: NextRequest) {
   }
   if (!Number.isFinite(weight) || weight <= 0 || weight > 50) {
     return NextResponse.json({ error: 'weight must be between 0 and 50 kg' }, { status: 400 })
+  }
+
+  if (isTestServiceablePincode(delivery)) {
+    return NextResponse.json(getTestServiceabilityResponse(delivery, codFlag), {
+      headers: { 'Cache-Control': 'no-store' },
+    })
   }
 
   try {

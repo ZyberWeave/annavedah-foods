@@ -145,7 +145,15 @@ const categoryDefaults: Record<
   },
 }
 
-const p = (size: string, price: number, buyPrice?: number): PackPrice => ({ size, price, buyPrice: buyPrice ?? Math.round(price * 0.55) })
+const SELLING_PRICE_MULTIPLIER = 1.5
+
+const p = (size: string, price: number, buyPrice?: number): PackPrice => ({
+  size,
+  price: Math.round(price * SELLING_PRICE_MULTIPLIER),
+  buyPrice: buyPrice ?? Math.round(price * 0.55),
+})
+
+const testP = (size: string): PackPrice => ({ size, price: 1, buyPrice: 1 })
 
 const productCatalog: ProductSeed[] = [
   {
@@ -640,7 +648,7 @@ const productCatalog: ProductSeed[] = [
     localName: 'Test Powder',
     category: 'Powders',
     badge: 'Test',
-    packPrices: [p('100gm', 1, 1)],
+    packPrices: [testP('100gm')],
   },
   {
     slug: 'test-grain-1rs',
@@ -648,7 +656,7 @@ const productCatalog: ProductSeed[] = [
     localName: 'Test Grain',
     category: 'Grains',
     badge: 'Test',
-    packPrices: [p('1kg', 1, 1)],
+    packPrices: [testP('1kg')],
   },
   {
     slug: 'test-essential-1rs',
@@ -656,7 +664,7 @@ const productCatalog: ProductSeed[] = [
     localName: 'Test Essential',
     category: 'Essentials',
     badge: 'Test',
-    packPrices: [p('100gm', 1, 1)],
+    packPrices: [testP('100gm')],
   },
 ]
 
@@ -1174,4 +1182,3 @@ export const benefits = [
 ]
 
 export const categories: string[] = ['All', 'Grains', 'Pulses', 'Powders', 'Atta', 'Essentials', 'Papad', 'Chutney']
-

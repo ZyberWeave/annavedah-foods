@@ -194,13 +194,13 @@ export default async function RootLayout({
             </div>
 
             <div className="border-t border-[#faf6f0]/10 pt-8">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-[#faf6f0]/60 md:pr-24 lg:pr-0">
+              <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-[#faf6f0]/60 md:pr-24 2xl:pr-0">
                 <p>© 2026 Annavedah Foods. All rights reserved.</p>
                 <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-                  <Link href="/privacy" className="hover:text-[#c9a45c] transition-colors">Privacy Policy</Link>
-                  <Link href="/terms" className="hover:text-[#c9a45c] transition-colors">Terms &amp; Conditions</Link>
-                  <Link href="/shipping" className="hover:text-[#c9a45c] transition-colors">Shipping Policy</Link>
-                  <Link href="/returns" className="hover:text-[#c9a45c] transition-colors">Cancellation, Return &amp; Refund Policy</Link>
+                  <Link href="/privacy" className="inline-flex min-h-8 items-center hover:text-[#c9a45c] transition-colors">Privacy Policy</Link>
+                  <Link href="/terms" className="inline-flex min-h-8 items-center hover:text-[#c9a45c] transition-colors">Terms &amp; Conditions</Link>
+                  <Link href="/shipping" className="inline-flex min-h-8 items-center hover:text-[#c9a45c] transition-colors">Shipping Policy</Link>
+                  <Link href="/returns" className="inline-flex min-h-8 items-center hover:text-[#c9a45c] transition-colors">Cancellation, Return &amp; Refund Policy</Link>
                 </div>
               </div>
             </div>

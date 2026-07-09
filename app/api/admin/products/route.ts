@@ -1,4 +1,4 @@
-import { and, eq, ne } from 'drizzle-orm';
+import { and, eq, inArray, ne } from 'drizzle-orm';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { requireAdmin } from '@/lib/auth';
@@ -14,7 +14,7 @@ import {
   syncProductIdSequence,
   type ProductMutationInput,
 } from '@/lib/products';
-import { productReviews, products } from '@/lib/schema';
+import { productReviews, products, reviewHelpfulVotes } from '@/lib/schema';
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -210,8 +210,27 @@ export async function DELETE(req: NextRequest) {
     }
 
     await db.transaction(async (tx) => {
+      const reviews = await tx
+        .select({ id: productReviews.id })
+        .from(productReviews)
+        .where(eq(productReviews.productSlug, current.slug));
+
+      if (reviews.length > 0) {
+        await tx
+          .delete(reviewHelpfulVotes)
+          .where(inArray(reviewHelpfulVotes.reviewId, reviews.map((review) => review.id)));
+      }
+
       await tx.delete(productReviews).where(eq(productReviews.productSlug, current.slug));
-      await tx.delete(products).where(eq(products.id, id));
+
+      const deleted = await tx
+        .delete(products)
+        .where(eq(products.id, id))
+        .returning({ id: products.id });
+
+      if (deleted.length === 0) {
+        throw new Error('Product delete did not affect any rows.');
+      }
     });
 
     invalidateProductCache();
@@ -219,6 +238,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Admin products delete error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Could not delete product. Please try again.' }, { status: 500 });
   }
 }

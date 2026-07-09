@@ -630,3 +630,15 @@ html {
 .dual-range-slider input[type="range"].thumb-upper {
   z-index: 4;
 }
+
+.instagram-feed-card .instagram-media,
+.instagram-feed-card iframe {
+  box-sizing: border-box !important;
+  display: block !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  width: 100% !important;
+}

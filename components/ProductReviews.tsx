@@ -174,6 +174,8 @@ export default function ProductReviews({ productSlug }: { productSlug: string })
         return
       }
 
+      setFilter(null)
+      await fetchReviews()
       setSubmitted(true)
       setTimeout(() => {
         setShowWriteForm(false)
@@ -266,7 +268,7 @@ export default function ProductReviews({ productSlug }: { productSlug: string })
                 </svg>
               </div>
               <p className="font-bold text-[#2d1b15] text-lg">Thank you for your review!</p>
-              <p className="text-sm text-[#6b5347] mt-1">Your review has been submitted and will appear after moderation.</p>
+              <p className="text-sm text-[#6b5347] mt-1">Your verified review is now visible in customer reviews.</p>
             </div>
           ) : (
             <form onSubmit={submit} className="space-y-5 max-w-xl">

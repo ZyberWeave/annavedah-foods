@@ -6,7 +6,7 @@ import { useCart } from '@/components/cart-context'
 import { validateCoupon, coupons } from '@/lib/coupons'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
-import { CheckCircle2, Loader2, MapPin, ShieldCheck, Truck, ChevronRight, AlertCircle, Tag, X, Ticket, ChevronDown, ChevronUp } from 'lucide-react'
+import { CheckCircle2, Loader2, MapPin, ShieldCheck, Truck, ChevronRight, AlertCircle, Tag, X, Ticket, ChevronDown, ChevronUp, Minus, Plus } from 'lucide-react'
 import { validateEmail, validatePhone, validateName, validateRequired } from '@/lib/validations'
 import Breadcrumbs from '@/components/Breadcrumbs'
 import { toast } from 'sonner'
@@ -33,7 +33,7 @@ type Step = 'address' | 'payment' | 'success'
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, total, remove, appliedCoupon, applyCoupon, removeCoupon } = useCart()
+  const { items, total, remove, updateQty, appliedCoupon, applyCoupon, removeCoupon } = useCart()
   const [step, setStep] = useState<Step>('address')
   const [loading, setLoading] = useState(false)
   const [serviceability, setServiceability] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle')
@@ -200,6 +200,10 @@ export default function CheckoutPage() {
       setShowAvailableCoupons(false)
     }
     setPromoLoading(false)
+  }
+
+  function updateCheckoutQty(id: number, size: string | undefined, qty: number) {
+    updateQty(id, size, Math.max(1, Math.min(100, qty)))
   }
 
   async function handlePayment() {
@@ -524,15 +528,16 @@ export default function CheckoutPage() {
           </div>
 
           {/* ── RIGHT: Order Summary ── */}
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-border bg-card p-6 space-y-4 sticky site-sticky-top">
+          <div className="space-y-4 lg:self-start">
+            <div className="h-fit rounded-2xl border border-border bg-card p-6 space-y-4">
               <h2 className="text-lg font-semibold text-foreground">Order Summary</h2>
 
-              <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+              <div className="space-y-3 max-h-60 overflow-y-auto pr-1 [scrollbar-gutter:stable]">
                 {items.map((item, idx) => {
                   const { product, qty } = item;
+                  const unitPrice = item.selectedPack ? item.selectedPack.price : product.price;
                   return (
-                  <div key={`${product.slug}-${idx}`} className="flex items-center gap-3">
+                  <div key={`${product.slug}-${item.selectedPack?.size ?? 'base'}-${idx}`} className="flex items-start gap-3 rounded-xl border border-border/60 bg-background/50 p-2">
                     <div className="w-12 h-12 rounded-lg border border-border bg-white flex-shrink-0 overflow-hidden">
                       <Image src={product.image} alt={product.name} width={48} height={48} className="w-full h-full object-contain p-1" />
                     </div>
@@ -540,9 +545,44 @@ export default function CheckoutPage() {
                       <p className="text-sm font-medium text-foreground truncate">
                         {product.name} {item.selectedPack && `(${item.selectedPack.size})`}
                       </p>
-                      <p className="text-xs text-muted-foreground">Qty: {qty}</p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <div className="inline-flex h-8 items-center overflow-hidden rounded-full border border-border bg-card">
+                          <button
+                            type="button"
+                            onClick={() => updateCheckoutQty(product.id, item.selectedPack?.size, qty - 1)}
+                            disabled={qty <= 1}
+                            className="flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                            aria-label={`Decrease quantity for ${product.name}`}
+                          >
+                            <Minus className="h-3.5 w-3.5" />
+                          </button>
+                          <span className="w-8 text-center text-xs font-bold tabular-nums text-foreground" aria-live="polite">
+                            {qty}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => updateCheckoutQty(product.id, item.selectedPack?.size, qty + 1)}
+                            disabled={qty >= 100}
+                            className="flex h-8 w-8 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                            aria-label={`Increase quantity for ${product.name}`}
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => remove(product.id, item.selectedPack?.size)}
+                          className="flex h-8 w-8 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                          aria-label={`Remove ${product.name}`}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
-                    <p className="text-sm font-semibold text-foreground">₹{(item.selectedPack ? item.selectedPack.price : product.price) * qty}</p>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-foreground">₹{unitPrice * qty}</p>
+                      <p className="text-[10px] text-muted-foreground">₹{unitPrice} each</p>
+                    </div>
                   </div>
                   )
                 })}

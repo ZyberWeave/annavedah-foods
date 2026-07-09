@@ -139,16 +139,56 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true, error: 'replay' }, { status: 200 })
     }
 
-    // Atomic flip: only update rows still in 'pending'. If the verify route
-    // already finalised this order in parallel — or admin advanced fulfillment
-    // past 'success' — this update matches zero rows and we skip emails.
+    // Atomic flip: only update rows still in 'pending'.
     const flipped = await db
       .update(orders)
       .set({ paymentId: razorpayPaymentId, status: 'success' })
       .where(and(eq(orders.orderId, razorpayOrderId), eq(orders.status, 'pending')))
       .returning()
 
-    const justFlipped = flipped.length > 0
+    let justFlipped = flipped.length > 0
+
+    // Zero rows updated → re-read and surface the actual state. If the row
+    // was admin-cancelled before payment landed, we need to alert ops, not
+    // silently 200 like everything is fine.
+    if (!justFlipped) {
+      const after = await findOrderByOrderId(razorpayOrderId)
+      const isPaidDuplicate =
+        after &&
+        after.paymentId === razorpayPaymentId &&
+        ((['success', 'processing', 'shipped', 'delivered'] as readonly string[]).includes(after.status))
+      if (!isPaidDuplicate) {
+        console.error('[razorpay/webhook] zero-row flip without paid duplicate — likely cancelled-before-pay', {
+          orderId: razorpayOrderId,
+          razorpayPaymentId,
+          afterStatus: after?.status,
+          afterPaymentId: after?.paymentId,
+        })
+        try {
+          await resend.emails.send({
+            from: 'Annavedah System <support@annavedahfoods.com>',
+            to: getAdminEmails(),
+            subject: '⚠️ MANUAL RECONCILE: payment captured for non-pending order ' + razorpayOrderId,
+            html:
+              '<div style="font-family: Helvetica, Arial, sans-serif; padding: 16px;">' +
+                '<h2>Razorpay webhook fired but the local order is not pending.</h2>' +
+                '<p>Likely an admin-cancellation race. Investigate and refund manually if needed.</p>' +
+                '<ul>' +
+                  '<li>Order ID: <code>' + escapeHtml(razorpayOrderId) + '</code></li>' +
+                  '<li>Payment ID: <code>' + escapeHtml(razorpayPaymentId) + '</code></li>' +
+                  '<li>Local status: <code>' + escapeHtml(after?.status ?? 'missing') + '</code></li>' +
+                  '<li>Local paymentId: <code>' + escapeHtml(after?.paymentId ?? 'null') + '</code></li>' +
+                '</ul>' +
+              '</div>',
+          })
+        } catch (alertErr) {
+          console.error('[razorpay/webhook] failed to send manual-reconcile alert', alertErr)
+        }
+        return NextResponse.json({ received: true, reconcile: 'manual' }, { status: 200 })
+      }
+      // Legitimate duplicate — verify already finalised this. Skip emails.
+      justFlipped = false
+    }
 
     if (justFlipped) {
       // Send a minimal confirmation email. We don't have the rich shipping

@@ -64,29 +64,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Review must be at least 20 characters' }, { status: 400 });
     }
 
-    // Verified badge: requires a paid order belonging to this user that was
-    // paid via Razorpay (i.e. paymentId present and not 'COD'). COD is
-    // self-declared at checkout time and could be cancelled — don't trust it
-    // for social proof. Counts any paid fulfillment state, not just 'success',
-    // because an admin moving the order to 'shipped' shouldn't strip the badge.
-    let isVerified = false;
+    // Reviews are purchase-gated. A prepaid order is eligible once payment is
+    // captured; COD is eligible only after delivery so an unfulfilled COD order
+    // cannot be used as proof of purchase.
+    let hasVerifiedPurchase = false;
     try {
       const userOrders = await db
-        .select({ items: orders.items, paymentId: orders.paymentId })
+        .select({ items: orders.items, paymentId: orders.paymentId, status: orders.status })
         .from(orders)
         .where(and(eq(orders.userId, session.userId), inArray(orders.status, [...PAID_ORDER_STATUSES])));
 
       for (const order of userOrders) {
-        if (!order.paymentId || order.paymentId === 'COD') continue;
         try {
           const items = JSON.parse(order.items);
-          if (Array.isArray(items) && items.some((item: any) => item?.slug === productSlug)) {
-            isVerified = true;
+          const containsProduct = Array.isArray(items) && items.some((item: unknown) => {
+            if (!item || typeof item !== 'object') return false;
+            return 'slug' in item && item.slug === productSlug;
+          });
+          if (!containsProduct) continue;
+
+          const isPrepaidPurchase = Boolean(order.paymentId && order.paymentId !== 'COD');
+          const isDeliveredCodPurchase = order.paymentId === 'COD' && order.status === 'delivered';
+          if (isPrepaidPurchase || isDeliveredCodPurchase) {
+            hasVerifiedPurchase = true;
             break;
           }
         } catch {}
       }
     } catch {}
+
+    if (!hasVerifiedPurchase) {
+      return NextResponse.json(
+        { error: 'Only customers who purchased this product can submit a review.' },
+        { status: 403 },
+      );
+    }
 
     const [review] = await db.insert(productReviews).values({
       productSlug,
@@ -96,8 +108,8 @@ export async function POST(request: NextRequest) {
       rating,
       title: title.trim(),
       body: reviewBody.trim(),
-      status: 'pending',
-      verified: isVerified,
+      status: 'approved',
+      verified: true,
       helpful: 0,
     }).returning();
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, type FormEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -19,6 +19,7 @@ import { motion, useAnimation, useInView, AnimatePresence, useScroll, useTransfo
 import CountUp from 'react-countup'
 import InstagramFeed from '@/components/InstagramFeed'
 import TrustBadges from '@/components/TrustBadges'
+import { toast } from 'sonner'
 
 // Enhanced Animation Variants
 const fadeInUp = {
@@ -286,7 +287,7 @@ function PLPProductCard({ product, index, add }: any) {
 
   return (
     <motion.div
-      className="group bg-white rounded-3xl border-2 border-[#e8ddd0] overflow-hidden hover:border-[#c9a45c] transition-colors duration-300 flex flex-col h-full"
+      className="group bg-white rounded-2xl md:rounded-3xl border-2 border-[#e8ddd0] overflow-hidden hover:border-[#c9a45c] transition-colors duration-300 flex flex-col h-full"
       variants={staggerItem}
       layout
       whileHover={{ 
@@ -307,20 +308,20 @@ function PLPProductCard({ product, index, add }: any) {
               src={product.image}
               alt={product.name}
               fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-contain p-6 drop-shadow-xl transition-all duration-500 group-hover:drop-shadow-2xl"
+              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-contain p-3 md:p-6 drop-shadow-xl transition-all duration-500 group-hover:drop-shadow-2xl"
             />
           </motion.div>
         </Link>
         {product.badge && (
           <motion.div 
-            className="absolute top-4 left-4 z-10"
+            className="absolute top-2 left-2 z-10 md:top-4 md:left-4"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 + 0.3 }}
           >
             <motion.span 
-              className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide inline-block ${
+              className={`px-2 py-1 md:px-4 md:py-1.5 rounded-full text-[9px] md:text-xs font-bold uppercase tracking-wide inline-block ${
                 product.badge === 'Bestseller' ? 'bg-[#c9a45c] text-[#2d1b15]' :
                 product.badge === 'New' ? 'bg-[#8b1a1a] text-white' :
                 'bg-[#2d1b15] text-white'
@@ -336,14 +337,14 @@ function PLPProductCard({ product, index, add }: any) {
 
       {/* Product Info */}
       <motion.div 
-        className="p-6 space-y-4 flex-1 flex flex-col"
+        className="p-3 md:p-6 space-y-2 md:space-y-4 flex-1 flex flex-col"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: index * 0.05 }}
       >
         <div>
           <motion.span 
-            className="text-xs text-[#c9a45c] font-medium uppercase tracking-wide"
+            className="block truncate text-[10px] md:text-xs text-[#c9a45c] font-medium uppercase tracking-wide"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -351,20 +352,21 @@ function PLPProductCard({ product, index, add }: any) {
             {product.category}
           </motion.span>
           <Link href={`/products/${product.slug}`} className="block group-hover:text-[#8b1a1a] transition-colors">
-            <h3 className="text-2xl font-bold text-[#2d1b15] group-hover:text-[#8b1a1a]">{product.name}</h3>
+            <h3 className="text-sm sm:text-base md:text-2xl leading-tight font-bold text-[#2d1b15] group-hover:text-[#8b1a1a] line-clamp-2">{product.name}</h3>
           </Link>
-          {product.nameHindi !== product.name && <p className="text-sm text-[#6b5347]">{product.nameHindi}</p>}
+          {product.nameHindi !== product.name && <p className="text-xs md:text-sm text-[#6b5347] line-clamp-1">{product.nameHindi}</p>}
         </div>
         
-        <p className="text-[#6b5347] text-sm leading-relaxed flex-1">{product.description}</p>
+        <p className="hidden md:block text-[#6b5347] text-sm leading-relaxed flex-1">{product.description}</p>
 
         {product.packPrices.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-2">
+          <div className="flex flex-wrap gap-1 md:gap-2 pt-1 md:pt-2">
             {product.packPrices.map((pack: any) => (
               <button
                 key={`${product.slug}-${pack.size}`}
                 onClick={() => setSelectedPack(pack)}
-                className={`relative px-3 py-1.5 border-2 rounded-xl text-xs font-bold transition-all duration-300 ${
+                onPointerDown={(event) => event.stopPropagation()}
+                className={`relative px-2 py-1 md:px-3 md:py-1.5 border-2 rounded-lg md:rounded-xl text-[10px] md:text-xs font-bold transition-all duration-300 ${
                   selectedPack?.size === pack.size 
                     ? 'border-[#8b1a1a] bg-[#8b1a1a]/5 text-[#8b1a1a] shadow-inner ring-1 ring-[#8b1a1a]' 
                     : 'border-[#e8ddd0] bg-white text-[#6b5347] hover:border-[#c9a45c] hover:shadow-sm'
@@ -382,32 +384,36 @@ function PLPProductCard({ product, index, add }: any) {
         )}
 
         <motion.div
-          className="flex items-center justify-between pt-2"
+          className="flex items-center justify-between pt-1 md:pt-2"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
           {currentPrice > 0 ? (
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-[#8b1a1a]">₹{currentPrice}</span>
+              <span className="text-xl md:text-3xl font-bold text-[#8b1a1a]">₹{currentPrice}</span>
             </div>
           ) : (
-            <span className="text-sm font-semibold text-amber-700 bg-amber-100 px-3 py-1 rounded-full">
+            <span className="text-[11px] md:text-sm font-semibold text-amber-700 bg-amber-100 px-2 md:px-3 py-1 rounded-full">
               Price on request
             </span>
           )}
         </motion.div>
         
-        <div className="flex gap-2 pt-4 mt-auto border-t border-[#e8ddd0]/50">
-          <Button asChild variant="outline" className="flex-1 h-12 border-2 border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10 font-semibold rounded-xl transition-all">
-            <Link href={`/products/${product.slug}`}>Details</Link>
+        <div className="flex gap-1 md:gap-2 pt-3 md:pt-4 mt-auto border-t border-[#e8ddd0]/50">
+          <Button asChild variant="outline" className="flex-1 h-9 md:h-12 px-2 border-2 border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10 font-semibold rounded-lg md:rounded-xl transition-all text-xs md:text-sm">
+            <Link href={`/products/${product.slug}`} onPointerDown={(event) => event.stopPropagation()}>Details</Link>
           </Button>
           <Button 
-            className="flex-1 h-12 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-semibold rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5"
-            onClick={() => add(product.id, selectedPack)} 
+            className="flex-1 h-9 md:h-12 px-2 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-semibold rounded-lg md:rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 text-xs md:text-sm"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation()
+              add(product.id, selectedPack)
+            }} 
             disabled={currentPrice <= 0}
           >
-            <ShoppingCart className="w-4 h-4 mr-1 md:mr-2" />
+            <ShoppingCart className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1 md:mr-2" />
             {currentPrice > 0 ? 'Add' : 'Enquire'}
           </Button>
         </div>
@@ -422,6 +428,9 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState('')
   const [currentBanner, setCurrentBanner] = useState(0)
+  const [newsletterEmail, setNewsletterEmail] = useState('')
+  const [newsletterMessage, setNewsletterMessage] = useState('')
+  const [newsletterSubmitted, setNewsletterSubmitted] = useState(false)
   const { add } = useCart()
   
   // Scroll progress for hero parallax
@@ -445,6 +454,32 @@ export default function HomePage() {
 
   const nextBanner = () => setCurrentBanner((prev) => (prev + 1) % banners.length)
   const prevBanner = () => setCurrentBanner((prev) => (prev - 1 + banners.length) % banners.length)
+
+  const handleNewsletterSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const email = String(formData.get('newsletterEmail') || newsletterEmail).trim().toLowerCase()
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setNewsletterSubmitted(false)
+      setNewsletterMessage('Enter a valid email address.')
+      return
+    }
+
+    try {
+      const raw = localStorage.getItem('annavedah_newsletter_emails')
+      const existing = raw ? JSON.parse(raw) : []
+      const emails = Array.isArray(existing) ? existing : []
+      if (!emails.includes(email)) {
+        localStorage.setItem('annavedah_newsletter_emails', JSON.stringify([...emails, email]))
+      }
+    } catch {}
+
+    setNewsletterSubmitted(true)
+    setNewsletterMessage('You are subscribed. Watch your inbox for recipes and offers.')
+    setNewsletterEmail('')
+    toast.success('Subscribed to the Wellness Community.')
+  }
 
   return (
     <div className="min-h-screen bg-[#faf6f0] text-[#2d1b15] site-page-gap-home">
@@ -708,9 +743,9 @@ export default function HomePage() {
                 ]}
                 className="w-full max-w-full relative cursor-grab active:cursor-grabbing"
               >
-                <CarouselContent>
+                <CarouselContent className="-ml-2 md:-ml-4">
                   {filteredProducts.map((product, index) => (
-                    <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/3 p-4">
+                    <CarouselItem key={product.id} className="basis-1/2 pl-2 py-2 md:basis-1/2 md:p-4 lg:basis-1/3">
                       <div className="h-full">
                         <PLPProductCard product={product} index={index} add={add} />
                       </div>
@@ -1246,12 +1281,20 @@ export default function HomePage() {
               Get exclusive recipes, Ayurvedic wellness tips, and special offers delivered to your inbox
             </motion.p>
             
-            <motion.div
+            <form
+              onSubmit={handleNewsletterSubmit}
               className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto"
-              variants={fadeInUp}
             >
               <motion.input
                 type="email"
+                name="newsletterEmail"
+                required
+                value={newsletterEmail}
+                onChange={(event) => {
+                  setNewsletterEmail(event.target.value)
+                  setNewsletterMessage('')
+                  setNewsletterSubmitted(false)
+                }}
                 placeholder="Enter your email"
                 className="flex-1 px-6 py-4 rounded-xl bg-white/10 backdrop-blur border-2 border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:border-[#c9a45c] transition-colors text-lg"
                 whileFocus={{ scale: 1.02, boxShadow: "0 0 30px rgba(201, 164, 92, 0.3)" }}
@@ -1260,11 +1303,22 @@ export default function HomePage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Button className="bg-[#c9a45c] hover:bg-[#b8944d] text-[#2d1b15] h-14 px-8 rounded-xl font-semibold text-lg w-full sm:w-auto">
-                  Subscribe
+                <Button type="submit" className="bg-[#c9a45c] hover:bg-[#b8944d] text-[#2d1b15] h-14 px-8 rounded-xl font-semibold text-lg w-full sm:w-auto">
+                  {newsletterSubmitted ? 'Subscribed' : 'Subscribe'}
                 </Button>
               </motion.div>
-            </motion.div>
+            </form>
+
+            {newsletterMessage && (
+              <motion.p
+                className={`text-sm mt-4 ${newsletterSubmitted ? 'text-[#c9a45c]' : 'text-red-200'}`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                aria-live="polite"
+              >
+                {newsletterMessage}
+              </motion.p>
+            )}
 
             <motion.p
               className="text-white/60 text-sm mt-4"

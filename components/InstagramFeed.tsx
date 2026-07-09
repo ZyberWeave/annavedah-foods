@@ -27,7 +27,7 @@ const FALLBACK_REELS: ReelData[] = [
 
 function InstagramEmbedCard({ reel }: { reel: ReelData }) {
   return (
-    <div className="w-full max-w-[540px] mx-auto flex-shrink-0">
+    <div className="instagram-feed-card mx-auto flex w-full min-w-0 max-w-full items-start justify-center overflow-hidden rounded-md bg-white shadow-[0_0_1px_0_rgba(0,0,0,0.5),0_1px_10px_0_rgba(0,0,0,0.15)] md:max-w-[540px]">
       <blockquote
         className="instagram-media"
         data-instgrm-captioned
@@ -37,12 +37,12 @@ function InstagramEmbedCard({ reel }: { reel: ReelData }) {
           background: '#FFF',
           border: 0,
           borderRadius: '3px',
-          boxShadow: '0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15)',
-          margin: '1px',
+          boxShadow: 'none',
+          margin: '0 auto',
           maxWidth: '540px',
-          minWidth: '326px',
+          minWidth: 0,
           padding: 0,
-          width: 'calc(100% - 2px)',
+          width: '100%',
         }}
       >
         <div style={{ padding: '16px' }}>
@@ -147,6 +147,7 @@ export default function InstagramFeed() {
   }, [getVisibleCount])
 
   const maxIndex = Math.max(0, reels.length - visibleCount)
+  const safeCurrentIndex = Math.min(currentIndex, maxIndex)
 
   // Auto-play slider
   useEffect(() => {
@@ -172,14 +173,14 @@ export default function InstagramFeed() {
     setCurrentIndex(Math.max(0, Math.min(index, maxIndex)))
   }
 
-  const prev = () => goTo(currentIndex - 1)
-  const next = () => goTo(currentIndex >= maxIndex ? 0 : currentIndex + 1)
+  const prev = () => goTo(safeCurrentIndex - 1)
+  const next = () => goTo(safeCurrentIndex >= maxIndex ? 0 : safeCurrentIndex + 1)
 
   if (reels.length === 0) return null
 
   return (
-    <section className="py-16 bg-[#faf6f0]">
-      <div className="container mx-auto px-4">
+    <section className="py-12 md:py-16 bg-[#faf6f0] overflow-hidden">
+      <div className="container mx-auto px-3 sm:px-4">
         <div className="text-center mb-10">
           <p className="text-sm font-semibold uppercase tracking-widest text-[#c9a45c] mb-2 flex items-center justify-center gap-2">
             <Instagram className="w-4 h-4" /> Follow @annavedah.foods
@@ -190,7 +191,7 @@ export default function InstagramFeed() {
 
         {/* Auto-sliding Carousel */}
         <div
-          className="relative max-w-7xl mx-auto"
+          className="relative max-w-7xl mx-auto overflow-hidden"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
@@ -199,14 +200,14 @@ export default function InstagramFeed() {
             <>
               <button
                 onClick={prev}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 z-10 w-10 h-10 rounded-full bg-white border-2 border-[#e8ddd0] hover:border-[#c9a45c] shadow-lg flex items-center justify-center transition-all hover:scale-110"
+                className="absolute left-1 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border-2 border-[#e8ddd0] hover:border-[#c9a45c] shadow-lg flex items-center justify-center transition-all hover:scale-110 md:left-0 md:-translate-x-3"
                 aria-label="Previous reel"
               >
                 <ChevronLeft className="w-5 h-5 text-[#8b1a1a]" />
               </button>
               <button
                 onClick={next}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10 w-10 h-10 rounded-full bg-white border-2 border-[#e8ddd0] hover:border-[#c9a45c] shadow-lg flex items-center justify-center transition-all hover:scale-110"
+                className="absolute right-1 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white border-2 border-[#e8ddd0] hover:border-[#c9a45c] shadow-lg flex items-center justify-center transition-all hover:scale-110 md:right-0 md:translate-x-3"
                 aria-label="Next reel"
               >
                 <ChevronRight className="w-5 h-5 text-[#8b1a1a]" />
@@ -215,17 +216,17 @@ export default function InstagramFeed() {
           )}
 
           {/* Slider Track */}
-          <div className="overflow-hidden rounded-2xl mx-6" ref={sliderRef}>
+          <div className="overflow-hidden rounded-lg mx-4 sm:mx-6" ref={sliderRef}>
             <div
-              className="flex transition-transform duration-700 ease-in-out"
+              className="flex min-w-0 items-stretch transition-transform duration-700 ease-in-out"
               style={{
-                transform: `translateX(-${currentIndex * (100 / visibleCount)}%)`,
+                transform: `translateX(-${safeCurrentIndex * (100 / visibleCount)}%)`,
               }}
             >
               {reels.map((reel) => (
                 <div
                   key={reel.id}
-                  className="flex-shrink-0 px-3"
+                  className="flex min-w-0 flex-shrink-0 overflow-hidden px-0 sm:px-3"
                   style={{ width: `${100 / visibleCount}%` }}
                 >
                   <InstagramEmbedCard reel={reel} />
@@ -242,7 +243,7 @@ export default function InstagramFeed() {
                   key={i}
                   onClick={() => goTo(i)}
                   className={`h-2 rounded-full transition-all duration-300 ${
-                    i === currentIndex
+                    i === safeCurrentIndex
                       ? 'w-8 bg-[#c9a45c]'
                       : 'w-2 bg-[#e8ddd0] hover:bg-[#c9a45c]/50'
                   }`}
