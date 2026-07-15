@@ -1,4 +1,4 @@
-import { blogPosts } from '@/lib/content'
+import { blogPosts } from '@/lib/public-content'
 import { getProducts } from '@/lib/products'
 import type { MetadataRoute } from 'next'
 

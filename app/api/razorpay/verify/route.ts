@@ -192,8 +192,11 @@ export async function POST(req: NextRequest) {
         const etaRange = fmtDate(etaFrom) + ' – ' + fmtDate(etaTo);
 
         await resend.emails.send({
+          // Deliver to the authoritative account/order email locked in at
+          // create-order time — never the client-supplied customer.email, which
+          // would let a caller send our branded mail to an arbitrary recipient.
           from: 'Annavedah Foods <support@annavedahfoods.com>',
-          to: customer.email,
+          to: existing.customerEmail,
           subject: 'Order Confirmed ✓ — ' + orderId + ' (Rs ' + numericTotal + ')',
           html: '<div style="font-family: \'Helvetica Neue\', Arial, sans-serif; max-width: 640px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e8ddd0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">' +
             '<div style="background-color: #faf6f0; padding: 40px 20px; text-align: center; border-bottom: 2px solid #c9a45c;">' +

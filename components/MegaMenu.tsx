@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronDown } from 'lucide-react'
-import { categories, banners } from '@/lib/content'
+import { categories, banners } from '@/lib/public-content'
 import { useProductsData } from '@/components/products-context'
 
 export default function MegaMenu() {

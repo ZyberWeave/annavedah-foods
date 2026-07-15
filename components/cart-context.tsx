@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
-import { type Product } from '@/lib/content'
+import type { Product } from '@/lib/content'
 import { validateCoupon } from '@/lib/coupons'
 import { useProductsData } from '@/components/products-context'
 import { toast } from 'sonner'

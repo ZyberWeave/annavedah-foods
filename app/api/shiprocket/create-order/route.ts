@@ -85,6 +85,9 @@ export async function POST(req: NextRequest) {
     // Resolve session email for ownership checks.
     const [sessionUser] = await db.select({ email: users.email }).from(users).where(eq(users.id, session.userId)).limit(1)
     const sessionEmail = sessionUser?.email ?? null
+    if (!sessionEmail) {
+      return NextResponse.json({ error: 'Session user not found' }, { status: 401 })
+    }
 
     // Look up the existing order. For Prepaid, this MUST exist (created by
     // /api/razorpay/verify). For COD, it may or may not exist — if it does,
@@ -192,7 +195,10 @@ export async function POST(req: NextRequest) {
       await persistOrderRecord({
         orderId,
         paymentId: paymentId || 'COD',
-        customerEmail: customer.email,
+        // Bind the order to the verified account email, not the client-supplied
+        // shipping-form email — keeps ownership/recovery consistent with the
+        // prepaid path and prevents arbitrary-recipient abuse.
+        customerEmail: sessionEmail,
         total: numericTotal,
         items: validatedItems,
         status: 'success',
@@ -298,8 +304,9 @@ export async function POST(req: NextRequest) {
         const etaRange = fmtDate(new Date(Date.now() + 3 * 86400000)) + ' – ' + fmtDate(new Date(Date.now() + 6 * 86400000));
 
         await resend.emails.send({
+          // Authoritative account email, never the client-supplied one.
           from: 'Annavedah Foods <support@annavedahfoods.com>',
-          to: customer.email,
+          to: sessionEmail,
           subject: 'COD Order Confirmed — ' + orderId + ' (Pay Rs ' + numericTotal + ' on delivery)',
           html: '<div style="font-family: \'Helvetica Neue\', Arial, sans-serif; max-width: 640px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e8ddd0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">' +
             '<div style="background-color: #faf6f0; padding: 40px 20px; text-align: center; border-bottom: 2px solid #c9a45c;">' +

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { productReviews, reviewHelpfulVotes } from '@/lib/schema';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { verifySession } from '@/lib/auth';
 import { rateLimitOr429 } from '@/lib/rate-limit';
 
@@ -19,6 +19,17 @@ export async function POST(request: NextRequest) {
     const id = Number(reviewId);
     if (!Number.isInteger(id) || id <= 0) {
       return NextResponse.json({ error: 'Valid reviewId is required' }, { status: 400 });
+    }
+
+    // Only allow votes against a review that actually exists and is public,
+    // so callers can't create dangling vote rows for arbitrary ids.
+    const [target] = await db
+      .select({ id: productReviews.id })
+      .from(productReviews)
+      .where(and(eq(productReviews.id, id), eq(productReviews.status, 'approved')))
+      .limit(1);
+    if (!target) {
+      return NextResponse.json({ error: 'Review not found' }, { status: 404 });
     }
 
     // Insert dedupe row; if it already exists (user already voted), short-circuit.

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { productReviews, orders } from '@/lib/schema';
+import { productReviews, orders, users } from '@/lib/schema';
 import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { verifySession } from '@/lib/auth';
+import { rateLimitOr429 } from '@/lib/rate-limit';
 import { PAID_ORDER_STATUSES } from '@/lib/order-status';
 
 // Public GET — approved reviews for a product
@@ -50,19 +51,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Please log in to submit a review' }, { status: 401 });
     }
 
+    // Throttle: reviews are auto-approved and instantly public, so cap how fast
+    // a single account can post to prevent review flooding.
+    const block = await rateLimitOr429(`review:user:${session.userId}`, 5, 600);
+    if (block) return block;
+
     const body = await request.json();
-    const { productSlug, name, location, rating, title, reviewBody } = body;
+    const { productSlug, location, rating, title, reviewBody } = body;
 
     // Validation
-    if (!productSlug || !name?.trim() || !title?.trim() || !reviewBody?.trim()) {
+    if (!productSlug || typeof productSlug !== 'string' || !title?.trim() || !reviewBody?.trim()) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
     }
-    if (rating < 1 || rating > 5) {
-      return NextResponse.json({ error: 'Rating must be between 1 and 5' }, { status: 400 });
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      return NextResponse.json({ error: 'Rating must be a whole number between 1 and 5' }, { status: 400 });
     }
-    if (reviewBody.trim().length < 20) {
-      return NextResponse.json({ error: 'Review must be at least 20 characters' }, { status: 400 });
+    const trimmedTitle = String(title).trim();
+    const trimmedBody = String(reviewBody).trim();
+    if (trimmedBody.length < 20 || trimmedBody.length > 5000) {
+      return NextResponse.json({ error: 'Review must be between 20 and 5000 characters' }, { status: 400 });
     }
+    if (trimmedTitle.length > 150) {
+      return NextResponse.json({ error: 'Title must be under 150 characters' }, { status: 400 });
+    }
+    const trimmedLocation = String(location ?? '').trim().slice(0, 100);
 
     // Reviews are purchase-gated. A prepaid order is eligible once payment is
     // captured; COD is eligible only after delivery so an unfulfilled COD order
@@ -100,14 +112,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Display name comes from the authenticated account, not the request body,
+    // so a reviewer can't impersonate another customer or the brand.
+    const [reviewer] = await db
+      .select({ name: users.name })
+      .from(users)
+      .where(eq(users.id, session.userId))
+      .limit(1);
+    if (!reviewer) {
+      return NextResponse.json({ error: 'Account not found' }, { status: 401 });
+    }
+
     const [review] = await db.insert(productReviews).values({
       productSlug,
       userId: session.userId,
-      name: name.trim(),
-      location: (location || '').trim(),
+      name: reviewer.name,
+      location: trimmedLocation,
       rating,
-      title: title.trim(),
-      body: reviewBody.trim(),
+      title: trimmedTitle,
+      body: trimmedBody,
       status: 'approved',
       verified: true,
       helpful: 0,

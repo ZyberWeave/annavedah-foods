@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { upload } from '@vercel/blob/client';
 import { Button } from '@/components/ui/button';
-import { categories, type PackPrice, type ProductCategory } from '@/lib/content';
+import { categories } from '@/lib/public-content';
+import type { AdminPackPrice, ProductCategory } from '@/lib/content';
 import { ADMIN_SLUG } from '@/lib/admin-config';
 import {
   Box,
@@ -35,7 +36,7 @@ type AdminProduct = {
   benefits: string[];
   usage: string;
   highlights: string[];
-  packPrices: PackPrice[];
+  packPrices: AdminPackPrice[];
   badge?: string;
   active: boolean;
   displayOrder: number;

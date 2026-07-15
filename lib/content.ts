@@ -1,6 +1,9 @@
 export interface PackPrice {
   size: string
   price: number
+}
+
+export interface AdminPackPrice extends PackPrice {
   buyPrice: number
 }
 
@@ -22,7 +25,6 @@ export interface Product {
   category: ProductCategory
   price: number
   originalPrice: number
-  costPrice: number
   image: string
   description: string
   benefits: string[]
@@ -30,6 +32,11 @@ export interface Product {
   highlights: string[]
   packPrices: PackPrice[]
   badge?: string
+}
+
+export interface ProductWithCosts extends Omit<Product, 'packPrices'> {
+  costPrice: number
+  packPrices: AdminPackPrice[]
 }
 
 export interface BlogPost {
@@ -55,7 +62,7 @@ type ProductSeed = {
   name: string
   localName: string
   category: ProductCategory
-  packPrices?: PackPrice[]
+  packPrices?: AdminPackPrice[]
   image?: string
   badge?: string
   description?: string
@@ -145,15 +152,15 @@ const categoryDefaults: Record<
   },
 }
 
-const SELLING_PRICE_MULTIPLIER = 1.5
+const SELLING_PRICE_MULTIPLIER = 1
 
-const p = (size: string, price: number, buyPrice?: number): PackPrice => ({
+const p = (size: string, price: number, buyPrice?: number): AdminPackPrice => ({
   size,
   price: Math.round(price * SELLING_PRICE_MULTIPLIER),
   buyPrice: buyPrice ?? Math.round(price * 0.55),
 })
 
-const testP = (size: string): PackPrice => ({ size, price: 1, buyPrice: 1 })
+const testP = (size: string): AdminPackPrice => ({ size, price: 1, buyPrice: 1 })
 
 const productCatalog: ProductSeed[] = [
   {
@@ -668,7 +675,7 @@ const productCatalog: ProductSeed[] = [
   },
 ]
 
-export const products: Product[] = productCatalog
+export const products: ProductWithCosts[] = productCatalog
   .filter((item) => {
     if (item.badge === 'Test') return true
     const hasImage = !!item.image

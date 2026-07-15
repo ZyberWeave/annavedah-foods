@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { blogPosts } from '@/lib/content'
+import { blogPosts } from '@/lib/public-content'
 import { useState, useMemo } from 'react'
 
 export default function BlogIndexPage() {

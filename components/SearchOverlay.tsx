@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { categories } from '@/lib/content'
+import { categories } from '@/lib/public-content'
 import { useProductsData } from '@/components/products-context'
 import { Search, X, ArrowRight, TrendingUp, Sparkles, CornerDownLeft, ArrowUp, ArrowDown, Tag, Flame } from 'lucide-react'
 

@@ -4,8 +4,9 @@ import { revalidateTag, unstable_cache } from 'next/cache';
 import { db } from './db';
 import {
   products as staticProducts,
-  type PackPrice,
+  type AdminPackPrice,
   type Product,
+  type ProductWithCosts,
   type ProductCategory,
 } from './content';
 import { products as productsTable } from './schema';
@@ -23,7 +24,7 @@ export const PRODUCT_CATEGORY_VALUES: ProductCategory[] = [
 
 type ProductRow = typeof productsTable.$inferSelect;
 
-export type AdminProduct = Product & {
+export type AdminProduct = ProductWithCosts & {
   active: boolean;
   displayOrder: number;
   createdAt: Date;
@@ -41,7 +42,7 @@ export type ProductMutationInput = {
   benefits: string[];
   usage: string;
   highlights: string[];
-  packPrices: PackPrice[];
+  packPrices: AdminPackPrice[];
   badge?: string | null;
   active?: boolean;
   displayOrder?: number;
@@ -58,7 +59,7 @@ export function normalizeStringList(value: unknown): string[] {
     .filter(Boolean);
 }
 
-export function normalizePackPrices(value: unknown): PackPrice[] {
+export function normalizePackPrices(value: unknown): AdminPackPrice[] {
   if (!Array.isArray(value)) return [];
 
   return value
@@ -73,12 +74,12 @@ export function normalizePackPrices(value: unknown): PackPrice[] {
         size,
         price: Math.max(0, Math.round(price)),
         buyPrice: Math.max(0, Math.round(buyPrice)),
-      } satisfies PackPrice;
+      } satisfies AdminPackPrice;
     })
-    .filter((item): item is PackPrice => item !== null);
+    .filter((item): item is AdminPackPrice => item !== null);
 }
 
-export function deriveProductPricing(packPrices: PackPrice[]) {
+export function deriveProductPricing(packPrices: AdminPackPrice[]) {
   const basePrice = packPrices[0]?.price ?? 0;
   const baseCostPrice = packPrices[0]?.buyPrice ?? 0;
   const originalPrice = packPrices.length > 1 ? packPrices[packPrices.length - 1].price : basePrice;
@@ -99,7 +100,7 @@ function parseJsonArray<T>(raw: string, fallback: T[]): T[] {
   }
 }
 
-function mapRowToProduct(row: ProductRow): Product {
+function mapRowToProductWithCosts(row: ProductRow): ProductWithCosts {
   const packPrices = normalizePackPrices(parseJsonArray(row.packPrices, []));
   const benefits = normalizeStringList(parseJsonArray(row.benefits, []));
   const highlights = normalizeStringList(parseJsonArray(row.highlights, []));
@@ -125,9 +126,26 @@ function mapRowToProduct(row: ProductRow): Product {
   };
 }
 
+/**
+ * Strip procurement cost fields (`costPrice`, and `buyPrice` on every pack)
+ * from a product before it can reach the browser. The public product catalog
+ * is serialized into the RSC/HTML payload for every visitor (see the root
+ * layout → ProductsProvider), so anything left on these objects is readable
+ * by anyone via View Source / DevTools. Only the admin path
+ * (getAllAdminProducts, behind requireAdmin) is allowed to carry cost data.
+ */
+function toPublicProduct(product: ProductWithCosts): Product {
+  const { costPrice: _costPrice, packPrices, ...publicProduct } = product;
+
+  return {
+    ...publicProduct,
+    packPrices: packPrices.map(({ size, price }) => ({ size, price })),
+  };
+}
+
 function mapRowToAdminProduct(row: ProductRow): AdminProduct {
   return {
-    ...mapRowToProduct(row),
+    ...mapRowToProductWithCosts(row),
     active: row.active,
     displayOrder: row.displayOrder,
     createdAt: row.createdAt,
@@ -176,7 +194,7 @@ const getCachedActiveProducts = unstable_cache(
       .where(eq(productsTable.active, true))
       .orderBy(asc(productsTable.displayOrder), asc(productsTable.id));
 
-    return rows.map(mapRowToProduct);
+    return rows.map((row) => toPublicProduct(mapRowToProductWithCosts(row)));
   },
   ['active-products'],
   { tags: [PRODUCT_CACHE_TAG] },
@@ -187,7 +205,9 @@ export async function getProducts(): Promise<Product[]> {
     return await getCachedActiveProducts();
   } catch (error) {
     console.error('Load products error:', error);
-    return staticProducts;
+    // The static fallback also carries buyPrice/costPrice, so it must be
+    // sanitized before being served, same as the DB path.
+    return staticProducts.map(toPublicProduct);
   }
 }
 

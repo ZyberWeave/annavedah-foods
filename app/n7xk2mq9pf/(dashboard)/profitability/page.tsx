@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { type Product, type ProductCategory } from '@/lib/content';
+import type { ProductCategory, ProductWithCosts } from '@/lib/content';
 import { Button } from '@/components/ui/button';
 import {
   Loader2, ShieldCheck, LogOut, ArrowLeft,
@@ -13,7 +13,7 @@ import { ADMIN_SLUG } from '@/lib/admin-config';
 
 type SortKey = 'name' | 'sellPrice' | 'buyPrice' | 'margin' | 'marginPct';
 type SortDir = 'asc' | 'desc';
-type AdminProduct = Product & { active: boolean };
+type AdminProduct = ProductWithCosts & { active: boolean };
 
 export default function ProfitabilityPage() {
   const [products, setProducts] = useState<AdminProduct[]>([]);

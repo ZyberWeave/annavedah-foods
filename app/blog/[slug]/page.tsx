@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { blogPosts } from '@/lib/content'
+import { blogPosts } from '@/lib/public-content'
 
 type BlogPageProps = {
   params: Promise<{ slug: string }>
