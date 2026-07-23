@@ -7,13 +7,31 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { validateEmail, validateRequired } from '@/lib/validations';
 
+import { useEffect } from 'react';
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [mobileInput, setMobileInput] = useState('');
+  const [completeMsg, setCompleteMsg] = useState('');
   const router = useRouter();
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('annavedah-user-profile');
+      if (raw) {
+        const u = JSON.parse(raw);
+        setUserProfile(u);
+        if (u.email && u.phone && u.phone.replace(/\D/g, '').length >= 10) {
+          router.replace('/dashboard');
+        }
+      }
+    } catch {}
+  }, [router]);
 
   // Per-field errors & touched state for inline validation
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
@@ -87,7 +105,7 @@ export default function LoginPage() {
   const inputClass = (field: 'email' | 'password') => {
     const hasError = touched[field] && fieldErrors[field];
     const isValid = touched[field] && !fieldErrors[field] && (field === 'email' ? email : password);
-    return `w-full px-4 py-3 rounded-xl border transition-all duration-200 focus:outline-none focus:ring-2 ${
+    return `w-full px-4 py-3 rounded-xl border transition-all duration-200 focus:outline-none focus:ring-2 bg-white/80 backdrop-blur-sm ${
       hasError
         ? 'border-red-400 focus:border-red-400 focus:ring-red-200 bg-red-50/30'
         : isValid
@@ -95,6 +113,48 @@ export default function LoginPage() {
         : 'border-[#e8ddd0] focus:border-[#c9a45c] focus:ring-[#c9a45c]/20'
     }`;
   };
+
+  if (userProfile && (!userProfile.phone || userProfile.phone.replace(/\D/g, '').length < 10)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-[#faf6f0]">
+        <div className="w-full max-w-md bg-white rounded-3xl p-8 border-2 border-[#e8ddd0] shadow-xl text-center space-y-5">
+          <span className="bg-amber-500 text-black text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full inline-block">
+            FINISH YOUR REGISTRATION
+          </span>
+          <h2 className="text-2xl font-bold text-[#2d1b15]">Complete Your Profile</h2>
+          <p className="text-xs text-[#6b5347]">
+            You are logged in as <strong className="text-[#2d1b15]">{userProfile.email}</strong>. Please attach your 10-digit mobile number to complete registration.
+          </p>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const clean = mobileInput.replace(/\D/g, '');
+            if (clean.length < 10) {
+              setCompleteMsg('Please enter a valid 10-digit mobile number.');
+              return;
+            }
+            const updated = { ...userProfile, phone: clean };
+            localStorage.setItem('annavedah-user-profile', JSON.stringify(updated));
+            window.dispatchEvent(new Event('auth-changed'));
+            router.replace('/dashboard');
+          }} className="space-y-4">
+            {completeMsg && <p className="text-red-500 text-xs font-bold">{completeMsg}</p>}
+            <input
+              type="tel"
+              maxLength={10}
+              placeholder="Enter 10-digit mobile number"
+              value={mobileInput}
+              onChange={(e) => setMobileInput(e.target.value.replace(/\D/g, ''))}
+              className="w-full border-2 border-[#e8ddd0] rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:border-[#8b1a1a]"
+              required
+            />
+            <Button type="submit" className="w-full bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-bold py-3.5 rounded-xl uppercase tracking-wider">
+              ATTACH MOBILE & FINISH REGISTRATION
+            </Button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen site-page-gap pb-16 flex items-center justify-center bg-[#faf6f0] px-4">

@@ -21,11 +21,13 @@ type FieldKey = 'name' | 'email' | 'password';
 export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const router = useRouter();
 
   const [step, setStep] = useState<'details' | 'otp'>('details');
@@ -36,7 +38,18 @@ export default function RegisterPage() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    // Check if user is already logged in
+    try {
+      const raw = localStorage.getItem('annavedah-user-profile');
+      if (raw) {
+        const u = JSON.parse(raw);
+        setUserProfile(u);
+        if (u.email && u.phone && u.phone.replace(/\D/g, '').length >= 10) {
+          router.replace('/dashboard');
+        }
+      }
+    } catch {}
+  }, [router]);
 
   const validateField = (field: string, value: string) => {
     let result;
@@ -46,6 +59,10 @@ export default function RegisterPage() {
         break;
       case 'email':
         result = validateEmail(value);
+        break;
+      case 'phone':
+        const clean = value.replace(/\D/g, '');
+        result = { valid: clean.length >= 10, message: 'Please enter a valid 10-digit mobile number' };
         break;
       case 'password':
         result = validatePassword(value);
@@ -67,14 +84,17 @@ export default function RegisterPage() {
   const validateDetailsStep = (): boolean => {
     const nameResult = validateName(name, 'Full name');
     const emailResult = validateEmail(email);
+    const cleanPhone = phone.replace(/\D/g, '');
+    const phoneValid = cleanPhone.length >= 10;
     const passwordResult = validatePassword(password);
     setFieldErrors({
       name: nameResult.valid ? '' : nameResult.message,
       email: emailResult.valid ? '' : emailResult.message,
+      phone: phoneValid ? '' : 'Please enter a valid 10-digit mobile number',
       password: passwordResult.valid ? '' : passwordResult.message,
     });
-    setTouched({ name: true, email: true, password: true });
-    return nameResult.valid && emailResult.valid && passwordResult.valid;
+    setTouched({ name: true, email: true, phone: true, password: true });
+    return nameResult.valid && emailResult.valid && phoneValid && passwordResult.valid;
   };
 
   const validateOtpStep = (): boolean => {
@@ -95,8 +115,8 @@ export default function RegisterPage() {
 
     try {
       const payload = step === 'details' 
-        ? { name, email, password }
-        : { name, email, password, otp };
+        ? { name, email, phone, password }
+        : { name, email, phone, password, otp };
 
       const res = await fetch('/api/auth/register', {
         method: 'POST',
@@ -116,6 +136,8 @@ export default function RegisterPage() {
         return;
       }
 
+      const profile = { name, email, phone };
+      localStorage.setItem('annavedah-user-profile', JSON.stringify(profile));
       window.dispatchEvent(new Event('auth-changed'));
 
       const params = new URLSearchParams(window.location.search);
@@ -339,14 +361,37 @@ export default function RegisterPage() {
                         aria-invalid={!!fieldErrors.email}
                         aria-describedby="email-error"
                       />
-                      {touched.email && !fieldErrors.email && email && (
+                    </div>
+                  </div>
+
+                  {/* Mobile Number */}
+                  <div>
+                    <label className="block text-sm font-semibold text-[#2d1b15] mb-2">Mobile Number *</label>
+                    <div className="relative">
+                      <input
+                        type="tel"
+                        maxLength={10}
+                        value={phone}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, '');
+                          setPhone(val);
+                          if (touched.phone) validateField('phone', val);
+                        }}
+                        onBlur={() => handleBlur('phone', phone)}
+                        className={inputClass('phone', phone)}
+                        placeholder="9876543210"
+                        autoComplete="tel"
+                        aria-invalid={!!fieldErrors.phone}
+                        aria-describedby="phone-error"
+                      />
+                      {touched.phone && !fieldErrors.phone && phone.length >= 10 && (
                         <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500" />
                       )}
                     </div>
-                    {touched.email && fieldErrors.email && (
-                      <p id="email-error" className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
+                    {touched.phone && fieldErrors.phone && (
+                      <p id="phone-error" className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
                         <AlertCircle className="w-3.5 h-3.5" />
-                        {fieldErrors.email}
+                        {fieldErrors.phone}
                       </p>
                     )}
                   </div>

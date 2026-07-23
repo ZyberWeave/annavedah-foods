@@ -47,6 +47,7 @@ export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
+  phone: text('phone'),
   password: text('password').notNull(),
   role: varchar('role', { length: 20 }).default('user').notNull(),
   avatarUrl: text('avatar_url'),

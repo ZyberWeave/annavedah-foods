@@ -14,11 +14,11 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: Request) {
   try {
-    const { name, email: rawEmail, password, otp } = await req.json();
+    const { name, email: rawEmail, password, phone, otp } = await req.json();
     const email = normalizeEmail(rawEmail);
 
-    if (!name || !email || !password) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!name || !email || !password || !phone) {
+      return NextResponse.json({ error: 'Missing required fields (Name, Email, Password, Mobile Number)' }, { status: 400 });
     }
 
     const ip = getClientIp(req);
@@ -128,8 +128,9 @@ export async function POST(req: Request) {
     const [newUser] = await db.insert(users).values({
       name: name.trim(),
       email,
+      phone: phone ? phone.trim() : null,
       password: hashedPassword,
-    }).returning({ id: users.id, name: users.name, email: users.email, role: users.role });
+    }).returning({ id: users.id, name: users.name, email: users.email, phone: users.phone, role: users.role });
 
     await createSession(newUser.id, newUser.role);
 
