@@ -161,19 +161,18 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'A product with this slug already exists.' }, { status: 409 });
     }
 
-    await db.transaction(async (tx) => {
-      await tx
-        .update(products)
-        .set(buildProductInsertValues(payload, { displayOrder: current.displayOrder }))
-        .where(eq(products.id, id));
+    // Direct sequential queries without db.transaction to support Neon HTTP driver
+    await db
+      .update(products)
+      .set(buildProductInsertValues(payload, { displayOrder: current.displayOrder }))
+      .where(eq(products.id, id));
 
-      if (current.slug !== payload.slug) {
-        await tx
-          .update(productReviews)
-          .set({ productSlug: payload.slug })
-          .where(eq(productReviews.productSlug, current.slug));
-      }
-    });
+    if (current.slug !== payload.slug) {
+      await db
+        .update(productReviews)
+        .set({ productSlug: payload.slug })
+        .where(eq(productReviews.productSlug, current.slug));
+    }
 
     invalidateProductCache();
 
@@ -209,29 +208,28 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Product not found.' }, { status: 404 });
     }
 
-    await db.transaction(async (tx) => {
-      const reviews = await tx
-        .select({ id: productReviews.id })
-        .from(productReviews)
-        .where(eq(productReviews.productSlug, current.slug));
+    // Direct sequential queries without db.transaction to support Neon HTTP driver
+    const reviews = await db
+      .select({ id: productReviews.id })
+      .from(productReviews)
+      .where(eq(productReviews.productSlug, current.slug));
 
-      if (reviews.length > 0) {
-        await tx
-          .delete(reviewHelpfulVotes)
-          .where(inArray(reviewHelpfulVotes.reviewId, reviews.map((review) => review.id)));
-      }
+    if (reviews.length > 0) {
+      await db
+        .delete(reviewHelpfulVotes)
+        .where(inArray(reviewHelpfulVotes.reviewId, reviews.map((review) => review.id)));
+    }
 
-      await tx.delete(productReviews).where(eq(productReviews.productSlug, current.slug));
+    await db.delete(productReviews).where(eq(productReviews.productSlug, current.slug));
 
-      const deleted = await tx
-        .delete(products)
-        .where(eq(products.id, id))
-        .returning({ id: products.id });
+    const deleted = await db
+      .delete(products)
+      .where(eq(products.id, id))
+      .returning({ id: products.id });
 
-      if (deleted.length === 0) {
-        throw new Error('Product delete did not affect any rows.');
-      }
-    });
+    if (deleted.length === 0) {
+      return NextResponse.json({ error: 'Product delete failed.' }, { status: 404 });
+    }
 
     invalidateProductCache();
 
