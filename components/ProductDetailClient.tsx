@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { useCart } from '@/components/cart-context'
-import type { Product } from '@/lib/products'
+import type { Product, PackPrice, BundleItem } from '@/lib/content'
 import { useProductsData } from '@/components/products-context'
 import { useRecentlyViewed } from '@/components/recently-viewed-context'
 import { ShoppingCart, Check, Truck, ShieldCheck, RefreshCcw, Star } from 'lucide-react'
@@ -18,18 +18,25 @@ import WishlistButton from '@/components/WishlistButton'
 import RecentlyViewed from '@/components/RecentlyViewed'
 
 export default function ProductDetailClient({ product }: { product: Product }) {
-  const { products } = useProductsData()
-  const { add } = useCart()
-  const { push } = useRecentlyViewed()
-
-  const [selectedPack, setSelectedPack] = useState(product.packPrices[0])
+  const [selectedPack, setSelectedPack] = useState(product.packPrices[0] || null)
   const [qty, setQty] = useState(1)
-  const currentPrice = selectedPack ? selectedPack.price : product.price
-  const hasPrice = currentPrice > 0
+  const [added, setAdded] = useState(false)
+  const { add } = useCart()
+  const { products } = useProductsData()
+  const { push } = useRecentlyViewed()
 
   useEffect(() => {
     push(product.id)
   }, [product.id, push])
+
+  const hasPrice = product.price > 0 || (product.packPrices && product.packPrices.length > 0)
+  const currentPrice = selectedPack ? selectedPack.price : product.price
+
+  const handleAddToCart = () => {
+    add(product.id, selectedPack || undefined, qty)
+    setAdded(true)
+    setTimeout(() => setAdded(false), 2000)
+  }
 
   const related = products
     .filter((p) => p.id !== product.id && p.category === product.category && p.price > 0)
@@ -37,41 +44,28 @@ export default function ProductDetailClient({ product }: { product: Product }) {
 
   return (
     <div className="container mx-auto px-4 site-page-gap pb-20 lg:pb-16 space-y-12">
-      <Breadcrumbs
-        items={[
-          { label: 'Products', href: '/products' },
-          { label: product.category, href: `/products?category=${encodeURIComponent(product.category)}` },
-          { label: product.name },
-        ]}
-      />
+      <Breadcrumbs items={[{ label: product.category, href: `/products?category=${encodeURIComponent(product.category)}` }, { label: product.name }]} />
 
-      <div className="grid gap-10 md:grid-cols-2 md:items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14">
         <ProductGallery images={[product.image]} alt={product.name} />
 
-        <div className="space-y-5">
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#c9a45c]">{product.category}</p>
-            <h1 className="text-4xl font-bold text-[#2d1b15] md:text-5xl leading-tight">{product.name}</h1>
-            {product.localName !== product.name && (
-              <p className="text-base text-[#6b5347] italic">{product.localName}</p>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="flex gap-0.5">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <Star key={n} className={`w-4 h-4 ${n <= 5 ? 'fill-[#c9a45c] text-[#c9a45c]' : 'text-[#e8ddd0]'}`} />
-              ))}
-            </div>
-            <a href="#reviews" className="text-sm text-[#6b5347] hover:text-[#8b1a1a] transition-colors">View reviews ↓</a>
-            {product.badge && (
-              <span className="text-[10px] font-bold uppercase tracking-widest bg-[#8b1a1a] text-white px-3 py-1 rounded-full">
-                {product.badge}
+        <div className="space-y-6">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <span className="bg-[#c9a45c]/10 text-[#8b1a1a] text-xs font-bold px-3 py-1 rounded-full border border-[#c9a45c]/20 uppercase tracking-wider">
+                {product.category}
               </span>
+              {product.nameHindi && (
+                <span className="text-[#6b5347] text-sm font-semibold">
+                  {product.nameHindi}
+                </span>
+              )}
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-[#2d1b15]">{product.name}</h1>
+            {product.localName && (
+              <p className="text-sm text-[#6b5347] font-medium mt-1">({product.localName})</p>
             )}
           </div>
-
-          <p className="text-lg text-[#2d1b15]/80 leading-relaxed">{product.description}</p>
 
           {product.isGift && product.bundleItems && (
             <div className="p-5 bg-[#8b1a1a]/5 border-2 border-[#c9a45c]/30 rounded-2xl space-y-3">
@@ -79,7 +73,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
                 <span>🎁</span> What's Inside This Gift Box:
               </h4>
               <ul className="space-y-2 text-sm text-[#2d1b15] font-medium">
-                {product.bundleItems.map((item) => {
+                {product.bundleItems.map((item: BundleItem) => {
                   const bundledProd = products.find((p) => p.slug === item.productSlug)
                   return (
                     <li key={item.productSlug} className="flex items-center justify-between border-b border-[#e8ddd0] pb-2 last:border-0">
@@ -111,7 +105,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
                 <div className="space-y-2">
                   <p className="text-xs font-bold uppercase tracking-widest text-[#6b5347]">Choose pack size</p>
                   <div className="flex flex-wrap gap-3">
-                    {product.packPrices.map((pack) => (
+                    {product.packPrices.map((pack: PackPrice) => (
                       <button
                         key={`${product.slug}-${pack.size}`}
                         onClick={() => setSelectedPack(pack)}
@@ -146,7 +140,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
           )}
 
           <div className="flex flex-wrap gap-2">
-            {product.benefits.map((benefit) => (
+            {product.benefits.map((benefit: string) => (
               <span key={benefit} className="rounded-full bg-[#c9a45c]/10 border border-[#c9a45c]/20 px-3 py-1 text-xs font-semibold text-[#8b1a1a]">
                 {benefit}
               </span>

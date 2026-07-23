@@ -9,6 +9,7 @@ import CustomerPOSLookup from "@/components/admin/pos/CustomerPOSLookup";
 import POSRegisterSummary from "@/components/admin/pos/POSRegisterSummary";
 import POSHeader from "@/components/admin/pos/POSHeader";
 import { savePOSOrder } from "@/lib/pos-orders-storage";
+import { deductBatchStock } from "@/lib/batch-inventory";
 import { ADMIN_SLUG } from "@/lib/admin-config";
 
 type CartItem = {
