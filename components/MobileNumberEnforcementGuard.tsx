@@ -74,11 +74,7 @@ export default function MobileNumberEnforcementGuard() {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
       <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border-2 border-red-200">
         <div className="text-center space-y-3">
-          <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto text-3xl font-bold animate-pulse">
-            📱
-          </div>
-
-          <span className="bg-red-600 text-white text-[10px] font-extrabold uppercase px-3 py-1 rounded-full inline-block">
+          <span className="bg-red-700 text-white text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full inline-block">
             MANDATORY ACTION REQUIRED
           </span>
 
