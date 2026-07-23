@@ -162,6 +162,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-[#8b1a1a] mb-2">Welcome Back</h1>
           <p className="text-[#6b5347]">Log in to your Annavedah account</p>
+        </div>
         {/* ── OAuth 1-Click Buttons ── */}
         <div className="space-y-3 mb-6">
           <button
