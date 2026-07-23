@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { getBatches, addBatch, type ProductBatch } from "@/lib/batch-inventory";
+import { products } from "@/lib/content";
 
 export default function BarcodeGenerator() {
   const [batches, setBatches] = useState<ProductBatch[]>(getBatches());
   const [productName, setProductName] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [mfdDate, setMfdDate] = useState(new Date().toISOString().split("T")[0]);
   const [expiryDate, setExpiryDate] = useState(
     new Date(Date.now() + 365 * 86400000).toISOString().split("T")[0]
@@ -205,16 +207,45 @@ PRINT 1,1
         </h3>
 
         <form onSubmit={handleCreateBatch} className="grid grid-cols-1 md:grid-cols-5 gap-3 text-xs">
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 relative">
             <label className="block font-bold text-[#2d1b15] uppercase mb-1">Product Name *</label>
             <input
               type="text"
               required
-              placeholder="e.g. Organic Moringa Leaf Powder 250g"
+              placeholder="Type product name (e.g. Moringa)..."
               value={productName}
-              onChange={(e) => setProductName(e.target.value)}
+              onChange={(e) => {
+                setProductName(e.target.value);
+                setShowSuggestions(true);
+              }}
+              onFocus={() => setShowSuggestions(true)}
               className="w-full border border-[#e8ddd0] rounded px-3 py-2 text-xs focus:outline-none focus:border-[#8b1a1a]"
             />
+
+            {showSuggestions && productName.trim().length > 0 && (
+              <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-[#e8ddd0] rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto divide-y divide-[#e8ddd0]">
+                {products.filter((p) => p.name.toLowerCase().includes(productName.toLowerCase())).length > 0 ? (
+                  products
+                    .filter((p) => p.name.toLowerCase().includes(productName.toLowerCase()))
+                    .map((p) => (
+                      <div
+                        key={p.id}
+                        onClick={() => {
+                          setProductName(p.name);
+                          setUnitPrice(p.price.toString());
+                          setShowSuggestions(false);
+                        }}
+                        className="p-2.5 hover:bg-[#faf6f0] cursor-pointer flex justify-between items-center text-xs font-semibold text-[#2d1b15]"
+                      >
+                        <span>{p.name}</span>
+                        <span className="font-mono font-bold text-[#8b1a1a]">₹{p.price}</span>
+                      </div>
+                    ))
+                ) : (
+                  <div className="p-3 text-[11px] text-[#6b5347] italic">No matching catalog product. Enter custom name.</div>
+                )}
+              </div>
+            )}
           </div>
 
           <div>

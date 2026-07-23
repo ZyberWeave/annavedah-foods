@@ -40,6 +40,9 @@ export default function OfflinePOSPage() {
   const [cashTendered, setCashTendered] = useState<string>("");
   const [lastBill, setLastBill] = useState<{
     invoiceNo: string;
+    subtotal: number;
+    gstAmount: number;
+    discountAmount: number;
     total: number;
     items: CartItem[];
     payment: string;
@@ -112,6 +115,9 @@ export default function OfflinePOSPage() {
     const invoiceNo = "INV-AV-" + Math.floor(100000 + Math.random() * 900000);
     const bill = {
       invoiceNo,
+      subtotal,
+      gstAmount,
+      discountAmount,
       total: grandTotal,
       items: [...cart],
       payment: paymentMethod,
@@ -164,9 +170,9 @@ export default function OfflinePOSPage() {
             )
             .join("")}
           <div class="divider"></div>
-          <div class="row"><span>Subtotal:</span><span>INR ${subtotal}.00</span></div>
-          <div class="row"><span>GST (5%):</span><span>INR ${gstAmount.toFixed(2)}</span></div>
-          ${customer.discountPercent > 0 ? `<div class="row"><span>Discount (5%):</span><span>-INR ${discountAmount.toFixed(2)}</span></div>` : ""}
+          <div class="row"><span>Subtotal:</span><span>INR ${lastBill.subtotal}.00</span></div>
+          <div class="row"><span>GST (5%):</span><span>INR ${lastBill.gstAmount.toFixed(2)}</span></div>
+          ${lastBill.discountAmount > 0 ? `<div class="row"><span>Discount:</span><span>-INR ${lastBill.discountAmount.toFixed(2)}</span></div>` : ""}
           <div class="divider"></div>
           <div class="row total"><span>GRAND TOTAL:</span><span>INR ${lastBill.total}.00</span></div>
           <div class="row"><span>Payment Mode:</span><span>${lastBill.payment}</span></div>
