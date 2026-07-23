@@ -285,13 +285,14 @@ export default function ProductsPage() {
   const minPercent = ((currentMinPrice - priceBounds.min) / priceSpan) * 100
   const maxPercent = ((currentMaxPrice - priceBounds.min) / priceSpan) * 100
 
-  const FilterPanel = (
+  const renderFilterPanel = () => (
     <div className="space-y-8">
       <div>
         <h3 className="text-xl font-bold text-[#2d1b15] mb-4">Search</h3>
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6b5347] w-5 h-5" />
           <input
+            id="catalog-search-input"
             type="text"
             placeholder="Search products..."
             value={searchQuery}
@@ -505,7 +506,7 @@ export default function ProductsPage() {
       <div className="flex flex-col lg:flex-row gap-12">
         {/* Desktop sidebar */}
         <div className="hidden lg:block lg:w-1/4 flex-shrink-0 lg:sticky lg:self-start lg:max-h-[calc(100vh-13rem)] lg:overflow-y-auto z-10 scrollbar-thin scrollbar-thumb-[#e8ddd0] scrollbar-track-transparent pr-2 site-sticky-top">
-          {FilterPanel}
+          {renderFilterPanel()}
         </div>
 
         {/* Mobile filter trigger + Sort + Results */}
@@ -581,7 +582,7 @@ export default function ProductsPage() {
                 <X className="w-5 h-5 text-[#2d1b15]" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-5">{FilterPanel}</div>
+            <div className="flex-1 overflow-y-auto p-5">{renderFilterPanel()}</div>
             <div className="p-4 border-t border-[#e8ddd0] bg-white">
               <Button
                 className="w-full h-12 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-bold uppercase tracking-wider rounded-xl"

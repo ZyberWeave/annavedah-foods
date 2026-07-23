@@ -197,9 +197,14 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
               </div>
               <input
                 ref={inputRef}
+                id="header-search-overlay-input"
                 type="text"
                 value={query}
-                onChange={(e) => search(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value
+                  search(val)
+                }}
+                autoFocus
                 placeholder="Search products, ingredients, categories…"
                 className="flex-1 text-lg sm:text-xl text-[#2d1b15] placeholder:text-[#6b5347]/60 outline-none bg-transparent font-medium tracking-tight"
                 autoComplete="off"
