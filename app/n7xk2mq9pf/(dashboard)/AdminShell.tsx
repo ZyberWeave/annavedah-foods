@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { ADMIN_SLUG } from '@/lib/admin-config'
 import {
-  LayoutDashboard, ShoppingCart, BarChart3, LogOut, Bell, Search, Menu, MessageSquareQuote, Star, Loader2, Box,
+  LayoutDashboard, ShoppingCart, BarChart3, LogOut, Bell, Search, Menu, MessageSquareQuote, Star, Loader2, Box, Store,
 } from 'lucide-react'
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
@@ -53,6 +53,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   const navItems = [
     { href: `/${ADMIN_SLUG}`, icon: LayoutDashboard, label: 'Dashboard', exact: true },
+    { href: `/${ADMIN_SLUG}/pos`, icon: Store, label: 'Offline POS Counter', badge: 'POS' },
     { href: `/${ADMIN_SLUG}/orders`, icon: ShoppingCart, label: 'Orders', badge: activeOrders ?? undefined },
     { href: `/${ADMIN_SLUG}/products`, icon: Box, label: 'Products' },
     { href: `/${ADMIN_SLUG}/profitability`, icon: BarChart3, label: 'Profitability' },
