@@ -286,7 +286,7 @@ export default function ProductsPage() {
   const maxPercent = ((currentMaxPrice - priceBounds.min) / priceSpan) * 100
 
   const renderFilterPanel = () => (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-20">
       <div>
         <h3 className="text-xl font-bold text-[#2d1b15] mb-4">Search</h3>
         <div className="relative">
@@ -505,7 +505,7 @@ export default function ProductsPage() {
 
       <div className="flex flex-col lg:flex-row gap-12">
         {/* Desktop sidebar */}
-        <div className="hidden lg:block lg:w-1/4 flex-shrink-0 lg:sticky lg:self-start lg:max-h-[calc(100vh-13rem)] lg:overflow-y-auto z-10 scrollbar-thin scrollbar-thumb-[#e8ddd0] scrollbar-track-transparent pr-2 site-sticky-top">
+        <div className="hidden lg:block lg:w-1/4 flex-shrink-0 lg:sticky lg:top-[120px] lg:self-start lg:max-h-[calc(100vh-150px)] lg:overflow-y-auto z-10 scrollbar-thin scrollbar-thumb-[#e8ddd0] scrollbar-track-transparent pr-3">
           {renderFilterPanel()}
         </div>
 
