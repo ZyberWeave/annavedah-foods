@@ -7,6 +7,11 @@ export interface AdminPackPrice extends PackPrice {
   buyPrice: number
 }
 
+export type BundleItem = {
+  productSlug: string
+  quantity: number
+}
+
 export type ProductCategory =
   | 'Powders'
   | 'Grains'
@@ -15,6 +20,7 @@ export type ProductCategory =
   | 'Essentials'
   | 'Papad'
   | 'Chutney'
+  | 'Gift Boxes & Bundles'
 
 export interface Product {
   id: number
@@ -32,6 +38,8 @@ export interface Product {
   highlights: string[]
   packPrices: PackPrice[]
   badge?: string
+  isGift?: boolean
+  bundleItems?: BundleItem[]
 }
 
 export interface ProductWithCosts extends Omit<Product, 'packPrices'> {
@@ -148,6 +156,16 @@ const categoryDefaults: Record<
       'Instant flavor support for simple meals',
       'Works with breakfast and lunch plates',
       'Easy pantry storage option',
+    ],
+  },
+  'Gift Boxes & Bundles': {
+    description: 'Curated traditional food & superfood gift boxes for wellness and festive gifting.',
+    benefits: ['Pure farm-sourced ingredients', 'Festive gift packaging', 'Inventory-synced products'],
+    usage: 'Unbox and enjoy authentic traditional grains, superfood powders, and festive delicacies.',
+    highlights: [
+      'Hand-selected superfood & grain combinations',
+      'Includes greeting note & gift box',
+      'Multi-product inventory tracking',
     ],
   },
 }

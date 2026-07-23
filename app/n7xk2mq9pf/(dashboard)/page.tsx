@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Loader2, Users, ShoppingBag, TrendingUp, Box, Instagram, Plus, Trash2, ArrowUp, ArrowDown, Eye, EyeOff, Link2, Check, BarChart3 } from 'lucide-react';
 import { ADMIN_SLUG } from '@/lib/admin-config';
+import GiftBundleCreator from '@/components/admin/GiftBundleCreator';
+import BarcodeGenerator from '@/components/admin/BarcodeGenerator';
+import ShipmentAlertDispatcher from '@/components/admin/ShipmentAlertDispatcher';
 
 interface InstaReel {
   id: number;
@@ -429,6 +432,9 @@ export default function AdminDashboardPage() {
                 <Button onClick={() => router.push(`/${ADMIN_SLUG}/profitability`)} className="w-full justify-start bg-gradient-to-r from-green-50 to-emerald-50 text-[#2d1b15] hover:from-green-100 hover:to-emerald-100 border border-green-200">
                   <BarChart3 className="w-4 h-4 mr-3 text-green-600" /> Product Profitability
                 </Button>
+                <Button onClick={() => router.push(`/${ADMIN_SLUG}/pos`)} className="w-full justify-start bg-[#8b1a1a] text-white hover:bg-[#6d1414]">
+                  <ShoppingBag className="w-4 h-4 mr-3 text-[#c9a45c]" /> Offline POS Counter Terminal
+                </Button>
               </div>
             </div>
 
@@ -451,6 +457,15 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Admin Gift Box & Bundle Creator */}
+        <GiftBundleCreator />
+
+        {/* Batch & Barcode Generator */}
+        <BarcodeGenerator />
+
+        {/* Shipment Tracking Alert Dispatcher */}
+        <ShipmentAlertDispatcher />
     </div>
   );
 }

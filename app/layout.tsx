@@ -16,6 +16,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { MapPin, Phone, Mail, Instagram, Facebook, Globe } from 'lucide-react'
 import { getProducts } from '@/lib/products'
+import NavigationTracker from '@/components/NavigationTracker'
+import FirstTimeCustomerPopup from '@/components/FirstTimeCustomerPopup'
+import MobileNumberEnforcementGuard from '@/components/MobileNumberEnforcementGuard'
 import './globals.css'
 
 const footerProductLinks = [
@@ -79,6 +82,9 @@ export default async function RootLayout({
           <WishlistProvider>
             <RecentlyViewedProvider>
               <CartProvider>
+                <NavigationTracker />
+                <FirstTimeCustomerPopup />
+                <MobileNumberEnforcementGuard />
                 <Header />
                 <main className="site-main">
                   {children}
@@ -179,15 +185,21 @@ export default async function RootLayout({
                 <ul className="space-y-4 text-sm text-[#faf6f0]/70">
                   <li className="flex items-start gap-3">
                     <MapPin className="w-5 h-5 text-[#c9a45c] flex-shrink-0 mt-0.5" />
-                    <span>Shivdatta Nagar, Karmvir Bhaurao Patil Rd, Shivramnagar, Pimple Gurav, Pimpri-Chinchwad, Pune, Maharashtra 411061</span>
+                    <a href="https://maps.google.com/?q=Shivdatta+Nagar,+Karmvir+Bhaurao+Patil+Rd,+Shivramnagar,+Pimple+Gurav,+Pimpri-Chinchwad,+Pune,+Maharashtra+411061" target="_blank" rel="noopener noreferrer" className="hover:text-[#c9a45c] transition-colors">
+                      Shivdatta Nagar, Karmvir Bhaurao Patil Rd, Shivramnagar, Pimple Gurav, Pimpri-Chinchwad, Pune, Maharashtra 411061
+                    </a>
                   </li>
                   <li className="flex items-center gap-3">
                     <Phone className="w-5 h-5 text-[#c9a45c] flex-shrink-0" />
-                    <span>+91 97634 56100</span>
+                    <a href="tel:+919763456100" className="hover:text-[#c9a45c] transition-colors">
+                      +91 97634 56100
+                    </a>
                   </li>
                   <li className="flex items-center gap-3">
                     <Mail className="w-5 h-5 text-[#c9a45c] flex-shrink-0" />
-                    <span>support@annavedah.com</span>
+                    <a href="mailto:support@annavedah.com" className="hover:text-[#c9a45c] transition-colors">
+                      support@annavedah.com
+                    </a>
                   </li>
                 </ul>
               </div>

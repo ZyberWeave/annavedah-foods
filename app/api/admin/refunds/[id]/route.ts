@@ -6,6 +6,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { Resend } from 'resend';
 import { getRazorpay } from '@/lib/razorpay';
 import { toPositiveInt } from '@/lib/validate-id';
+import { restoreInventoryForRefund, type OrderItem } from '@/lib/inventory';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -182,6 +183,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         { error: 'Refund state changed concurrently. Please refresh.' },
         { status: 409 },
       );
+    }
+
+    // Automatically restore inventory when a refund is approved
+    if (status === 'approved' && updatedRefund.orderId) {
+      try {
+        const [ord] = await db.select().from(orders).where(eq(orders.orderId, updatedRefund.orderId)).limit(1);
+        if (ord?.items) {
+          const parsedItems: OrderItem[] = JSON.parse(ord.items);
+          restoreInventoryForRefund(parsedItems);
+        }
+      } catch (stockRestoreErr) {
+        console.error('[Refund Stock Restoration] Error restoring inventory:', stockRestoreErr);
+      }
     }
 
     // Look up user email to send notification

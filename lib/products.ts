@@ -20,6 +20,7 @@ export const PRODUCT_CATEGORY_VALUES: ProductCategory[] = [
   'Essentials',
   'Papad',
   'Chutney',
+  'Gift Boxes & Bundles',
 ];
 
 type ProductRow = typeof productsTable.$inferSelect;

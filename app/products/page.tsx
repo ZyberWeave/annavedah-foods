@@ -139,6 +139,7 @@ function PLPProductCard({ product, add }: { product: Product; add: (id: number, 
 }
 
 export default function ProductsPage() {
+  const STORAGE_KEY = 'annavedah_product_filters'
   const { products } = useProductsData()
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [searchQuery, setSearchQuery] = useState('')
@@ -147,6 +148,7 @@ export default function ProductsPage() {
   const [maxPrice, setMaxPrice] = useState<number | null>(null)
   const [activeTags, setActiveTags] = useState<string[]>([])
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [isRestored, setIsRestored] = useState(false)
   const { add } = useCart()
 
   // Flash sale countdown — 48 hours from now
@@ -154,11 +156,45 @@ export default function ProductsPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    const searchParam = params.get('search')
-    if (searchParam) setSearchQuery(searchParam)
-    const categoryParam = params.get('category')
-    if (categoryParam && categories.includes(categoryParam)) setSelectedCategory(categoryParam)
+    const hasUrlParams = params.has('search') || params.has('category') || params.has('tag') || params.has('sort')
+
+    if (hasUrlParams) {
+      const searchParam = params.get('search')
+      if (searchParam) setSearchQuery(searchParam)
+      const categoryParam = params.get('category')
+      if (categoryParam && categories.includes(categoryParam)) setSelectedCategory(categoryParam)
+      const tagParam = params.get('tag')
+      if (tagParam) setActiveTags(tagParam.split(',').filter(Boolean))
+      const sortParam = params.get('sort') as SortKey | null
+      if (sortParam && sortOptions.some((o) => o.value === sortParam)) setSortBy(sortParam)
+    } else {
+      try {
+        const raw = sessionStorage.getItem(STORAGE_KEY)
+        if (raw) {
+          const saved = JSON.parse(raw)
+          if (saved.selectedCategory) setSelectedCategory(saved.selectedCategory)
+          if (typeof saved.searchQuery === 'string') setSearchQuery(saved.searchQuery)
+          if (saved.sortBy) setSortBy(saved.sortBy)
+          if (typeof saved.minPrice === 'number' || saved.minPrice === null) setMinPrice(saved.minPrice)
+          if (typeof saved.maxPrice === 'number' || saved.maxPrice === null) setMaxPrice(saved.maxPrice)
+          if (Array.isArray(saved.activeTags)) setActiveTags(saved.activeTags)
+        }
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    setIsRestored(true)
   }, [])
+
+  useEffect(() => {
+    if (!isRestored) return
+    try {
+      const data = { selectedCategory, searchQuery, sortBy, minPrice, maxPrice, activeTags }
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+    } catch (e) {
+      console.error(e)
+    }
+  }, [selectedCategory, searchQuery, sortBy, minPrice, maxPrice, activeTags, isRestored])
 
   const priceBounds = useMemo(() => {
     const prices = products.flatMap(getProductPrices)
@@ -232,6 +268,9 @@ export default function ProductsPage() {
     setMinPrice(null)
     setMaxPrice(null)
     setActiveTags([])
+    try {
+      sessionStorage.removeItem(STORAGE_KEY)
+    } catch (e) {}
   }
 
   const hasActiveFilters =
