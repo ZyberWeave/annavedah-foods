@@ -57,8 +57,8 @@ export default function BarcodeGenerator() {
 
     const rotationStyle =
       orientation === "rotated"
-        ? `transform: rotate(90deg); transform-origin: center center; width: ${h}mm; height: ${w}mm;`
-        : `width: ${w - 2}mm; height: ${h - 2}mm;`;
+        ? `position: absolute; top: 50%; left: 50%; width: ${h}mm; height: ${w}mm; transform: translate(-50%, -50%) rotate(90deg); transform-origin: center center;`
+        : `position: absolute; top: 50%; left: 50%; width: ${w}mm; height: ${h}mm; transform: translate(-50%, -50%);`;
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -67,7 +67,7 @@ export default function BarcodeGenerator() {
           <title>TSC TTP-244 Pro Label - ${b.barcode}</title>
           <style>
             @page {
-              size: ${w}mm ${h}mm ${orientation === "rotated" ? "portrait" : "landscape"};
+              size: ${w}mm ${h}mm;
               margin: 0;
             }
             html, body {
@@ -78,10 +78,11 @@ export default function BarcodeGenerator() {
               background: #ffffff;
               font-family: Arial, Helvetica, sans-serif;
               overflow: hidden;
+              position: relative;
             }
             .label-wrapper {
               box-sizing: border-box;
-              padding: 1.5mm;
+              padding: 1mm 1.5mm;
               display: flex;
               flex-direction: column;
               align-items: center;
@@ -90,29 +91,29 @@ export default function BarcodeGenerator() {
               ${rotationStyle}
             }
             .p-name {
-              font-size: 8pt;
+              font-size: 7.5pt;
               font-weight: 800;
               color: #000000;
               line-height: 1.1;
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
-              max-width: 100%;
+              max-width: 95%;
             }
             .mfd-exp {
-              font-size: 6pt;
+              font-size: 5.5pt;
               font-weight: 700;
               color: #111111;
               margin: 1px 0;
             }
             .barcode-svg {
-              width: 90%;
-              height: 10mm;
+              width: 85%;
+              height: 8mm;
               margin: 1px 0;
             }
             .b-code {
               font-family: monospace;
-              font-size: 7.5pt;
+              font-size: 7pt;
               font-weight: 900;
               letter-spacing: 1px;
               color: #000000;
