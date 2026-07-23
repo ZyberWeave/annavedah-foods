@@ -116,10 +116,10 @@ export default function GiftingPage() {
               EXPLORE PRE-SET HAMPERS
             </a>
             <a
-              href="#box-builder"
+              href="#corporate"
               className="bg-white text-[#2d1b15] hover:bg-[#f0e8dc] font-extrabold text-xs px-6 py-3.5 rounded-xl uppercase tracking-wider transition-all"
             >
-              BUILD YOUR OWN GIFT BOX
+              CORPORATE BULK INQUIRY
             </a>
           </div>
         </div>
@@ -190,94 +190,6 @@ export default function GiftingPage() {
                 </div>
               </div>
             ))}
-          </div>
-        </section>
-
-        {/* ════════════ CUSTOM GIFT BOX BUILDER ════════════ */}
-        <section id="box-builder" className="bg-white rounded-3xl p-6 sm:p-10 border-2 border-[#e8ddd0] shadow-xl space-y-8">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="bg-[#c9a45c] text-black text-[10px] font-extrabold uppercase tracking-widest px-3.5 py-1 rounded-full inline-block">
-              BUILD-A-BOX CUSTOMIZER
-            </span>
-            <h2 className="text-3xl font-extrabold text-[#2d1b15]">
-              Create Your Personal Gift Box
-            </h2>
-            <p className="text-xs sm:text-sm text-[#6b5347]">
-              Handpick up to 6 organic items and include a personal message (includes signature luxury gift box packaging).
-            </p>
-          </div>
-
-          {/* STEP 1: SELECT PRODUCTS */}
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <label className="block text-xs font-extrabold text-[#2d1b15] uppercase tracking-wider">
-                STEP 1: HANDPICK ITEMS (SELECTED {customItems.length}/6)
-              </label>
-              <span className="text-xs font-mono font-bold text-[#6b5347]">
-                ITEMS TOTAL: ₹{customItemsTotal}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-h-72 overflow-y-auto p-1 hide-scrollbar">
-              {products.slice(0, 8).map((p) => {
-                const isSelected = customItems.some((item) => item.id === p.id);
-                return (
-                  <div
-                    key={p.id}
-                    onClick={() => toggleCustomItem(p)}
-                    className={`p-3 rounded-2xl border-2 cursor-pointer transition-all ${
-                      isSelected
-                        ? 'border-[#8b1a1a] bg-[#8b1a1a] text-white shadow-md'
-                        : 'border-[#e8ddd0] bg-white text-[#2d1b15] hover:border-[#c9a45c]'
-                    }`}
-                  >
-                    <h5 className="text-xs font-bold truncate">{p.name}</h5>
-                    <p className={`text-[11px] font-mono font-bold ${isSelected ? 'text-amber-200' : 'text-[#8b1a1a]'}`}>
-                      ₹{p.price}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* STEP 2: RECIPIENT MESSAGE & ADD TO CART */}
-          <div className="space-y-4 pt-4 border-t border-[#e8ddd0]">
-            <div>
-              <label className="block text-xs font-extrabold text-[#2d1b15] uppercase tracking-wider mb-1">
-                STEP 2: PERSONAL GIFT MESSAGE CARD (OPTIONAL)
-              </label>
-              <input
-                type="text"
-                maxLength={120}
-                placeholder="Write a message for the recipient..."
-                value={customNote}
-                onChange={(e) => setCustomNote(e.target.value)}
-                className="w-full border-2 border-[#e8ddd0] rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-[#8b1a1a]"
-              />
-            </div>
-
-            <div className="bg-[#faf6f0] p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 border border-[#e8ddd0]">
-              <div>
-                <span className="text-xs text-[#6b5347] font-bold uppercase tracking-wider block">
-                  CUSTOM GIFT BOX TOTAL PRICE:
-                </span>
-                <span className="text-3xl font-extrabold text-[#8b1a1a] font-mono">
-                  ₹{customItemsTotal}
-                </span>
-                <span className="text-[10px] text-gray-500 block font-medium">
-                  (Includes Signature Luxury Gift Box + {customItems.length} items)
-                </span>
-              </div>
-
-              <button
-                onClick={handleAddCustomBoxToCart}
-                disabled={customItems.length === 0}
-                className="w-full sm:w-auto bg-[#8b1a1a] hover:bg-[#6d1414] disabled:bg-gray-300 text-white font-extrabold text-xs px-8 py-4 rounded-xl uppercase tracking-wider shadow transition-all"
-              >
-                {addedBoxSuccess ? 'ADDED TO CART ✓' : 'ADD CUSTOM GIFT BOX TO CART'}
-              </button>
-            </div>
           </div>
         </section>
 
