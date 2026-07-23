@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { ADMIN_SLUG } from '@/lib/admin-config'
 import {
-  LayoutDashboard, ShoppingCart, BarChart3, LogOut, Bell, Search, Menu, MessageSquareQuote, Star, Loader2, Box, Store,
+  LayoutDashboard, ShoppingCart, BarChart3, LogOut, Bell, Search, Menu, MessageSquareQuote, Star, Loader2, Box, Store, Layers, Users, Receipt
 } from 'lucide-react'
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
@@ -51,9 +51,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     router.push(`/${ADMIN_SLUG}/orders?q=${encodeURIComponent(q)}`)
   }
 
-  const navItems = [
+  const mainNavItems = [
     { href: `/${ADMIN_SLUG}`, icon: LayoutDashboard, label: 'Dashboard', exact: true },
-    { href: `/${ADMIN_SLUG}/pos`, icon: Store, label: 'Offline POS Counter', badge: 'POS' },
     { href: `/${ADMIN_SLUG}/orders`, icon: ShoppingCart, label: 'Orders', badge: activeOrders ?? undefined },
     { href: `/${ADMIN_SLUG}/products`, icon: Box, label: 'Products' },
     { href: `/${ADMIN_SLUG}/profitability`, icon: BarChart3, label: 'Profitability' },
@@ -61,8 +60,15 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     { href: `/${ADMIN_SLUG}/reviews`, icon: Star, label: 'Reviews' },
   ]
 
+  const posNavItems = [
+    { href: `/${ADMIN_SLUG}/pos`, icon: Store, label: 'POS Billing Terminal', exact: true },
+    { href: `/${ADMIN_SLUG}/pos/batches`, icon: Layers, label: 'Batch & Expiry' },
+    { href: `/${ADMIN_SLUG}/pos/customers`, icon: Users, label: 'Customer Directory' },
+    { href: `/${ADMIN_SLUG}/pos/audit`, icon: Receipt, label: 'Sales Audit & Receipts' },
+  ]
+
   const isActive = (href: string, exact?: boolean) =>
-    exact ? pathname === href : pathname === href || pathname.startsWith(href + '/')
+    exact ? pathname === href : pathname === href
 
   const SidebarBody = (
     <>
@@ -75,30 +81,64 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
-        {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={() => setMobileNavOpen(false)}
-            className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-              isActive(item.href, item.exact)
-                ? 'bg-primary/10 text-primary shadow-sm border border-primary/10'
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <item.icon className={`w-4 h-4 ${isActive(item.href, item.exact) ? 'text-primary' : ''}`} />
-              {item.label}
-            </div>
-            {typeof item.badge === 'number' && item.badge > 0 && (
-              <span className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 rounded-full font-bold">
-                {item.badge}
-              </span>
-            )}
-          </Link>
-        ))}
+      <div className="flex-1 overflow-y-auto py-6 px-4 space-y-6">
+        {/* MAIN NAVIGATION */}
+        <div className="space-y-1">
+          <span className="px-4 text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground">
+            MANAGEMENT
+          </span>
+          {mainNavItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setMobileNavOpen(false)}
+              className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                isActive(item.href, item.exact)
+                  ? 'bg-primary/10 text-primary shadow-sm border border-primary/10'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <item.icon className={`w-4 h-4 ${isActive(item.href, item.exact) ? 'text-primary' : ''}`} />
+                {item.label}
+              </div>
+              {typeof item.badge === 'number' && item.badge > 0 && (
+                <span className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 rounded-full font-bold">
+                  {item.badge}
+                </span>
+              )}
+            </Link>
+          ))}
+        </div>
 
+        {/* OFFLINE POS SUITE */}
+        <div className="space-y-1">
+          <div className="px-4 flex items-center justify-between">
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-primary">
+              OFFLINE POS SUITE
+            </span>
+            <span className="bg-primary/20 text-primary text-[9px] font-extrabold px-1.5 py-0.5 rounded">
+              COUNTER
+            </span>
+          </div>
+          {posNavItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setMobileNavOpen(false)}
+              className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                isActive(item.href, item.exact)
+                  ? 'bg-primary text-primary-foreground font-bold shadow-md'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <item.icon className="w-4 h-4" />
+                {item.label}
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
 
       <div className="p-4 border-t border-border">

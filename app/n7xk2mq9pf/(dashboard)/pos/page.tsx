@@ -243,43 +243,35 @@ Thank you for choosing Annavedah Foods!`;
           </div>
         </header>
 
-        {/* SECTION TABS */}
+        {/* SECTION NAVIGATION LINKS */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-white p-1.5 rounded-xl border-2 border-[#e8ddd0] shadow-xs font-bold text-xs">
-          <button
-            onClick={() => setActiveTab("billing")}
-            className={`py-2.5 px-4 rounded-lg transition-all uppercase tracking-wider ${
-              activeTab === "billing" ? "bg-[#8b1a1a] text-white shadow-xs" : "text-[#6b5347] hover:bg-[#faf6f0]"
-            }`}
+          <Link
+            href={`/${ADMIN_SLUG}/pos`}
+            className="py-2.5 px-4 rounded-lg transition-all uppercase tracking-wider text-center bg-[#8b1a1a] text-white shadow-xs"
           >
             BILLING TERMINAL
-          </button>
+          </Link>
 
-          <button
-            onClick={() => setActiveTab("inventory")}
-            className={`py-2.5 px-4 rounded-lg transition-all uppercase tracking-wider ${
-              activeTab === "inventory" ? "bg-[#8b1a1a] text-white shadow-xs" : "text-[#6b5347] hover:bg-[#faf6f0]"
-            }`}
+          <Link
+            href={`/${ADMIN_SLUG}/pos/batches`}
+            className="py-2.5 px-4 rounded-lg transition-all uppercase tracking-wider text-center text-[#6b5347] hover:bg-[#faf6f0]"
           >
-            MULTI-BATCH INVENTORY
-          </button>
+            BATCH & EXPIRY
+          </Link>
 
-          <button
-            onClick={() => setActiveTab("printers")}
-            className={`py-2.5 px-4 rounded-lg transition-all uppercase tracking-wider ${
-              activeTab === "printers" ? "bg-[#8b1a1a] text-white shadow-xs" : "text-[#6b5347] hover:bg-[#faf6f0]"
-            }`}
+          <Link
+            href={`/${ADMIN_SLUG}/pos/customers`}
+            className="py-2.5 px-4 rounded-lg transition-all uppercase tracking-wider text-center text-[#6b5347] hover:bg-[#faf6f0]"
           >
-            PRINTER STUDIO
-          </button>
+            CUSTOMER DIRECTORY
+          </Link>
 
-          <button
-            onClick={() => setActiveTab("register")}
-            className={`py-2.5 px-4 rounded-lg transition-all uppercase tracking-wider ${
-              activeTab === "register" ? "bg-[#8b1a1a] text-white shadow-xs" : "text-[#6b5347] hover:bg-[#faf6f0]"
-            }`}
+          <Link
+            href={`/${ADMIN_SLUG}/pos/audit`}
+            className="py-2.5 px-4 rounded-lg transition-all uppercase tracking-wider text-center text-[#6b5347] hover:bg-[#faf6f0]"
           >
-            SALES REGISTER
-          </button>
+            SALES AUDIT & RECEIPTS
+          </Link>
         </div>
 
         {/* TAB 1: COUNTER BILLING TERMINAL */}
