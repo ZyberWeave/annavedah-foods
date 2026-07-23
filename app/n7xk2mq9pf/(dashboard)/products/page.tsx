@@ -432,7 +432,7 @@ export default function AdminProductsPage() {
   }
 
   return (
-    <div className="space-y-8 max-w-6xl">
+    <div className="space-y-8 w-full">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-gradient-to-br from-[#c9a45c]/20 to-[#8b1a1a]/10 rounded-2xl flex items-center justify-center border border-[#c9a45c]/20">
