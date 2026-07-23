@@ -203,41 +203,15 @@ export default function GiftingPage() {
               Create Your Personal Gift Box
             </h2>
             <p className="text-xs sm:text-sm text-[#6b5347]">
-              Choose your box style, handpick up to 6 organic items, and include a personal message.
+              Handpick up to 6 organic items and include a personal message (includes signature luxury gift box packaging).
             </p>
           </div>
 
-          {/* STEP 1: CHOOSE PACKAGING */}
-          <div className="space-y-3">
-            <label className="block text-xs font-extrabold text-[#2d1b15] uppercase tracking-wider">
-              STEP 1: SELECT GIFT PACKAGING STYLE
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {GIFT_PACKAGING_OPTIONS.map((box) => (
-                <div
-                  key={box.id}
-                  onClick={() => setSelectedBox(box)}
-                  className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
-                    selectedBox.id === box.id
-                      ? 'border-[#8b1a1a] bg-[#8b1a1a]/5 ring-1 ring-[#8b1a1a]'
-                      : 'border-[#e8ddd0] bg-white hover:border-[#c9a45c]'
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="text-sm font-bold text-[#2d1b15]">{box.name}</h4>
-                    <span className="text-xs font-mono font-bold text-[#8b1a1a]">+₹{box.price}</span>
-                  </div>
-                  <p className="text-xs text-[#6b5347] font-medium">{box.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* STEP 2: SELECT PRODUCTS */}
+          {/* STEP 1: SELECT PRODUCTS */}
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <label className="block text-xs font-extrabold text-[#2d1b15] uppercase tracking-wider">
-                STEP 2: HANDPICK ITEMS (SELECTED {customItems.length}/6)
+                STEP 1: HANDPICK ITEMS (SELECTED {customItems.length}/6)
               </label>
               <span className="text-xs font-mono font-bold text-[#6b5347]">
                 ITEMS TOTAL: ₹{customItemsTotal}
@@ -267,11 +241,11 @@ export default function GiftingPage() {
             </div>
           </div>
 
-          {/* STEP 3: RECIPIENT MESSAGE & ADD TO CART */}
+          {/* STEP 2: RECIPIENT MESSAGE & ADD TO CART */}
           <div className="space-y-4 pt-4 border-t border-[#e8ddd0]">
             <div>
               <label className="block text-xs font-extrabold text-[#2d1b15] uppercase tracking-wider mb-1">
-                STEP 3: PERSONAL GIFT MESSAGE CARD (OPTIONAL)
+                STEP 2: PERSONAL GIFT MESSAGE CARD (OPTIONAL)
               </label>
               <input
                 type="text"
@@ -289,10 +263,10 @@ export default function GiftingPage() {
                   CUSTOM GIFT BOX TOTAL PRICE:
                 </span>
                 <span className="text-3xl font-extrabold text-[#8b1a1a] font-mono">
-                  ₹{customBoxTotalPrice}
+                  ₹{customItemsTotal}
                 </span>
                 <span className="text-[10px] text-gray-500 block font-medium">
-                  ({selectedBox.name} + {customItems.length} items)
+                  (Includes Signature Luxury Gift Box + {customItems.length} items)
                 </span>
               </div>
 
