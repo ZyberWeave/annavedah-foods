@@ -122,6 +122,26 @@ export default function GiftingPage() {
               CORPORATE BULK INQUIRY
             </a>
           </div>
+          <div className="mt-8 max-w-4xl mx-auto rounded-3xl overflow-hidden shadow-2xl border-4 border-[#e8ddd0]/20 relative group">
+            <Image
+              src="/gifting-hamper.jpg"
+              alt="Annavedah Foods Signature Luxury Gift Hamper Box"
+              width={1200}
+              height={600}
+              className="w-full h-64 sm:h-80 md:h-96 object-cover transform group-hover:scale-105 transition-transform duration-700"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-6 sm:p-8">
+              <div className="text-left space-y-1">
+                <span className="bg-[#8b1a1a] text-white text-[9px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full inline-block">
+                  SIGNATURE LUXURY COLLECTION
+                </span>
+                <h3 className="text-xl sm:text-2xl font-extrabold text-white">
+                  Handcrafted Superfood Gift Hampers
+                </h3>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -150,15 +170,27 @@ export default function GiftingPage() {
                 key={g.id}
                 className="bg-white rounded-3xl border-2 border-[#e8ddd0] overflow-hidden shadow-lg hover:border-[#8b1a1a] transition-all flex flex-col justify-between"
               >
-                <div className="p-6 space-y-4">
-                  <span className="bg-[#8b1a1a] text-white text-[9px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full inline-block">
-                    {g.badge}
-                  </span>
+                <div className="relative h-52 w-full overflow-hidden bg-gray-100">
+                  <Image
+                    src={g.image}
+                    alt={g.name}
+                    fill
+                    className="object-cover hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute top-3 left-3">
+                    <span className="bg-[#8b1a1a] text-white text-[9px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full inline-block shadow">
+                      {g.badge}
+                    </span>
+                  </div>
+                </div>
 
-                  <h3 className="text-xl font-extrabold text-[#2d1b15]">{g.name}</h3>
-                  <p className="text-xs text-[#6b5347] font-medium leading-relaxed">
-                    {g.description}
-                  </p>
+                <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-extrabold text-[#2d1b15]">{g.name}</h3>
+                    <p className="text-xs text-[#6b5347] font-medium leading-relaxed">
+                      {g.description}
+                    </p>
+                  </div>
 
                   <div className="bg-[#faf6f0] p-4 rounded-2xl space-y-2 border border-[#e8ddd0]">
                     <span className="text-[10px] font-extrabold text-[#2d1b15] uppercase tracking-wider block">
