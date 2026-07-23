@@ -31,14 +31,11 @@ export function saveCODOrders(orders: CODOrderDetails[]) {
   }
 }
 
-/**
- * Formats the exact WhatsApp COD Confirmation Message matching the reference design.
- */
 export function buildWhatsAppCODMessage(order: CODOrderDetails, siteUrl: string): string {
   const confirmUrl = `${siteUrl}/cod-confirm?id=${order.orderId}&action=confirm`;
   const cancelUrl = `${siteUrl}/cod-confirm?id=${order.orderId}&action=cancel`;
 
-  const msg = `Hi ${order.customerName}!
+  const msg = `Hi ${order.customerName},
 
 Thank you for shopping with us. We are glad you love our range of products!
 
@@ -51,15 +48,12 @@ Since you have placed your order with (Cash on Delivery) COD option, we need con
 Your Order total is *INR ${order.totalAmount}.00*
 
 Click on the links below to confirm or cancel your order:
-✅ *Confirm Order*: ${confirmUrl}
-❌ *Cancel Order*: ${cancelUrl}`;
+Confirm Order: ${confirmUrl}
+Cancel Order: ${cancelUrl}`;
 
   return encodeURIComponent(msg);
 }
 
-/**
- * Triggers automated WhatsApp message dispatch for COD order.
- */
 export function dispatchAutomatedCODConfirmation(order: CODOrderDetails) {
   const existing = getCODOrders();
   saveCODOrders([order, ...existing.filter((o) => o.orderId !== order.orderId)]);
@@ -70,7 +64,6 @@ export function dispatchAutomatedCODConfirmation(order: CODOrderDetails) {
   const whatsappUrl = `https://api.whatsapp.com/send?phone=91${cleanPhone}&text=${encodedMsg}`;
 
   console.log(`[Automated COD Engine] Dispatching WhatsApp confirmation for Order #${order.orderId} to +91${cleanPhone}`);
-  
   return whatsappUrl;
 }
 
@@ -85,6 +78,5 @@ export function updateCODOrderStatus(orderId: string, action: "confirm" | "cance
   );
 
   saveCODOrders(updated);
-  console.log(`[Automated COD Engine] Order #${orderId} automatically updated to '${newStatus}'!`);
   return true;
 }

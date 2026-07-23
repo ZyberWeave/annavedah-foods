@@ -50,27 +50,25 @@ export default function CustomerPOSLookup({ onCustomerIdentified }: CustomerPOSL
   };
 
   return (
-    <div className="bg-white rounded-2xl p-5 border-2 border-[#e8ddd0] shadow-sm mb-6">
-      <h3 className="text-sm font-bold text-[#2d1b15] uppercase tracking-wider mb-2 flex items-center gap-2">
-        <span>👤</span> Customer Loyalty & Phone Lookup at POS Counter
+    <div className="bg-white rounded-xl p-5 border-2 border-[#e8ddd0] shadow-xs mb-6">
+      <h3 className="text-xs font-extrabold text-[#2d1b15] uppercase tracking-wider mb-2">
+        CUSTOMER PROFILE & PHONE LOOKUP
       </h3>
 
       {foundCustomer ? (
-        <div className="bg-[#8b1a1a]/10 border border-[#c9a45c]/30 rounded-xl p-3.5 flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold text-sm text-[#2d1b15]">{foundCustomer.name}</span>
-              <span className="font-mono text-xs font-bold text-[#8b1a1a]">({foundCustomer.phone})</span>
-              {foundCustomer.ordersCount === 0 ? (
-                <span className="bg-[#8b1a1a] text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase">
-                  ⭐ First-Time Customer (5% OFF Applied)
-                </span>
-              ) : (
-                <span className="bg-[#2d1b15] text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase">
-                  Loyal Customer ({foundCustomer.ordersCount} Orders)
-                </span>
-              )}
-            </div>
+        <div className="bg-[#8b1a1a]/10 border border-[#c9a45c]/30 rounded-lg p-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-bold text-xs text-[#2d1b15]">{foundCustomer.name}</span>
+            <span className="font-mono text-xs font-bold text-[#8b1a1a]">({foundCustomer.phone})</span>
+            {foundCustomer.ordersCount === 0 ? (
+              <span className="bg-[#8b1a1a] text-white text-[10px] font-extrabold px-2 py-0.5 rounded uppercase">
+                FIRST PURCHASE (5% DISCOUNT APPLIED)
+              </span>
+            ) : (
+              <span className="bg-[#2d1b15] text-white text-[10px] font-extrabold px-2 py-0.5 rounded uppercase">
+                EXISTING CUSTOMER ({foundCustomer.ordersCount} ORDERS)
+              </span>
+            )}
           </div>
           <button
             onClick={() => {
@@ -78,9 +76,9 @@ export default function CustomerPOSLookup({ onCustomerIdentified }: CustomerPOSL
               setPhone("");
               setName("");
             }}
-            className="text-xs text-gray-500 hover:text-gray-900 font-bold underline"
+            className="text-xs text-gray-600 hover:text-gray-900 font-bold underline uppercase tracking-wider"
           >
-            Change Customer
+            Change
           </button>
         </div>
       ) : (
@@ -91,20 +89,20 @@ export default function CustomerPOSLookup({ onCustomerIdentified }: CustomerPOSL
             placeholder="Enter 10-digit mobile number..."
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="border-2 border-[#e8ddd0] rounded-xl px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#8b1a1a]"
+            className="border-2 border-[#e8ddd0] rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#8b1a1a]"
           />
           <input
             type="text"
             placeholder="Customer Name (Optional)..."
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="border-2 border-[#e8ddd0] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#8b1a1a]"
+            className="border-2 border-[#e8ddd0] rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-[#8b1a1a]"
           />
           <button
             type="submit"
-            className="bg-[#2d1b15] hover:bg-black text-white font-bold text-xs py-2 rounded-xl shadow transition-colors"
+            className="bg-[#2d1b15] hover:bg-black text-white font-bold text-xs py-2 rounded-lg transition-colors uppercase tracking-wider"
           >
-            Lookup / Apply 5% First Purchase
+            Lookup Profile / Apply Discount
           </button>
         </form>
       )}

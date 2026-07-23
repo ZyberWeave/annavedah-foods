@@ -31,24 +31,24 @@ export default function ShipmentAlertDispatcher() {
   };
 
   return (
-    <div className="bg-white rounded-2xl border-2 border-[#e8ddd0] p-6 mt-8 shadow-sm">
+    <div className="bg-white rounded-xl border-2 border-[#e8ddd0] p-6 mt-8 shadow-xs">
       <div className="flex items-center justify-between border-b border-[#e8ddd0] pb-4 mb-5">
         <div>
-          <h2 className="text-lg font-bold text-[#2d1b15] flex items-center gap-2">
-            <span>✈️</span> WhatsApp Order Shipped & Live Tracking Dispatcher
+          <h2 className="text-xs font-extrabold text-[#2d1b15] uppercase tracking-wider">
+            WHATSAPP SHIPMENT NOTIFICATION DISPATCHER
           </h2>
           <p className="text-xs text-[#6b5347] mt-0.5">
-            Sends enhanced shipment tracking notifications with visual delivery progress bar (✅🛒 ── ✅📦 ── ✅✈️ ── ⚪🚚) via WhatsApp.
+            Dispatches automated order shipment notices with tracking AWB and delivery progress via WhatsApp.
           </p>
         </div>
-        <span className="bg-[#8b1a1a]/10 text-[#8b1a1a] text-xs font-bold px-3 py-1 rounded-full border border-[#c9a45c]/30">
-          Tracking Engine Active
+        <span className="bg-[#8b1a1a]/10 text-[#8b1a1a] text-[10px] font-extrabold px-3 py-1 rounded border border-[#c9a45c]/30 uppercase tracking-wider">
+          ACTIVE
         </span>
       </div>
 
       {sentAlert && (
-        <div className="bg-[#8b1a1a]/10 border border-[#c9a45c]/30 text-[#8b1a1a] px-4 py-3 rounded-xl text-sm mb-4 font-bold">
-          ✓ Dispatched WhatsApp Shipment Tracking Alert for Order #{orderId}!
+        <div className="bg-[#8b1a1a]/10 border border-[#c9a45c]/30 text-[#8b1a1a] px-4 py-3 rounded text-xs mb-4 font-bold uppercase tracking-wider">
+          DISPATCHED SHIPMENT TRACKING ALERT FOR ORDER #{orderId}
         </div>
       )}
 
@@ -60,7 +60,7 @@ export default function ShipmentAlertDispatcher() {
             required
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
-            className="w-full border-2 border-[#e8ddd0] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#8b1a1a] bg-white"
+            className="w-full border-2 border-[#e8ddd0] rounded px-3 py-2 text-xs focus:outline-none focus:border-[#8b1a1a] bg-white"
           />
         </div>
 
@@ -72,7 +72,7 @@ export default function ShipmentAlertDispatcher() {
             maxLength={10}
             value={customerPhone}
             onChange={(e) => setCustomerPhone(e.target.value)}
-            className="w-full border-2 border-[#e8ddd0] rounded-xl px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#8b1a1a] bg-white"
+            className="w-full border-2 border-[#e8ddd0] rounded px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#8b1a1a] bg-white"
           />
         </div>
 
@@ -83,7 +83,7 @@ export default function ShipmentAlertDispatcher() {
             required
             value={orderId}
             onChange={(e) => setOrderId(e.target.value)}
-            className="w-full border-2 border-[#e8ddd0] rounded-xl px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#8b1a1a] bg-white"
+            className="w-full border-2 border-[#e8ddd0] rounded px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#8b1a1a] bg-white"
           />
         </div>
 
@@ -94,7 +94,7 @@ export default function ShipmentAlertDispatcher() {
             required
             value={trackingNumber}
             onChange={(e) => setTrackingNumber(e.target.value)}
-            className="w-full border-2 border-[#e8ddd0] rounded-xl px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#8b1a1a] bg-white"
+            className="w-full border-2 border-[#e8ddd0] rounded px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#8b1a1a] bg-white"
           />
         </div>
 
@@ -104,16 +104,16 @@ export default function ShipmentAlertDispatcher() {
             type="text"
             value={courierName}
             onChange={(e) => setCourierName(e.target.value)}
-            className="w-full border-2 border-[#e8ddd0] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#8b1a1a] bg-white"
+            className="w-full border-2 border-[#e8ddd0] rounded px-3 py-2 text-xs focus:outline-none focus:border-[#8b1a1a] bg-white"
           />
         </div>
 
         <div className="flex items-end">
           <button
             type="submit"
-            className="w-full bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-bold text-xs py-2.5 rounded-xl shadow transition-colors flex items-center justify-center gap-1.5"
+            className="w-full bg-[#2d1b15] hover:bg-black text-white font-bold text-xs py-2.5 rounded transition-colors uppercase tracking-wider"
           >
-            <span>✈️ Dispatch WhatsApp Tracking Alert</span>
+            DISPATCH TRACKING ALERT
           </button>
         </div>
       </form>

@@ -10,24 +10,20 @@ export type ShipmentDetails = {
 };
 
 export function buildOrderConfirmedMessage(customerName: string, orderId: string, itemsSummary: string, totalAmount: number): string {
-  const msg = `🎉 *ORDER CONFIRMED!*
+  const msg = `ORDER CONFIRMED
 
 Hi ${customerName},
 
-Thank you for shopping with us! Your order *#${orderId}* has been successfully confirmed. We are carefully preparing your farm-fresh traditional foods for packaging.
+Thank you for shopping with us. Your order *#${orderId}* has been successfully confirmed. We are preparing your items for packaging.
 
-📋 *Order Details*:
+Order Details:
 ${itemsSummary}
-Total Amount: *₹${totalAmount}.00*
+Total Amount: *INR ${totalAmount}.00*
 
-📊 *Current Progress*:
-✅ 🛒 Order Confirmed
-⚪ 📦 Quality Check & Packaging
-⚪ ✈️ Dispatched & In Transit
-⚪ 🚚 Out for Delivery
+Current Status: Order Confirmed -> Packaging -> In Transit -> Out for Delivery
 
 Regards,
-*Team Annavedah Foods* 🌾`;
+Team Annavedah Foods`;
 
   return encodeURIComponent(msg);
 }
@@ -35,25 +31,23 @@ Regards,
 export function buildShipmentDispatchedMessage(shipment: ShipmentDetails): string {
   const trackingUrl = shipment.trackingUrl || `https://annavedah.shiprocket.co/tracking/${shipment.trackingNumber}`;
 
-  const msg = `✈️ *YOUR ORDER IS ON ITS WAY!*
+  const msg = `SHIPMENT DISPATCH NOTICE
 
 Hi ${shipment.customerName},
 
-Great news! Your order *#${shipment.orderId}* has been shipped and will be delivered to your address soon.
+Your order *#${shipment.orderId}* has been shipped and is on its way.
 
-📦 *Shipment Info*:
+Shipment Information:
 Courier Partner: *${shipment.courierName || "Shiprocket Express"}*
 Tracking Number: *${shipment.trackingNumber}*
 
-🔗 *Live Shipment Tracking Link*:
+Live Tracking Link:
 ${trackingUrl}
 
-📊 *Delivery Progress*:
-✅ 🛒 Confirmed ── ✅ 📦 Packed ── ✅ ✈️ Shipped ── ⚪ 🚚 Out for Delivery
+Progress: Confirmed -> Packed -> Dispatched -> Out for Delivery
 
-Thank you for choosing Annavedah Foods!
 Regards,
-*Team Annavedah Foods* 🌾`;
+Team Annavedah Foods`;
 
   return encodeURIComponent(msg);
 }
