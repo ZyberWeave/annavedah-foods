@@ -7,7 +7,7 @@ import BarcodeGenerator from "@/components/admin/BarcodeGenerator";
 import BatchProductSearch from "@/components/admin/pos/BatchProductSearch";
 import CustomerPOSLookup from "@/components/admin/pos/CustomerPOSLookup";
 import POSRegisterSummary from "@/components/admin/pos/POSRegisterSummary";
-import { type ProductBatch, deductBatchStock } from "@/lib/batch-inventory";
+import { savePOSOrder } from "@/lib/pos-orders-storage";
 import { ADMIN_SLUG } from "@/lib/admin-config";
 
 type CartItem = {
@@ -125,6 +125,18 @@ export default function OfflinePOSPage() {
     };
 
     setLastBill(bill);
+    savePOSOrder({
+      invoiceNo,
+      date: bill.date,
+      customerName: customer.name,
+      customerPhone: customer.phone,
+      subtotal,
+      gstAmount,
+      discountAmount,
+      total: grandTotal,
+      paymentMethod,
+      items: [...cart],
+    });
     setCart([]);
     alert(`Order ${invoiceNo} Completed Successfully. Stock deducted.`);
   };
