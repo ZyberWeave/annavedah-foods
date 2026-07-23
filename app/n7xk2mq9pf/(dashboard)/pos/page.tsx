@@ -3,322 +3,499 @@
 import { useState } from "react";
 import Link from "next/link";
 import BarcodeScannerGuard from "@/components/admin/BarcodeScannerGuard";
-import { deductBatchStock, type ProductBatch, type ExpiryAnalysis } from "@/lib/batch-inventory";
+import BarcodeGenerator from "@/components/admin/BarcodeGenerator";
+import BatchProductSearch from "@/components/admin/pos/BatchProductSearch";
+import CustomerPOSLookup from "@/components/admin/pos/CustomerPOSLookup";
+import POSRegisterSummary from "@/components/admin/pos/POSRegisterSummary";
+import { type ProductBatch, deductBatchStock } from "@/lib/batch-inventory";
 import { ADMIN_SLUG } from "@/lib/admin-config";
 
-type POSCartItem = {
-  batch: ProductBatch;
+type CartItem = {
+  productId: string;
+  name: string;
+  price: number;
   qty: number;
+  batchId: string;
+  mfdDate: string;
+  expiryDate: string;
+  barcode: string;
 };
 
 export default function OfflinePOSPage() {
-  const [cart, setCart] = useState<POSCartItem[]>([]);
-  const [customerName, setCustomerName] = useState("");
+  const [activeTab, setActiveTab] = useState<"billing" | "inventory" | "printers" | "register">("billing");
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "UPI" | "CARD">("UPI");
-  const [completedOrder, setCompletedOrder] = useState<any>(null);
-  const [notification, setNotification] = useState("");
+  const [customer, setCustomer] = useState<{
+    name: string;
+    phone: string;
+    isFirstTime: boolean;
+    discountPercent: number;
+  }>({
+    name: "Walk-in Customer",
+    phone: "",
+    isFirstTime: false,
+    discountPercent: 0,
+  });
 
-  const handleItemScanned = (batch: ProductBatch, analysis: ExpiryAnalysis) => {
-    if (analysis.isBlocked) {
-      setNotification(`🚨 CANNOT ADD EXPIRED BATCH '${batch.barcode}' TO POS CART!`);
-      setTimeout(() => setNotification(""), 4000);
-      return;
-    }
+  const [cashTendered, setCashTendered] = useState<string>("");
+  const [lastBill, setLastBill] = useState<{
+    invoiceNo: string;
+    total: number;
+    items: CartItem[];
+    payment: string;
+    date: string;
+  } | null>(null);
 
+  const handleAddBatchItem = (batchItem: {
+    productId: string;
+    productName: string;
+    batchId: string;
+    mfdDate: string;
+    expiryDate: string;
+    price: number;
+    barcode: string;
+  }) => {
     setCart((prev) => {
-      const existing = prev.find((i) => i.batch.id === batch.id);
+      const existing = prev.find((item) => item.batchId === batchItem.batchId);
       if (existing) {
-        return prev.map((i) =>
-          i.batch.id === batch.id ? { ...i, qty: i.qty + 1 } : i
+        return prev.map((item) =>
+          item.batchId === batchItem.batchId ? { ...item, qty: item.qty + 1 } : item
         );
       }
-      return [...prev, { batch, qty: 1 }];
+      return [
+        ...prev,
+        {
+          productId: batchItem.productId,
+          name: batchItem.productName,
+          price: batchItem.price,
+          qty: 1,
+          batchId: batchItem.batchId,
+          mfdDate: batchItem.mfdDate,
+          expiryDate: batchItem.expiryDate,
+          barcode: batchItem.barcode,
+        },
+      ];
     });
-
-    setNotification(`Added 1x '${batch.productName}' (Batch ${batch.id}) to POS Cart!`);
-    setTimeout(() => setNotification(""), 3000);
   };
 
-  const handleQtyChange = (batchId: string, qty: number) => {
+  const updateQty = (batchId: string, delta: number) => {
     setCart((prev) =>
-      qty <= 0
-        ? prev.filter((i) => i.batch.id !== batchId)
-        : prev.map((i) => (i.batch.id === batchId ? { ...i, qty } : i))
+      prev
+        .map((item) => {
+          if (item.batchId === batchId) {
+            const newQty = item.qty + delta;
+            return newQty > 0 ? { ...item, qty: newQty } : null;
+          }
+          return item;
+        })
+        .filter(Boolean) as CartItem[]
     );
   };
 
-  const subtotal = cart.reduce((sum, item) => sum + item.batch.sellingPrice * item.qty, 0);
-  const taxAmount = Math.round(subtotal * 0.05); // 5% GST
-  const grandTotal = subtotal + taxAmount;
+  const subtotal = cart.reduce((acc, i) => acc + i.price * i.qty, 0);
+  const discountAmount = (subtotal * customer.discountPercent) / 100;
+  const gstAmount = ((subtotal - discountAmount) * 0.05);
+  const grandTotal = Math.round(subtotal - discountAmount + gstAmount);
 
-  const handleCheckout = () => {
-    if (cart.length === 0) return;
+  const cashReturn = Math.max(0, (parseFloat(cashTendered) || 0) - grandTotal);
 
-    for (const item of cart) {
-      deductBatchStock(item.batch.barcode, item.qty);
+  const handleCompleteSale = () => {
+    if (cart.length === 0) {
+      alert("Cart is empty!");
+      return;
     }
 
-    const orderId = `POS-AV-${Date.now().toString().slice(-6)}`;
-    const orderData = {
-      orderId,
-      customerName: customerName || "Counter Guest",
-      paymentMethod,
+    cart.forEach((item) => {
+      deductBatchStock(item.batchId, item.qty);
+    });
+
+    const invoiceNo = "INV-AV-" + Math.floor(100000 + Math.random() * 900000);
+    const bill = {
+      invoiceNo,
+      total: grandTotal,
       items: [...cart],
-      subtotal,
-      taxAmount,
-      grandTotal,
-      createdAt: new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+      payment: paymentMethod,
+      date: new Date().toLocaleString("en-IN"),
     };
 
-    setCompletedOrder(orderData);
+    setLastBill(bill);
     setCart([]);
-    setCustomerName("");
+    alert(`Order ${invoiceNo} Completed Successfully! Batch stock deducted.`);
+  };
+
+  const handlePrint80mmBill = () => {
+    if (!lastBill) return;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Bill Receipt #${lastBill.invoiceNo}</title>
+          <style>
+            @page { size: 80mm auto; margin: 0; }
+            body { font-family: monospace; width: 78mm; padding: 4mm; font-size: 11px; color: #000; }
+            .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 6px; margin-bottom: 6px; }
+            .title { font-size: 14px; font-weight: bold; }
+            .row { display: flex; justify-content: space-between; margin: 2px 0; }
+            .divider { border-top: 1px dashed #000; margin: 6px 0; }
+            .total { font-size: 13px; font-weight: bold; }
+            .footer { text-align: center; margin-top: 10px; font-size: 9px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">ANNAVEDAH FOODS</div>
+            <div>Offline Counter Terminal</div>
+            <div>Tax Invoice #: ${lastBill.invoiceNo}</div>
+            <div>${lastBill.date}</div>
+            <div>Customer: ${customer.name}</div>
+          </div>
+          <div class="divider"></div>
+          ${lastBill.items
+            .map(
+              (i) => `
+            <div class="row">
+              <span>${i.qty}x ${i.name}</span>
+              <span>Rs ${i.price * i.qty}.00</span>
+            </div>
+            <div style="font-size:8px; color:#444;">Batch: ${i.batchId} | Exp: ${i.expiryDate}</div>
+          `
+            )
+            .join("")}
+          <div class="divider"></div>
+          <div class="row"><span>Subtotal:</span><span>Rs ${subtotal}.00</span></div>
+          <div class="row"><span>GST (5%):</span><span>Rs ${gstAmount.toFixed(2)}</span></div>
+          ${customer.discountPercent > 0 ? `<div class="row"><span>Loyalty Discount (5%):</span><span>-Rs ${discountAmount.toFixed(2)}</span></div>` : ""}
+          <div class="divider"></div>
+          <div class="row total"><span>GRAND TOTAL:</span><span>Rs ${lastBill.total}.00</span></div>
+          <div class="row"><span>Payment Mode:</span><span>${lastBill.payment}</span></div>
+          <div class="divider"></div>
+          <div class="footer">
+            Thank you for shopping at Annavedah Foods!<br/>
+            Visit again 🌾
+          </div>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
+  };
+
+  const handleSendWhatsAppBill = () => {
+    if (!lastBill || !customer.phone) {
+      alert("Please enter customer phone number to send WhatsApp bill receipt!");
+      return;
+    }
+
+    const itemsSummary = lastBill.items.map((i) => `${i.qty}x ${i.name} (Batch: ${i.batchId})`).join("\n");
+    const msg = `🧾 *ANNAVEDAH FOODS TAX INVOICE*
+
+Hi ${customer.name}!
+
+Thank you for shopping at our Offline Counter! Here is your itemized bill receipt:
+
+*Invoice #*: ${lastBill.invoiceNo}
+*Date*: ${lastBill.date}
+
+*Purchased Items*:
+${itemsSummary}
+
+*Grand Total*: *INR ${lastBill.total}.00*
+*Payment Mode*: ${lastBill.payment}
+
+Thank you for choosing Annavedah Foods! 🌾`;
+
+    const cleanPhone = customer.phone.replace(/\D/g, "");
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=91${cleanPhone}&text=${encodeURIComponent(msg)}`;
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
   };
 
   return (
-    <div className="min-h-screen bg-[#faf6f0]">
-      {/* POS Header */}
-      <header className="bg-[#2d1b15] text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-[#8b1a1a] rounded-full flex items-center justify-center font-bold text-sm text-white">
+    <div className="min-h-screen bg-[#faf6f0] p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* TOP POS HEADER */}
+        <header className="bg-[#2d1b15] text-white rounded-2xl p-5 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4 border-2 border-[#e8ddd0]">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-[#8b1a1a] rounded-xl flex items-center justify-center font-bold text-lg text-white shadow border border-[#c9a45c]/30">
               POS
             </div>
             <div>
-              <span className="font-semibold text-base block leading-none">Annavedah Foods Offline POS</span>
-              <span className="text-[10px] text-[#c9a45c]">Physical Store Counter & Barcode Terminal</span>
+              <h1 className="text-xl font-extrabold flex items-center gap-2">
+                <span>🛒</span> Offline Counter & Multi-Batch Suite
+              </h1>
+              <p className="text-xs text-gray-300">
+                Annavedah Foods Physical Store Terminal & Multi-Batch Inventory Center
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-4 text-sm">
-            <Link href={`/${ADMIN_SLUG}`} className="text-gray-300 hover:text-white transition-colors">
-              ← Admin Dashboard
+
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/${ADMIN_SLUG}`}
+              className="bg-[#8b1a1a] hover:bg-[#6d1414] text-white text-xs font-bold px-4 py-2.5 rounded-xl border border-[#c9a45c]/30 transition-colors shadow"
+            >
+              ← Back to Admin Console
             </Link>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {notification && (
-          <div className="bg-[#8b1a1a] text-white px-4 py-3 rounded-xl text-sm font-bold mb-6 shadow-md animate-bounce">
-            {notification}
+        {/* SECTION TABS */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-white p-1.5 rounded-2xl border-2 border-[#e8ddd0] shadow-sm font-bold text-xs">
+          <button
+            onClick={() => setActiveTab("billing")}
+            className={`py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 ${
+              activeTab === "billing" ? "bg-[#8b1a1a] text-white shadow" : "text-[#6b5347] hover:bg-[#faf6f0]"
+            }`}
+          >
+            <span>🛒</span> Counter Billing Terminal
+          </button>
+
+          <button
+            onClick={() => setActiveTab("inventory")}
+            className={`py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 ${
+              activeTab === "inventory" ? "bg-[#8b1a1a] text-white shadow" : "text-[#6b5347] hover:bg-[#faf6f0]"
+            }`}
+          >
+            <span>📦</span> Multi-Batch Inventory
+          </button>
+
+          <button
+            onClick={() => setActiveTab("printers")}
+            className={`py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 ${
+              activeTab === "printers" ? "bg-[#8b1a1a] text-white shadow" : "text-[#6b5347] hover:bg-[#faf6f0]"
+            }`}
+          >
+            <span>🖨️</span> Printer Studio (TSC / 80mm)
+          </button>
+
+          <button
+            onClick={() => setActiveTab("register")}
+            className={`py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 ${
+              activeTab === "register" ? "bg-[#8b1a1a] text-white shadow" : "text-[#6b5347] hover:bg-[#faf6f0]"
+            }`}
+          >
+            <span>📊</span> Sales Register Summary
+          </button>
+        </div>
+
+        {/* TAB 1: COUNTER BILLING TERMINAL */}
+        {activeTab === "billing" && (
+          <div className="space-y-6">
+            <BarcodeScannerGuard
+              onScannedProductFound={(batch) => {
+                handleAddBatchItem({
+                  productId: batch.productId,
+                  productName: batch.productName,
+                  batchId: batch.batchId,
+                  mfdDate: batch.mfdDate,
+                  expiryDate: batch.expiryDate,
+                  price: batch.unitPrice,
+                  barcode: batch.barcode,
+                });
+              }}
+            />
+
+            <CustomerPOSLookup onCustomerIdentified={setCustomer} />
+
+            <BatchProductSearch onSelectBatchItem={handleAddBatchItem} />
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 bg-white rounded-2xl p-6 border-2 border-[#e8ddd0] shadow-sm">
+                <div className="flex items-center justify-between border-b border-[#e8ddd0] pb-4 mb-4">
+                  <h3 className="font-extrabold text-[#2d1b15] text-sm uppercase tracking-wider flex items-center gap-2">
+                    <span>🛍️</span> Billed Cart Items ({cart.length})
+                  </h3>
+                  {cart.length > 0 && (
+                    <button
+                      onClick={() => setCart([])}
+                      className="text-xs text-red-600 font-bold hover:underline"
+                    >
+                      Clear Cart
+                    </button>
+                  )}
+                </div>
+
+                {cart.length === 0 ? (
+                  <div className="p-12 text-center text-[#6b5347]">
+                    <span className="text-4xl block mb-2">🛒</span>
+                    <p className="font-bold text-sm text-[#2d1b15]">No items added to bill yet.</p>
+                    <p className="text-xs text-[#6b5347] mt-1">
+                      Scan a product barcode above or search by product name to select a manufacturing batch.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {cart.map((item) => (
+                      <div
+                        key={item.batchId}
+                        className="p-4 rounded-xl border border-[#e8ddd0] bg-[#faf6f0] flex items-center justify-between gap-4"
+                      >
+                        <div>
+                          <h4 className="font-extrabold text-sm text-[#2d1b15]">{item.name}</h4>
+                          <div className="flex items-center gap-2 text-xs text-[#6b5347] mt-1">
+                            <span className="font-mono bg-[#2d1b15] text-white text-[10px] font-bold px-2 py-0.5 rounded">
+                              Batch: {item.batchId}
+                            </span>
+                            <span>Exp: {item.expiryDate}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center border border-gray-300 rounded-lg bg-white overflow-hidden">
+                            <button
+                              onClick={() => updateQty(item.batchId, -1)}
+                              className="px-2.5 py-1 hover:bg-gray-100 font-bold text-gray-700"
+                            >
+                              -
+                            </button>
+                            <span className="px-3 font-extrabold text-xs text-[#2d1b15]">{item.qty}</span>
+                            <button
+                              onClick={() => updateQty(item.batchId, 1)}
+                              className="px-2.5 py-1 hover:bg-gray-100 font-bold text-gray-700"
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          <div className="text-right min-w-[70px]">
+                            <span className="font-extrabold text-sm text-[#8b1a1a]">
+                              ₹{item.price * item.qty}.00
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-white rounded-2xl p-6 border-2 border-[#e8ddd0] shadow-sm space-y-5">
+                <h3 className="font-extrabold text-[#2d1b15] text-sm uppercase tracking-wider border-b border-[#e8ddd0] pb-3">
+                  Payment Summary
+                </h3>
+
+                <div className="space-y-2 text-xs text-[#6b5347]">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span className="font-bold text-[#2d1b15]">₹{subtotal}.00</span>
+                  </div>
+                  {customer.discountPercent > 0 && (
+                    <div className="flex justify-between text-[#8b1a1a] font-bold">
+                      <span>First Purchase Discount (5%):</span>
+                      <span>-₹{discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span>GST (5%):</span>
+                    <span className="font-bold text-[#2d1b15]">₹{gstAmount.toFixed(2)}</span>
+                  </div>
+                  <div className="border-t border-[#e8ddd0] pt-2 flex justify-between text-base font-extrabold text-[#2d1b15]">
+                    <span>Grand Total:</span>
+                    <span className="text-[#8b1a1a]">₹{grandTotal}.00</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-[#2d1b15] uppercase tracking-wider mb-2">
+                    Payment Method
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["UPI", "CASH", "CARD"] as const).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setPaymentMethod(m)}
+                        className={`py-2 rounded-xl text-xs font-bold border transition-all ${
+                          paymentMethod === m
+                            ? "bg-[#8b1a1a] text-white border-[#8b1a1a] shadow"
+                            : "bg-[#faf6f0] border-[#e8ddd0] text-[#2d1b15] hover:bg-white"
+                        }`}
+                      >
+                        {m === "UPI" ? "📱 UPI" : m === "CASH" ? "💵 Cash" : "💳 Card"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {paymentMethod === "CASH" && (
+                  <div className="bg-amber-50 border border-amber-200 p-3.5 rounded-xl space-y-2">
+                    <label className="block text-[11px] font-bold text-amber-900 uppercase">
+                      Cash Tendered by Customer (₹)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 2000"
+                      value={cashTendered}
+                      onChange={(e) => setCashTendered(e.target.value)}
+                      className="w-full border border-amber-300 rounded-lg px-3 py-2 text-sm font-extrabold text-gray-900 focus:outline-none focus:border-amber-600 bg-white"
+                    />
+                    {cashReturn > 0 && (
+                      <div className="flex justify-between items-center text-xs font-extrabold text-amber-900 pt-1">
+                        <span>Change to Return:</span>
+                        <span className="text-sm text-[#8b1a1a]">₹{cashReturn}.00</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <button
+                  onClick={handleCompleteSale}
+                  disabled={cart.length === 0}
+                  className="w-full bg-[#8b1a1a] hover:bg-[#6d1414] disabled:opacity-50 text-white font-extrabold text-sm py-3.5 rounded-xl shadow-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <span>✓</span> Complete Sale & Deduct Stock
+                </button>
+
+                {lastBill && (
+                  <div className="pt-4 border-t border-[#e8ddd0] space-y-2">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block text-center">
+                      Last Completed Bill: #{lastBill.invoiceNo}
+                    </span>
+                    <button
+                      onClick={handlePrint80mmBill}
+                      className="w-full bg-[#2d1b15] hover:bg-black text-white font-bold text-xs py-3 rounded-xl shadow transition-colors flex items-center justify-center gap-2"
+                    >
+                      <span>⚡</span> Automate Print Bill Receipt (80mm)
+                    </button>
+                    {customer.phone && (
+                      <button
+                        onClick={handleSendWhatsAppBill}
+                        className="w-full bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-bold text-xs py-3 rounded-xl shadow transition-colors flex items-center justify-center gap-2"
+                      >
+                        <span>📲</span> Send Digital Receipt via WhatsApp
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left Column: Barcode Scanner Guard */}
-          <div className="lg:col-span-7 space-y-6">
-            <BarcodeScannerGuard onItemScanned={handleItemScanned} />
+        {activeTab === "inventory" && (
+          <div className="bg-white rounded-2xl p-6 border-2 border-[#e8ddd0] shadow-sm">
+            <h2 className="text-lg font-bold text-[#2d1b15] mb-4">Multi-Batch Expiry Inventory Center</h2>
+            <p className="text-xs text-[#6b5347] mb-6">
+              Manage and track manufacturing batches, expiry dates, and FEFO recommendations across physical store inventory.
+            </p>
+            <BarcodeGenerator />
           </div>
+        )}
 
-          {/* Right Column: POS Counter Cart & Receipt */}
-          <div className="lg:col-span-5">
-            <div className="bg-white rounded-2xl border-2 border-[#e8ddd0] p-6 shadow-sm sticky top-8">
-              <h2 className="text-lg font-bold text-[#2d1b15] border-b border-[#e8ddd0] pb-3 mb-4 flex items-center justify-between">
-                <span>🛒 Counter Sales Cart</span>
-                <span className="text-xs bg-[#faf6f0] text-[#8b1a1a] px-2.5 py-1 rounded-full font-bold border border-[#c9a45c]/30">
-                  {cart.reduce((sum, i) => sum + i.qty, 0)} Items
-                </span>
-              </h2>
-
-              {cart.length === 0 ? (
-                <div className="py-12 text-center text-[#6b5347] text-sm italic border-2 border-dashed border-[#e8ddd0] rounded-2xl">
-                  Scan barcodes using scanner above to add items to cart.
-                </div>
-              ) : (
-                <div className="space-y-3 mb-6">
-                  {cart.map((item) => (
-                    <div
-                      key={item.batch.id}
-                      className="flex items-center justify-between bg-[#faf6f0] border border-[#e8ddd0] rounded-xl p-3 text-sm"
-                    >
-                      <div>
-                        <h4 className="font-bold text-[#2d1b15] text-xs">{item.batch.productName}</h4>
-                        <p className="text-[11px] text-[#6b5347] font-mono">
-                          Batch: {item.batch.id} | Exp: {item.batch.expiryDate}
-                        </p>
-                        <p className="text-xs text-[#8b1a1a] font-bold mt-0.5">
-                          ₹{item.batch.sellingPrice * item.qty}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="number"
-                          min={1}
-                          value={item.qty}
-                          onChange={(e) => handleQtyChange(item.batch.id, parseInt(e.target.value) || 0)}
-                          className="w-14 border border-[#e8ddd0] rounded-lg px-2 py-1 text-center text-xs font-bold bg-white"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleQtyChange(item.batch.id, 0)}
-                          className="text-[#8b1a1a] hover:underline text-xs font-bold"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Pricing Breakdown */}
-                  <div className="border-t border-[#e8ddd0] pt-4 space-y-1 text-xs text-[#6b5347] font-medium">
-                    <div className="flex justify-between">
-                      <span>Subtotal:</span>
-                      <span>₹{subtotal}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>GST (5%):</span>
-                      <span>₹{taxAmount}</span>
-                    </div>
-                    <div className="flex justify-between text-sm font-bold text-[#2d1b15] pt-2 border-t border-[#e8ddd0]">
-                      <span>Grand Total:</span>
-                      <span className="text-[#8b1a1a] text-base">₹{grandTotal}</span>
-                    </div>
-                  </div>
-
-                  {/* Customer & Payment details */}
-                  <div className="space-y-3 pt-4 border-t border-[#e8ddd0]">
-                    <div>
-                      <label className="block text-[11px] font-bold text-[#2d1b15] uppercase tracking-wider mb-1">
-                        Customer Name (Optional)
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Priya Sharma"
-                        value={customerName}
-                        onChange={(e) => setCustomerName(e.target.value)}
-                        className="w-full border-2 border-[#e8ddd0] rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#8b1a1a]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-[#2d1b15] uppercase tracking-wider mb-1">
-                        Payment Method
-                      </label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {(["UPI", "CASH", "CARD"] as const).map((method) => (
-                          <button
-                            key={method}
-                            type="button"
-                            onClick={() => setPaymentMethod(method)}
-                            className={`py-2 text-xs font-bold rounded-xl border transition-all ${
-                              paymentMethod === method
-                                ? "bg-[#8b1a1a] text-white border-[#8b1a1a] shadow"
-                                : "bg-white text-[#2d1b15] border-[#e8ddd0] hover:bg-[#faf6f0]"
-                            }`}
-                          >
-                            {method}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleCheckout}
-                      className="w-full bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-bold text-sm py-3 rounded-xl shadow transition-colors mt-2"
-                    >
-                      Complete Order & Print Receipt
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Completed Receipt Modal / Print Preview */}
-              {completedOrder && (
-                <div className="mt-6 p-4 bg-[#8b1a1a]/10 border border-[#c9a45c]/30 rounded-2xl text-center">
-                  <h3 className="text-sm font-bold text-[#8b1a1a]">🎉 POS SALE COMPLETED</h3>
-                  <p className="text-xs text-[#2d1b15] font-mono mt-1">Invoice #{completedOrder.orderId}</p>
-
-                  <div className="my-3 bg-white p-3 rounded-xl border border-[#e8ddd0] text-left text-xs font-mono">
-                    <p className="font-bold border-b pb-1 text-center text-[#2d1b15]">ANNAVEDAH FOODS STORE RECEIPT</p>
-                    <p className="mt-1">Date: {completedOrder.createdAt}</p>
-                    <p>Customer: {completedOrder.customerName}</p>
-                    <p>Payment: {completedOrder.paymentMethod}</p>
-                    <div className="border-t border-b my-2 py-1 space-y-1">
-                      {completedOrder.items.map((i: any) => (
-                        <div key={i.batch.id} className="flex justify-between">
-                          <span>{i.qty}x {i.batch.productName}</span>
-                          <span>₹{i.batch.sellingPrice * i.qty}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="font-bold text-right text-sm text-[#8b1a1a]">TOTAL: ₹{completedOrder.grandTotal}</p>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <button
-                      onClick={() => {
-                        const printWin = window.open("", "_blank", "width=380,height=600");
-                        if (printWin) {
-                          const itemsHtml = completedOrder.items.map((i: any) => `
-                            <tr>
-                              <td style="padding: 2px 0;">${i.qty}x ${i.batch.productName}</td>
-                              <td style="text-align: right;">₹${i.batch.sellingPrice * i.qty}</td>
-                            </tr>
-                          `).join("");
-
-                          printWin.document.write(`
-                            <html>
-                              <head>
-                                <title>Receipt #${completedOrder.orderId}</title>
-                                <style>
-                                  @page { size: 80mm auto; margin: 0; }
-                                  body { font-family: monospace; font-size: 9pt; margin: 0; padding: 4mm; width: 72mm; background: #fff; }
-                                  .header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 2mm; margin-bottom: 2mm; }
-                                  .brand { font-size: 11pt; font-weight: bold; }
-                                  table { width: 100%; font-size: 8.5pt; border-collapse: collapse; margin: 2mm 0; }
-                                  .totals { border-top: 1px dashed #000; pt: 2mm; margin-top: 2mm; text-align: right; }
-                                  .grand { font-size: 11pt; font-weight: bold; }
-                                  .footer { text-align: center; margin-top: 4mm; font-size: 7.5pt; border-top: 1px dashed #000; padding-top: 2mm; }
-                                </style>
-                              </head>
-                              <body onload="window.print(); setTimeout(function(){ window.close(); }, 500);">
-                                <div class="header">
-                                  <div class="brand">ANNAVEDAH FOODS</div>
-                                  <div>Farm Pure Traditional Foods Store</div>
-                                  <div>Invoice: ${completedOrder.orderId}</div>
-                                  <div>Date: ${completedOrder.createdAt}</div>
-                                </div>
-                                <div>Customer: ${completedOrder.customerName}</div>
-                                <div>Payment: ${completedOrder.paymentMethod}</div>
-                                <table>
-                                  <tbody>
-                                    ${itemsHtml}
-                                  </tbody>
-                                </table>
-                                <div class="totals">
-                                  <div>Subtotal: ₹${completedOrder.subtotal}</div>
-                                  <div>GST (5%): ₹${completedOrder.taxAmount}</div>
-                                  <div class="grand">GRAND TOTAL: ₹${completedOrder.grandTotal}</div>
-                                </div>
-                                <div class="footer">
-                                  Thank you for shopping with Annavedah Foods!<br/>
-                                  Nourish your body with pure farm tradition 🌾
-                                </div>
-                              </body>
-                            </html>
-                          `);
-                          printWin.document.close();
-                        }
-                      }}
-                      className="w-full bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-bold text-xs py-2.5 rounded-xl shadow flex items-center justify-center gap-1 transition-colors"
-                    >
-                      <span>⚡ Automate Print Bill Receipt (80mm Thermal)</span>
-                    </button>
-
-                    <button
-                      onClick={() => setCompletedOrder(null)}
-                      className="w-full bg-white border border-[#e8ddd0] text-[#2d1b15] font-bold text-xs py-2 rounded-xl hover:bg-[#faf6f0]"
-                    >
-                      New Sale
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+        {activeTab === "printers" && (
+          <div className="bg-white rounded-2xl p-6 border-2 border-[#e8ddd0] shadow-sm space-y-6">
+            <h2 className="text-lg font-bold text-[#2d1b15]">TSC TTP-244 Pro & Thermal Printer Studio</h2>
+            <BarcodeGenerator />
           </div>
-        </div>
+        )}
+
+        {activeTab === "register" && <POSRegisterSummary />}
       </div>
     </div>
   );

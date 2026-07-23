@@ -5,9 +5,10 @@ import { lookupByBarcode, analyzeExpiry, getBatches, type ProductBatch, type Exp
 
 type BarcodeScannerGuardProps = {
   onItemScanned?: (batch: ProductBatch, analysis: ExpiryAnalysis) => void;
+  onScannedProductFound?: (batch: ProductBatch, analysis: ExpiryAnalysis) => void;
 };
 
-export default function BarcodeScannerGuard({ onItemScanned }: BarcodeScannerGuardProps) {
+export default function BarcodeScannerGuard({ onItemScanned, onScannedProductFound }: BarcodeScannerGuardProps) {
   const [barcodeInput, setBarcodeInput] = useState("");
   const [scannedBatch, setScannedBatch] = useState<ProductBatch | null>(null);
   const [analysis, setAnalysis] = useState<ExpiryAnalysis | null>(null);
