@@ -7,6 +7,7 @@ import { useCart } from '@/components/cart-context'
 const navItems = [
   { href: '/', label: 'Home' },
   { href: '/products', label: 'Products' },
+  { href: '/gifting', label: 'Gifting & Hampers' },
   { href: '/heritage', label: 'Heritage' },
   { href: '/benefits', label: 'Benefits' },
   { href: '/testimonials', label: 'Testimonials' },

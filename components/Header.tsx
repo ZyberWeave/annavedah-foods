@@ -13,6 +13,7 @@ import SearchOverlay from '@/components/SearchOverlay'
 
 const navItems = [
   { label: 'Home', href: '/' },
+  { label: 'Gifting & Hampers', href: '/gifting' },
   { label: 'Heritage', href: '/heritage' },
   { label: 'Commitment', href: '/commitment' },
   { label: 'Benefits', href: '/benefits' },
@@ -24,6 +25,7 @@ const navItems = [
 const mobileNavItems = [
   { label: 'Home', href: '/' },
   { label: 'Products', href: '/products' },
+  { label: 'Gifting & Hampers', href: '/gifting' },
   { label: 'Wishlist', href: '/wishlist' },
   { label: 'Heritage', href: '/heritage' },
   { label: 'Commitment', href: '/commitment' },
