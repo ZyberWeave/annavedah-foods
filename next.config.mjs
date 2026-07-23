@@ -8,6 +8,9 @@ const nextConfig = {
     formats: ['image/webp'],
   },
   serverExternalPackages: ['bcryptjs'],
+  turbopack: {
+    root: '.',
+  },
 }
 
 export default nextConfig
