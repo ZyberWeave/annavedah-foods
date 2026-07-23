@@ -170,7 +170,7 @@ PRINT 1,1
           </p>
         </div>
 
-        <div className="flex items-center gap-4 text-xs font-bold">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-bold">
           <div>
             <label className="block text-[9px] uppercase text-[#6b5347] mb-1">Label Size</label>
             <select
@@ -180,7 +180,7 @@ PRINT 1,1
                 setLabelWidth(w);
                 setLabelHeight(h);
               }}
-              className="border border-[#e8ddd0] rounded px-2.5 py-1.5 bg-white text-xs font-semibold focus:outline-none focus:border-[#8b1a1a]"
+              className="w-full border border-[#e8ddd0] rounded px-2.5 py-1.5 bg-white text-xs font-semibold focus:outline-none focus:border-[#8b1a1a]"
             >
               <option value="50x25">50mm x 25mm (Standard TSC 2-inch Roll)</option>
               <option value="50x30">50mm x 30mm</option>
@@ -193,7 +193,7 @@ PRINT 1,1
             <select
               value={orientation}
               onChange={(e) => setOrientation(e.target.value as "standard" | "rotated")}
-              className="border border-[#e8ddd0] rounded px-2.5 py-1.5 bg-white text-xs font-semibold focus:outline-none focus:border-[#8b1a1a]"
+              className="w-full border border-[#e8ddd0] rounded px-2.5 py-1.5 bg-white text-xs font-semibold focus:outline-none focus:border-[#8b1a1a]"
             >
               <option value="standard">Standard Horizontal (0° Normal)</option>
               <option value="rotated">Rotated Sideways (90° Vertical Fix)</option>
@@ -207,8 +207,8 @@ PRINT 1,1
           CREATE NEW INVENTORY BATCH & BARCODE
         </h3>
 
-        <form onSubmit={handleCreateBatch} className="grid grid-cols-1 md:grid-cols-5 gap-3 text-xs">
-          <div className="md:col-span-2 relative">
+        <form onSubmit={handleCreateBatch} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+          <div className="sm:col-span-2 relative">
             <label className="block font-bold text-[#2d1b15] uppercase mb-1">Product Name *</label>
             <input
               type="text"
@@ -256,7 +256,7 @@ PRINT 1,1
               required
               value={mfdDate}
               onChange={(e) => setMfdDate(e.target.value)}
-              className="w-full border border-[#e8ddd0] rounded px-3 py-2 text-xs focus:outline-none focus:border-[#8b1a1a] font-mono"
+              className="w-full border border-[#e8ddd0] rounded px-3 py-2 text-xs focus:outline-none focus:border-[#8b1a1a]"
             />
           </div>
 
@@ -267,7 +267,7 @@ PRINT 1,1
               required
               value={expiryDate}
               onChange={(e) => setExpiryDate(e.target.value)}
-              className="w-full border border-[#e8ddd0] rounded px-3 py-2 text-xs focus:outline-none focus:border-[#8b1a1a] font-mono"
+              className="w-full border border-[#e8ddd0] rounded px-3 py-2 text-xs focus:outline-none focus:border-[#8b1a1a]"
             />
           </div>
 
@@ -281,10 +281,20 @@ PRINT 1,1
             />
           </div>
 
-          <div className="md:col-span-5 flex justify-end">
+          <div>
+            <label className="block font-bold text-[#2d1b15] uppercase mb-1">Unit Price (₹)</label>
+            <input
+              type="number"
+              value={unitPrice}
+              onChange={(e) => setUnitPrice(e.target.value)}
+              className="w-full border border-[#e8ddd0] rounded px-3 py-2 text-xs focus:outline-none focus:border-[#8b1a1a] font-mono"
+            />
+          </div>
+
+          <div className="col-span-full flex justify-end mt-2">
             <button
               type="submit"
-              className="bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-bold text-xs px-6 py-2.5 rounded shadow transition-colors uppercase tracking-wider"
+              className="w-full sm:w-auto bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-bold text-xs px-6 py-2.5 rounded shadow transition-colors uppercase tracking-wider"
             >
               CREATE BATCH & GENERATE BARCODE
             </button>
@@ -296,11 +306,11 @@ PRINT 1,1
         {batches.map((b) => (
           <div key={b.batchId || b.id} className="bg-white rounded-xl p-4 border border-[#e8ddd0] shadow-xs flex flex-col justify-between">
             <div>
-              <div className="flex justify-between items-start mb-2">
-                <span className="font-mono text-xs font-extrabold bg-[#2d1b15] text-white px-2 py-0.5 rounded">
+              <div className="flex justify-between items-center gap-2 mb-2">
+                <span className="font-mono text-[11px] font-extrabold bg-[#2d1b15] text-white px-2 py-0.5 rounded truncate max-w-[140px]">
                   {b.batchId || b.id}
                 </span>
-                <span className="text-[10px] font-bold text-[#6b5347] uppercase">
+                <span className="text-[10px] font-bold text-[#6b5347] uppercase shrink-0">
                   STOCK: {b.currentStock ?? b.quantity} UNITS
                 </span>
               </div>

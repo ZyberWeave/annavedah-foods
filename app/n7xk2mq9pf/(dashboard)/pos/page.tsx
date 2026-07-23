@@ -7,6 +7,7 @@ import BarcodeGenerator from "@/components/admin/BarcodeGenerator";
 import BatchProductSearch from "@/components/admin/pos/BatchProductSearch";
 import CustomerPOSLookup from "@/components/admin/pos/CustomerPOSLookup";
 import POSRegisterSummary from "@/components/admin/pos/POSRegisterSummary";
+import POSHeader from "@/components/admin/pos/POSHeader";
 import { savePOSOrder } from "@/lib/pos-orders-storage";
 import { ADMIN_SLUG } from "@/lib/admin-config";
 
@@ -235,62 +236,8 @@ Thank you for choosing Annavedah Foods!`;
   };
 
   return (
-    <div className="min-h-screen bg-[#faf6f0] p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* TOP POS HEADER */}
-        <header className="bg-[#2d1b15] text-white rounded-xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 border-2 border-[#e8ddd0]">
-          <div>
-            <span className="bg-[#8b1a1a] text-white text-[9px] font-extrabold px-2.5 py-0.5 rounded uppercase tracking-wider">
-              ENTERPRISE TERMINAL
-            </span>
-            <h1 className="text-lg font-extrabold uppercase tracking-wider mt-1">
-              OFFLINE POS COUNTER & MULTI-BATCH SUITE
-            </h1>
-            <p className="text-xs text-gray-300">
-              Annavedah Foods Physical Store Terminal & Multi-Batch Inventory Center
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href={`/${ADMIN_SLUG}`}
-              className="bg-[#8b1a1a] hover:bg-[#6d1414] text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors uppercase tracking-wider"
-            >
-              Back to Console
-            </Link>
-          </div>
-        </header>
-
-        {/* SECTION NAVIGATION LINKS */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-white p-1.5 rounded-xl border-2 border-[#e8ddd0] shadow-xs font-bold text-xs">
-          <Link
-            href={`/${ADMIN_SLUG}/pos`}
-            className="py-2.5 px-4 rounded-lg transition-all uppercase tracking-wider text-center bg-[#8b1a1a] text-white shadow-xs"
-          >
-            BILLING TERMINAL
-          </Link>
-
-          <Link
-            href={`/${ADMIN_SLUG}/pos/batches`}
-            className="py-2.5 px-4 rounded-lg transition-all uppercase tracking-wider text-center text-[#6b5347] hover:bg-[#faf6f0]"
-          >
-            BATCH & EXPIRY
-          </Link>
-
-          <Link
-            href={`/${ADMIN_SLUG}/pos/customers`}
-            className="py-2.5 px-4 rounded-lg transition-all uppercase tracking-wider text-center text-[#6b5347] hover:bg-[#faf6f0]"
-          >
-            CUSTOMER DIRECTORY
-          </Link>
-
-          <Link
-            href={`/${ADMIN_SLUG}/pos/audit`}
-            className="py-2.5 px-4 rounded-lg transition-all uppercase tracking-wider text-center text-[#6b5347] hover:bg-[#faf6f0]"
-          >
-            SALES AUDIT & RECEIPTS
-          </Link>
-        </div>
+    <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 space-y-6 overflow-x-hidden">
+      <POSHeader />
 
         {/* TAB 1: COUNTER BILLING TERMINAL */}
         {activeTab === "billing" && (
@@ -507,7 +454,6 @@ Thank you for choosing Annavedah Foods!`;
         )}
 
         {activeTab === "register" && <POSRegisterSummary />}
-      </div>
     </div>
   );
 }
