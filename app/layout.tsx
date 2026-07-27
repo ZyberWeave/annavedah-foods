@@ -8,7 +8,7 @@ import { WishlistProvider } from '@/components/wishlist-context'
 import { RecentlyViewedProvider } from '@/components/recently-viewed-context'
 import Header from '@/components/Header'
 import SlideCart from '@/components/SlideCart'
-import NewsletterPopup from '@/components/NewsletterPopup'
+import FirstTimeCustomerPopup from '@/components/FirstTimeCustomerPopup'
 import FacebookPixel from '@/components/FacebookPixel'
 import FloatingWhatsApp from '@/components/FloatingWhatsApp'
 import { Toaster } from 'sonner'
@@ -86,7 +86,7 @@ export default async function RootLayout({
                   {children}
                 </main>
                 <SlideCart />
-                <NewsletterPopup />
+                <FirstTimeCustomerPopup />
                 <FloatingWhatsApp />
               </CartProvider>
             </RecentlyViewedProvider>
