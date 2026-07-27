@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getBatches, addBatch, type ProductBatch } from "@/lib/batch-inventory";
 import { products } from "@/lib/content";
 
 export default function BarcodeGenerator() {
-  const [batches, setBatches] = useState<ProductBatch[]>(getBatches());
+  const [batches, setBatches] = useState<ProductBatch[]>([]);
+  useEffect(() => { getBatches().then(setBatches).catch(console.error); }, []);
   const [productName, setProductName] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [mfdDate, setMfdDate] = useState(new Date().toISOString().split("T")[0]);
@@ -18,7 +19,7 @@ export default function BarcodeGenerator() {
   const [labelHeight, setLabelHeight] = useState<number>(25);
   const [orientation, setOrientation] = useState<"standard" | "rotated">("standard");
 
-  const handleCreateBatch = (e: React.FormEvent) => {
+  const handleCreateBatch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!productName.trim()) {
       alert("Please enter a product name");
@@ -28,7 +29,7 @@ export default function BarcodeGenerator() {
     const batchId = "BATCH-AV-" + Date.now().toString(36).toUpperCase();
     const barcode = Math.floor(1000000000000 + Math.random() * 9000000000000).toString();
 
-    const created = addBatch({
+    const created = await addBatch({
       batchId,
       productId: "P-" + Date.now().toString(36),
       productName: productName.trim(),

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import {
   getProductBatches,
-  getFEFOBatch,
   analyzeExpiry,
   type ProductBatch,
 } from "@/lib/batch-inventory";
@@ -27,11 +26,11 @@ export default function BatchProductSearch({ onSelectBatchItem }: BatchProductSe
     batches: ProductBatch[];
   } | null>(null);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
 
-    const matches = getProductBatches(query);
+    const matches = await getProductBatches(query);
     if (matches.length === 0) {
       alert(`No products or batches found matching "${query}"`);
       return;
@@ -44,9 +43,9 @@ export default function BatchProductSearch({ onSelectBatchItem }: BatchProductSe
     });
   };
 
-  const fefoBatch = selectedProductGroup
-    ? getFEFOBatch(selectedProductGroup.productName)
-    : null;
+  const fefoBatch = selectedProductGroup?.batches
+    .filter((batch) => batch.currentStock > 0 && !analyzeExpiry(batch.expiryDate).isBlocked)
+    .sort((a, b) => a.expiryDate.localeCompare(b.expiryDate))[0] || null;
 
   return (
     <div className="bg-white rounded-xl p-5 border-2 border-[#e8ddd0] shadow-xs mb-6">

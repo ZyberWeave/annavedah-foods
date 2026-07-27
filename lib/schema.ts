@@ -1,4 +1,9 @@
-import { pgTable, serial, text, timestamp, varchar, integer, boolean, decimal, primaryKey } from 'drizzle-orm/pg-core';
+import { pgSchema, serial, bigserial, bigint, text, timestamp, varchar, integer, boolean, decimal, primaryKey, date, jsonb, numeric, index } from 'drizzle-orm/pg-core';
+
+// Keep every Annavedah table in its own PostgreSQL namespace. Roots & Reefs
+// may intentionally use the same Neon project, but it must never share rows,
+// constraints, sequences, or admin accounts with this application.
+const pgTable = pgSchema('annavedah').table;
 
 export const products = pgTable('products', {
   id: serial('id').primaryKey(),
@@ -17,6 +22,7 @@ export const products = pgTable('products', {
   highlights: text('highlights').notNull(), // stored as JSON string
   packPrices: text('pack_prices').notNull(), // stored as JSON string
   badge: text('badge'),
+  stock: integer('stock').default(50).notNull(),
   active: boolean('active').default(true).notNull(),
   displayOrder: integer('display_order').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -70,6 +76,7 @@ export const refundRequests = pgTable('refund_requests', {
   // call (with a sentinel) and replaced with the real refund id on success.
   // If non-null, no gateway re-call is allowed for this row.
   razorpayRefundId: text('razorpay_refund_id'),
+  inventoryToken: text('inventory_token').unique(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -141,4 +148,53 @@ export const productReviews = pgTable('product_reviews', {
   helpful: integer('helpful').default(0).notNull(),
   verified: boolean('verified').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const posBatches = pgTable('annavedah_pos_batches', {
+  batchId: text('batch_id').primaryKey(), productId: text('product_id').notNull(),
+  productName: text('product_name').notNull(), productSlug: text('product_slug'),
+  mfdDate: date('mfd_date').notNull(), expiryDate: date('expiry_date').notNull(),
+  barcode: text('barcode').notNull().unique(), initialStock: integer('initial_stock').notNull(),
+  currentStock: integer('current_stock').notNull(),
+  unitPrice: numeric('unit_price', { precision: 12, scale: 2 }).notNull(),
+  costPrice: numeric('cost_price', { precision: 12, scale: 2 }),
+  location: text('location'), supplier: text('supplier'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  productIdx: index('annavedah_pos_batches_product_idx').on(table.productId),
+  expiryIdx: index('annavedah_pos_batches_expiry_idx').on(table.expiryDate),
+}));
+
+export const posOrders = pgTable('annavedah_pos_orders', {
+  invoiceNo: text('invoice_no').primaryKey(), customerName: text('customer_name').notNull(),
+  customerPhone: text('customer_phone').notNull(),
+  subtotal: numeric('subtotal', { precision: 12, scale: 2 }).notNull(),
+  gstAmount: numeric('gst_amount', { precision: 12, scale: 2 }).notNull(),
+  discountAmount: numeric('discount_amount', { precision: 12, scale: 2 }).notNull(),
+  total: numeric('total', { precision: 12, scale: 2 }).notNull(),
+  paymentMethod: varchar('payment_method', { length: 10 }).notNull(),
+  items: jsonb('items').notNull(), createdBy: text('created_by').notNull(),
+  shiftId: bigint('shift_id', { mode: 'number' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({ createdIdx: index('annavedah_pos_orders_created_idx').on(table.createdAt) }));
+
+export const posShifts = pgTable('annavedah_pos_shifts', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  businessDate: date('business_date').notNull(),
+  status: varchar('status', { length: 10 }).default('open').notNull(),
+  openedBy: text('opened_by').notNull(),
+  openingFloat: numeric('opening_float', { precision: 12, scale: 2 }).notNull(),
+  totalSales: numeric('total_sales', { precision: 14, scale: 2 }).default('0').notNull(),
+  cashSales: numeric('cash_sales', { precision: 14, scale: 2 }).default('0').notNull(),
+  upiSales: numeric('upi_sales', { precision: 14, scale: 2 }).default('0').notNull(),
+  cardSales: numeric('card_sales', { precision: 14, scale: 2 }).default('0').notNull(),
+  orderCount: integer('order_count').default(0).notNull(),
+  openedAt: timestamp('opened_at', { withTimezone: true }).defaultNow().notNull(),
+  closedBy: text('closed_by'),
+  closedAt: timestamp('closed_at', { withTimezone: true }),
+  closingCash: numeric('closing_cash', { precision: 12, scale: 2 }),
+  expectedCash: numeric('expected_cash', { precision: 12, scale: 2 }),
+  cashDifference: numeric('cash_difference', { precision: 12, scale: 2 }),
+  notes: text('notes'),
 });

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { ADMIN_SLUG } from '@/lib/admin-config'
 import {
-  LayoutDashboard, ShoppingCart, BarChart3, LogOut, Bell, Search, Menu, MessageSquareQuote, Star, Loader2, Box, Store, Layers, Users, Receipt, PanelLeftClose, PanelLeftOpen
+  LayoutDashboard, ShoppingCart, BarChart3, LogOut, Bell, Search, Menu, MessageSquareQuote, Star, Loader2, Box, Store, Layers, Users, Receipt, PanelLeftClose, PanelLeftOpen, MessageSquare
 } from 'lucide-react'
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
@@ -71,6 +71,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     { href: `/${ADMIN_SLUG}`, icon: LayoutDashboard, label: 'Dashboard', exact: true },
     { href: `/${ADMIN_SLUG}/orders`, icon: ShoppingCart, label: 'Orders', badge: activeOrders ?? undefined },
     { href: `/${ADMIN_SLUG}/products`, icon: Box, label: 'Products' },
+    { href: `/${ADMIN_SLUG}/whatsapp`, icon: MessageSquare, label: 'WhatsApp Flows', badge: '12' },
     { href: `/${ADMIN_SLUG}/profitability`, icon: BarChart3, label: 'Profitability' },
     { href: `/${ADMIN_SLUG}/testimonials`, icon: MessageSquareQuote, label: 'Testimonials' },
     { href: `/${ADMIN_SLUG}/reviews`, icon: Star, label: 'Reviews' },
@@ -156,7 +157,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             {(!isMin || isMobile) ? (
               <div className="px-3 flex items-center justify-between mb-1">
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-primary">
-                  OFFLINE POS SUITE
+                  STORE POS SUITE
                 </span>
                 <span className="bg-primary/20 text-primary text-[9px] font-extrabold px-1.5 py-0.5 rounded">
                   COUNTER

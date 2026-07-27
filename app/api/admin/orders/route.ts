@@ -61,10 +61,12 @@ export async function GET() {
  */
 const TRANSITIONS: Record<string, readonly string[]> = {
   pending: ['cancelled'],
-  success: ['processing', 'shipped', 'delivered', 'cancelled'],
-  processing: ['shipped', 'delivered', 'cancelled'],
-  shipped: ['delivered', 'cancelled'],
-  delivered: ['cancelled'],
+  // Paid orders must go through the refund workflow; a status-only
+  // cancellation would leave both money and inventory unreconciled.
+  success: ['processing', 'shipped', 'delivered'],
+  processing: ['shipped', 'delivered'],
+  shipped: ['delivered'],
+  delivered: [],
   cancelled: [],
 };
 

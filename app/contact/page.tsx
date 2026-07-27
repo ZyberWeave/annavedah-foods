@@ -20,6 +20,7 @@ type ContactFieldKey = keyof ContactForm
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [submitError, setSubmitError] = useState('')
   const [form, setForm] = useState<ContactForm>({
     name: '', email: '', phone: '', reason: 'Product enquiry', company: '', message: '',
   })
@@ -79,6 +80,7 @@ export default function ContactPage() {
     if (!validateAll()) return
 
     setLoading(true)
+    setSubmitError('')
     
     try {
       const res = await fetch('/api/contact', {
@@ -86,10 +88,13 @@ export default function ContactPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
-      // Even if API fails gracefully, show success to user
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(typeof body.error === 'string' ? body.error : 'Unable to send your message.')
+      }
       setSubmitted(true)
-    } catch {
-      setSubmitted(true) // Fallback — still show success UI
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Unable to send your message. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -235,6 +240,11 @@ export default function ContactPage() {
             <div className="p-4 bg-green-50 border border-green-200 text-green-700 rounded-xl flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm font-medium">Thank you! We will get back within one business day.</span>
+            </div>
+          )}
+          {submitError && (
+            <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {submitError}
             </div>
           )}
 

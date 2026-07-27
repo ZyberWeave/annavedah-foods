@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { lookupByBarcode, analyzeExpiry, getBatches, type ProductBatch, type ExpiryAnalysis } from "@/lib/batch-inventory";
 
 type BarcodeScannerGuardProps = {
@@ -14,11 +14,11 @@ export default function BarcodeScannerGuard({ onItemScanned, onScannedProductFou
   const [analysis, setAnalysis] = useState<ExpiryAnalysis | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const handleScan = (codeToScan?: string) => {
+  const handleScan = async (codeToScan?: string) => {
     const targetCode = codeToScan || barcodeInput.trim();
     if (!targetCode) return;
 
-    const batch = lookupByBarcode(targetCode);
+    const batch = await lookupByBarcode(targetCode);
     if (!batch) {
       setScannedBatch(null);
       setAnalysis(null);
@@ -36,7 +36,8 @@ export default function BarcodeScannerGuard({ onItemScanned, onScannedProductFou
     }
   };
 
-  const sampleBatches = getBatches();
+  const [sampleBatches, setSampleBatches] = useState<ProductBatch[]>([]);
+  useEffect(() => { getBatches().then(setSampleBatches).catch(console.error); }, []);
 
   return (
     <div className="bg-white rounded-2xl border-2 border-[#e8ddd0] p-6 shadow-sm">
@@ -150,12 +151,12 @@ export default function BarcodeScannerGuard({ onItemScanned, onScannedProductFou
 
           {analysis.isBlocked ? (
             <div className="mt-4 p-3 bg-red-100 border border-red-300 rounded-xl text-red-900 text-xs font-bold flex items-center justify-between">
-              <span>⛔ ACTION BLOCKED: Cannot ship or process offline transaction for expired batch.</span>
+              <span>⛔ ACTION BLOCKED: Cannot ship or process a store transaction for an expired batch.</span>
               <span className="bg-red-700 text-white px-3 py-1 rounded uppercase text-[10px]">BLOCKED</span>
             </div>
           ) : (
             <div className="mt-4 p-3 bg-[#8b1a1a]/20 border border-[#c9a45c]/40 rounded-xl text-[#8b1a1a] text-xs font-bold flex items-center justify-between">
-              <span>✅ VERIFIED VALID: Approved for offline counter POS & order packaging shipment.</span>
+              <span>✅ VERIFIED VALID: Approved for counter POS and order packaging.</span>
               <span className="bg-[#8b1a1a] text-white px-3 py-1 rounded uppercase text-[10px]">PASSED</span>
             </div>
           )}

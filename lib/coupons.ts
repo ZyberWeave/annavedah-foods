@@ -60,22 +60,7 @@ export function validateCoupon(
   )
 
   if (!coupon) {
-    const { validatePersonalCoupon } = require("./personal-coupons");
-    const personalVal = validatePersonalCoupon(code);
-    if (personalVal.valid) {
-      const dynamicCoupon: Coupon = {
-        code: personalVal.coupon.code,
-        description: `Personalized 5% OFF First Purchase (${personalVal.coupon.boundEmail})`,
-        type: "percentage",
-        value: personalVal.coupon.discountPercent,
-        minOrder: 0,
-        active: true,
-        firstOrderOnly: true,
-      };
-      const discount = Math.round((cartTotal * dynamicCoupon.value) / 100);
-      return { valid: true, coupon: dynamicCoupon, discount };
-    }
-    return { valid: false, error: personalVal.error || "Invalid coupon code" }
+    return { valid: false, error: "Invalid coupon code" }
   }
 
   if (!coupon.active) {

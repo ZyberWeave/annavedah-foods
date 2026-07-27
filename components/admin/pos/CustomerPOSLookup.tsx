@@ -20,15 +20,19 @@ export default function CustomerPOSLookup({ onCustomerIdentified }: CustomerPOSL
     ordersCount: number;
   } | null>(null);
 
-  const handleLookup = (e: React.FormEvent) => {
+  const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (phone.length < 10) {
       alert("Please enter a valid 10-digit mobile number");
       return;
     }
 
-    if (phone === "9876543210") {
-      const match = { name: "Mansi", phone, ordersCount: 3 };
+    try {
+      const response = await fetch(`/api/admin/pos/customers?phone=${encodeURIComponent(phone)}`, { cache: "no-store" });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Customer lookup failed");
+      if (body.customer) {
+      const match = body.customer as { name: string; phone: string; ordersCount: number };
       setFoundCustomer(match);
       setName(match.name);
       onCustomerIdentified({
@@ -37,7 +41,7 @@ export default function CustomerPOSLookup({ onCustomerIdentified }: CustomerPOSL
         isFirstTime: false,
         discountPercent: 0,
       });
-    } else {
+      } else {
       const newCust = { name: name || `Customer ${phone.slice(-4)}`, phone, ordersCount: 0 };
       setFoundCustomer(newCust);
       onCustomerIdentified({
@@ -46,6 +50,9 @@ export default function CustomerPOSLookup({ onCustomerIdentified }: CustomerPOSL
         isFirstTime: true,
         discountPercent: 5,
       });
+      }
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Customer lookup failed");
     }
   };
 

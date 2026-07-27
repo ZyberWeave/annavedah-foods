@@ -15,22 +15,14 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [mobileInput, setMobileInput] = useState('');
-  const [completeMsg, setCompleteMsg] = useState('');
   const router = useRouter();
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('annavedah-user-profile');
-      if (raw) {
-        const u = JSON.parse(raw);
-        setUserProfile(u);
-        if (u.email && u.phone && u.phone.replace(/\D/g, '').length >= 10) {
-          router.replace('/dashboard');
-        }
-      }
-    } catch {}
+    fetch('/api/auth/me', { cache: 'no-store' })
+      .then((response) => {
+        if (response.ok) router.replace('/dashboard');
+      })
+      .catch(() => {});
   }, [router]);
 
   // Per-field errors & touched state for inline validation
@@ -90,7 +82,7 @@ export default function LoginPage() {
       // All users go to dashboard from the regular login
       const params = new URLSearchParams(window.location.search);
       const redirectPath = params.get('redirect');
-      if (redirectPath) {
+      if (redirectPath?.startsWith('/') && !redirectPath.startsWith('//') && !redirectPath.includes('\\')) {
         router.push(redirectPath);
       } else {
         router.push('/dashboard');
@@ -114,48 +106,6 @@ export default function LoginPage() {
     }`;
   };
 
-  if (userProfile && (!userProfile.phone || userProfile.phone.replace(/\D/g, '').length < 10)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-[#faf6f0]">
-        <div className="w-full max-w-md bg-white rounded-3xl p-8 border-2 border-[#e8ddd0] shadow-xl text-center space-y-5">
-          <span className="bg-amber-500 text-black text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full inline-block">
-            FINISH YOUR REGISTRATION
-          </span>
-          <h2 className="text-2xl font-bold text-[#2d1b15]">Complete Your Profile</h2>
-          <p className="text-xs text-[#6b5347]">
-            You are logged in as <strong className="text-[#2d1b15]">{userProfile.email}</strong>. Please attach your 10-digit mobile number to complete registration.
-          </p>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            const clean = mobileInput.replace(/\D/g, '');
-            if (clean.length < 10) {
-              setCompleteMsg('Please enter a valid 10-digit mobile number.');
-              return;
-            }
-            const updated = { ...userProfile, phone: clean };
-            localStorage.setItem('annavedah-user-profile', JSON.stringify(updated));
-            window.dispatchEvent(new Event('auth-changed'));
-            router.replace('/dashboard');
-          }} className="space-y-4">
-            {completeMsg && <p className="text-red-500 text-xs font-bold">{completeMsg}</p>}
-            <input
-              type="tel"
-              maxLength={10}
-              placeholder="Enter 10-digit mobile number"
-              value={mobileInput}
-              onChange={(e) => setMobileInput(e.target.value.replace(/\D/g, ''))}
-              className="w-full border-2 border-[#e8ddd0] rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:border-[#8b1a1a]"
-              required
-            />
-            <Button type="submit" className="w-full bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-bold py-3.5 rounded-xl uppercase tracking-wider">
-              ATTACH MOBILE & FINISH REGISTRATION
-            </Button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen site-page-gap pb-16 flex items-center justify-center bg-[#faf6f0] px-4">
       <div className="max-w-md w-full bg-white p-8 rounded-3xl border border-[#e8ddd0] shadow-xl">
@@ -168,9 +118,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => {
-              const googleUser = { name: "Google User", email: "user.google@gmail.com", phone: "" };
-              localStorage.setItem("annavedah-user-profile", JSON.stringify(googleUser));
-              setUserProfile(googleUser);
+              setError("Google sign-in is not configured. Please use your email and password.");
             }}
             className="w-full bg-white border-2 border-[#e8ddd0] hover:border-[#c9a45c] text-[#2d1b15] font-bold text-xs py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-3 transition-all cursor-pointer"
           >
@@ -186,9 +134,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => {
-              const fbUser = { name: "Facebook User", email: "user.fb@facebook.com", phone: "" };
-              localStorage.setItem("annavedah-user-profile", JSON.stringify(fbUser));
-              setUserProfile(fbUser);
+              setError("Facebook sign-in is not configured. Please use your email and password.");
             }}
             className="w-full bg-[#1877F2] hover:bg-[#166FE5] text-white font-bold text-xs py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-3 transition-all cursor-pointer"
           >

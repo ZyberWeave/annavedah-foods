@@ -17,8 +17,6 @@ import Link from 'next/link'
 import { MapPin, Phone, Mail, Instagram, Facebook, Globe } from 'lucide-react'
 import { getProducts } from '@/lib/products'
 import NavigationTracker from '@/components/NavigationTracker'
-import FirstTimeCustomerPopup from '@/components/FirstTimeCustomerPopup'
-import MobileNumberEnforcementGuard from '@/components/MobileNumberEnforcementGuard'
 import './globals.css'
 
 const footerProductLinks = [
@@ -83,8 +81,6 @@ export default async function RootLayout({
             <RecentlyViewedProvider>
               <CartProvider>
                 <NavigationTracker />
-                <FirstTimeCustomerPopup />
-                <MobileNumberEnforcementGuard />
                 <Header />
                 <main className="site-main">
                   {children}

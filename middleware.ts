@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 import { getSessionSecretKey } from './lib/session-secret';
 
-const ADMIN_SLUG = process.env.NEXT_PUBLIC_ADMIN_SLUG || 'n7xk2mq9pf';
+// This must match both the physical app directory and the static matcher below.
+const ADMIN_SLUG = 'n7xk2mq9pf';
 
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
@@ -59,10 +60,6 @@ export async function middleware(req: NextRequest) {
   }
 }
 
-// Note: Next.js requires `matcher` to be a static literal — it cannot read
-// process.env at runtime. If you change NEXT_PUBLIC_ADMIN_SLUG, update the
-// pattern below to match. The runtime guard above also enforces auth on the
-// configured slug.
 export const config = {
   matcher: ['/dashboard/:path*', '/n7xk2mq9pf/:path*'],
 };

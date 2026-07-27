@@ -9,7 +9,6 @@ import CustomerPOSLookup from "@/components/admin/pos/CustomerPOSLookup";
 import POSRegisterSummary from "@/components/admin/pos/POSRegisterSummary";
 import POSHeader from "@/components/admin/pos/POSHeader";
 import { savePOSOrder } from "@/lib/pos-orders-storage";
-import { deductBatchStock } from "@/lib/batch-inventory";
 import { ADMIN_SLUG } from "@/lib/admin-config";
 
 type CartItem = {
@@ -104,43 +103,23 @@ export default function OfflinePOSPage() {
 
   const cashReturn = Math.max(0, (parseFloat(cashTendered) || 0) - grandTotal);
 
-  const handleCompleteSale = () => {
+  const handleCompleteSale = async () => {
     if (cart.length === 0) {
       alert("Cart is empty!");
       return;
     }
 
-    cart.forEach((item) => {
-      deductBatchStock(item.batchId, item.qty);
-    });
-
-    const invoiceNo = "INV-AV-" + Math.floor(100000 + Math.random() * 900000);
-    const bill = {
-      invoiceNo,
-      subtotal,
-      gstAmount,
-      discountAmount,
-      total: grandTotal,
-      items: [...cart],
-      payment: paymentMethod,
-      date: new Date().toLocaleString("en-IN"),
-    };
-
-    setLastBill(bill);
-    savePOSOrder({
-      invoiceNo,
-      date: bill.date,
-      customerName: customer.name,
-      customerPhone: customer.phone,
-      subtotal,
-      gstAmount,
-      discountAmount,
-      total: grandTotal,
-      paymentMethod,
-      items: [...cart],
-    });
-    setCart([]);
-    alert(`Order ${invoiceNo} Completed Successfully. Stock deducted.`);
+    try {
+      const saved = await savePOSOrder({
+        customerName: customer.name, customerPhone: customer.phone, paymentMethod,
+        items: [...cart], discountPercent: customer.discountPercent,
+      });
+      setLastBill({ ...saved, payment: saved.paymentMethod });
+      setCart([]);
+      alert(`Order ${saved.invoiceNo} completed successfully. Stock was deducted atomically.`);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Unable to complete the sale");
+    }
   };
 
   const handlePrint80mmBill = () => {
@@ -166,7 +145,7 @@ export default function OfflinePOSPage() {
         <body>
           <div class="header">
             <div class="title">ANNAVEDAH FOODS</div>
-            <div>Offline Counter Terminal</div>
+            <div>Store Counter Terminal</div>
             <div>Tax Invoice #: ${lastBill.invoiceNo}</div>
             <div>${lastBill.date}</div>
             <div>Customer: ${customer.name}</div>
@@ -218,7 +197,7 @@ export default function OfflinePOSPage() {
 
 Hi ${customer.name},
 
-Thank you for shopping at our Offline Counter! Here is your itemized bill receipt:
+Thank you for shopping at our Store Counter! Here is your itemized bill receipt:
 
 Invoice #: ${lastBill.invoiceNo}
 Date: ${lastBill.date}

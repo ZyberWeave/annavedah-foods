@@ -1,19 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getPOSOrders, type POSOrder } from "@/lib/pos-orders-storage";
+import { closePOSShift, getCurrentPOSShift, getPOSOrders, openPOSShift, type POSOrder, type POSShift } from "@/lib/pos-orders-storage";
 
 export default function POSRegisterSummary() {
   const [orders, setOrders] = useState<POSOrder[]>([]);
+  const [shift,setShift]=useState<POSShift|null>(null),[openingFloat,setOpeningFloat]=useState("0"),[closingCash,setClosingCash]=useState(""),[shiftError,setShiftError]=useState(""),[shiftBusy,setShiftBusy]=useState(false);
+  const [lastClosed,setLastClosed]=useState<POSShift|null>(null);
 
   useEffect(() => {
-    setOrders(getPOSOrders());
+    const load=()=>Promise.all([getPOSOrders(),getCurrentPOSShift()]).then(([o,s])=>{setOrders(o);setShift(s)}).catch((e)=>setShiftError(e.message));void load();window.addEventListener("pos-sale-completed",load);return()=>window.removeEventListener("pos-sale-completed",load);
   }, []);
 
-  const totalSales = orders.reduce((sum, o) => sum + o.total, 0);
-  const cashSales = orders.filter((o) => o.paymentMethod === "CASH").reduce((sum, o) => sum + o.total, 0);
-  const upiSales = orders.filter((o) => o.paymentMethod === "UPI").reduce((sum, o) => sum + o.total, 0);
-  const cardSales = orders.filter((o) => o.paymentMethod === "CARD").reduce((sum, o) => sum + o.total, 0);
+  const shiftOrders=shift?orders.filter(o=>o.shiftId===shift.id):[],totalSales=shift?.totalSales||0,cashSales=shift?.cashSales||0,upiSales=shift?.upiSales||0,cardSales=shift?.cardSales||0;
+  const startShift=async()=>{setShiftBusy(true);setShiftError("");try{setShift(await openPOSShift(Number(openingFloat)))}catch(e){setShiftError(e instanceof Error?e.message:"Unable to open shift")}finally{setShiftBusy(false)}};
+  const endShift=async()=>{setShiftBusy(true);setShiftError("");try{setLastClosed(await closePOSShift(Number(closingCash)));setShift(null);setClosingCash("")}catch(e){setShiftError(e instanceof Error?e.message:"Unable to close shift")}finally{setShiftBusy(false)}};
 
   const handlePrintPastReceipt = (order: POSOrder) => {
     const printWindow = window.open("", "_blank");
@@ -37,7 +38,7 @@ export default function POSRegisterSummary() {
         <body>
           <div class="header">
             <div class="title">ANNAVEDAH FOODS</div>
-            <div>Offline Counter Terminal</div>
+            <div>Store Counter Terminal</div>
             <div>Tax Invoice #: ${order.invoiceNo}</div>
             <div>${order.date}</div>
             <div>Customer: ${order.customerName}</div>
@@ -89,7 +90,7 @@ export default function POSRegisterSummary() {
 
 Hi ${order.customerName},
 
-Thank you for shopping at our Offline Counter! Here is your itemized bill receipt:
+Thank you for shopping at our Store Counter! Here is your itemized bill receipt:
 
 Invoice #: ${order.invoiceNo}
 Date: ${order.date}
@@ -116,14 +117,14 @@ Thank you for choosing Annavedah Foods!`;
         <div className="flex items-center justify-between border-b border-[#e8ddd0] pb-4 mb-6">
           <div>
             <h2 className="text-sm font-extrabold text-[#2d1b15] uppercase tracking-wider">
-              DAILY CASH REGISTER & SHIFT RECONCILIATION
+              POS SHIFT RECONCILIATION
             </h2>
             <p className="text-xs text-[#6b5347] mt-0.5">
-              Real-time cash drawer status, payment method breakdown, and cashier shift summary.
+              Persisted opening cash, shift sales, closing cash, and drawer variance.
             </p>
           </div>
           <span className="bg-[#8b1a1a]/10 text-[#8b1a1a] text-xs font-bold px-3 py-1 rounded border border-[#c9a45c]/30 uppercase tracking-wider">
-            SHIFT ACTIVE (#041)
+            {shift?`SHIFT #${shift.id} · ${shift.businessDate}`:"NO OPEN SHIFT"}
           </span>
         </div>
 
@@ -131,13 +132,13 @@ Thank you for choosing Annavedah Foods!`;
           <div className="bg-[#faf6f0] rounded-lg p-4 border border-[#e8ddd0]">
             <span className="text-[10px] font-bold text-[#6b5347] uppercase tracking-wider block">TOTAL POS SALES</span>
             <span className="text-2xl font-extrabold text-[#2d1b15] mt-1 block">INR {totalSales.toLocaleString()}.00</span>
-            <span className="text-xs font-semibold text-[#8b1a1a] mt-1 block">{orders.length} Completed Orders</span>
+            <span className="text-xs font-semibold text-[#8b1a1a] mt-1 block">{shift?.orderCount||shiftOrders.length} Completed Orders</span>
           </div>
 
           <div className="bg-[#faf6f0] rounded-lg p-4 border border-[#e8ddd0]">
-            <span className="text-[10px] font-bold text-[#6b5347] uppercase tracking-wider block">CASH IN DRAWER</span>
+            <span className="text-[10px] font-bold text-[#6b5347] uppercase tracking-wider block">TODAY&apos;S CASH SALES</span>
             <span className="text-2xl font-extrabold text-[#2d1b15] mt-1 block">INR {cashSales.toLocaleString()}.00</span>
-            <span className="text-xs font-semibold text-[#8b1a1a] mt-1 block">Opening Float: INR 2,000.00</span>
+            <span className="text-xs font-semibold text-[#8b1a1a] mt-1 block">Excludes any opening float</span>
           </div>
 
           <div className="bg-[#faf6f0] rounded-lg p-4 border border-[#e8ddd0]">
@@ -153,6 +154,7 @@ Thank you for choosing Annavedah Foods!`;
           </div>
         </div>
       </div>
+      <div className="rounded-xl border border-gray-200 bg-white p-5">{shift?<div className="flex flex-wrap items-end gap-4"><div className="text-sm"><b>Opened:</b> {new Date(shift.openedAt).toLocaleString("en-IN")}<br/><b>Opening float:</b> INR {shift.openingFloat.toLocaleString()}<br/><b>Expected drawer:</b> INR {(shift.openingFloat+shift.cashSales).toLocaleString()}</div><label className="text-xs font-bold">Counted closing cash<input type="number" min="0" value={closingCash} onChange={e=>setClosingCash(e.target.value)} className="mt-1 block rounded border px-3 py-2"/></label><button disabled={shiftBusy||closingCash===""} onClick={endShift} className="rounded bg-red-700 px-4 py-2 text-xs font-bold text-white disabled:opacity-50">Close & reconcile shift</button></div>:<div className="flex flex-wrap items-end gap-4"><label className="text-xs font-bold">Opening cash float<input type="number" min="0" value={openingFloat} onChange={e=>setOpeningFloat(e.target.value)} className="mt-1 block rounded border px-3 py-2"/></label><button disabled={shiftBusy} onClick={startShift} className="rounded bg-[#8b1a1a] px-4 py-2 text-xs font-bold text-white">Open POS shift</button><span className="text-xs text-gray-500">Sales are rejected until a shift is open.</span></div>}{shiftError&&<p className="mt-3 text-xs font-semibold text-red-700">{shiftError}</p>}{lastClosed&&<p className="mt-3 rounded bg-amber-50 p-3 text-sm font-bold text-amber-900">Shift #{lastClosed.id} closed. Expected INR {lastClosed.expectedCash?.toLocaleString()}, counted INR {lastClosed.closingCash?.toLocaleString()}, variance INR {lastClosed.cashDifference?.toLocaleString()}.</p>}</div>
 
       {/* PAST POS ORDERS AUDIT TABLE */}
       <div className="bg-white rounded-xl p-6 border-2 border-[#e8ddd0] shadow-xs space-y-4">

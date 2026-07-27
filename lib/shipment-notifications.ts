@@ -1,3 +1,5 @@
+import { buildWhatsAppMessage } from "@/lib/whatsapp-automation";
+
 export type ShipmentDetails = {
   orderId: string;
   customerName: string;
@@ -10,20 +12,12 @@ export type ShipmentDetails = {
 };
 
 export function buildOrderConfirmedMessage(customerName: string, orderId: string, itemsSummary: string, totalAmount: number): string {
-  const msg = `ORDER CONFIRMED
-
-Hi ${customerName},
-
-Thank you for shopping with us. Your order *#${orderId}* has been successfully confirmed. We are preparing your items for packaging.
-
-Order Details:
-${itemsSummary}
-Total Amount: *INR ${totalAmount}.00*
-
-Current Status: Order Confirmed -> Packaging -> In Transit -> Out for Delivery
-
-Regards,
-Team Annavedah Foods`;
+  const msg = buildWhatsAppMessage('order_confirmed', {
+    customerName,
+    orderId,
+    productList: itemsSummary,
+    orderTotal: totalAmount,
+  });
 
   return encodeURIComponent(msg);
 }
@@ -31,23 +25,14 @@ Team Annavedah Foods`;
 export function buildShipmentDispatchedMessage(shipment: ShipmentDetails): string {
   const trackingUrl = shipment.trackingUrl || `https://annavedah.shiprocket.co/tracking/${shipment.trackingNumber}`;
 
-  const msg = `SHIPMENT DISPATCH NOTICE
-
-Hi ${shipment.customerName},
-
-Your order *#${shipment.orderId}* has been shipped and is on its way.
-
-Shipment Information:
-Courier Partner: *${shipment.courierName || "Shiprocket Express"}*
-Tracking Number: *${shipment.trackingNumber}*
-
-Live Tracking Link:
-${trackingUrl}
-
-Progress: Confirmed -> Packed -> Dispatched -> Out for Delivery
-
-Regards,
-Team Annavedah Foods`;
+  const msg = buildWhatsAppMessage('order_shipped', {
+    customerName: shipment.customerName,
+    customerPhone: shipment.customerPhone,
+    orderId: shipment.orderId,
+    trackingLink: trackingUrl,
+    productList: shipment.itemsSummary,
+    orderTotal: shipment.totalAmount,
+  });
 
   return encodeURIComponent(msg);
 }

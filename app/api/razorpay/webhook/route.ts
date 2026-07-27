@@ -6,6 +6,8 @@ import { orders } from '@/lib/schema'
 import { and, eq } from 'drizzle-orm'
 import { findOrderByOrderId } from '@/lib/order-records'
 import { escapeHtml, getAdminEmails } from '@/lib/email-utils'
+import { deductInventoryForOrder, restoreInventoryForRefund } from '@/lib/inventory'
+import { getRazorpay } from '@/lib/razorpay'
 
 /**
  * Razorpay webhook handler — fallback reconciliation path.
@@ -139,10 +141,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true, error: 'replay' }, { status: 200 })
     }
 
-    // Atomic flip: only update rows still in 'pending'.
+    // Claim the order before touching inventory so the browser verification
+    // path and webhook cannot both deduct the same stock.
     const flipped = await db
       .update(orders)
-      .set({ paymentId: razorpayPaymentId, status: 'success' })
+      .set({ paymentId: razorpayPaymentId, status: 'finalizing' })
       .where(and(eq(orders.orderId, razorpayOrderId), eq(orders.status, 'pending')))
       .returning()
 
@@ -191,6 +194,58 @@ export async function POST(req: NextRequest) {
     }
 
     if (justFlipped) {
+      let inventoryItems: Array<{ slug: string; qty: number }> = []
+      try {
+        const parsed: unknown = JSON.parse(existing.items)
+        if (Array.isArray(parsed)) {
+          inventoryItems = parsed
+            .filter((item): item is { slug: string; qty: number } =>
+              typeof item === 'object' && item !== null &&
+              typeof (item as { slug?: unknown }).slug === 'string' &&
+              Number.isInteger((item as { qty?: unknown }).qty) &&
+              Number((item as { qty: number }).qty) > 0)
+            .map((item) => ({ slug: item.slug, qty: item.qty }))
+        }
+      } catch {}
+
+      const deduction = inventoryItems.length
+        ? await deductInventoryForOrder(inventoryItems)
+        : { success: false }
+      if (!deduction.success) {
+        let recoveryStatus = 'stock_failed'
+        try {
+          await getRazorpay().payments.refund(razorpayPaymentId, {
+            amount: capturedAmountPaise,
+            notes: { reason: 'inventory_unavailable', orderId: razorpayOrderId },
+          })
+          recoveryStatus = 'refunded_stock_failure'
+        } catch (refundError) {
+          console.error('[razorpay/webhook] automatic stock-failure refund failed', refundError)
+        }
+        await db.update(orders)
+          .set({ status: recoveryStatus })
+          .where(and(eq(orders.orderId, razorpayOrderId), eq(orders.status, 'finalizing')))
+        return NextResponse.json({
+          received: true,
+          inventory: 'failed',
+          refunded: recoveryStatus === 'refunded_stock_failure',
+        }, { status: 200 })
+      }
+
+      try {
+        const completed = await db.update(orders)
+          .set({ status: 'success' })
+          .where(and(eq(orders.orderId, razorpayOrderId), eq(orders.status, 'finalizing')))
+          .returning({ id: orders.id })
+        if (completed.length === 0) {
+          await restoreInventoryForRefund(inventoryItems)
+          return NextResponse.json({ received: true, reconcile: 'concurrent-state-change' }, { status: 200 })
+        }
+      } catch (error) {
+        await restoreInventoryForRefund(inventoryItems)
+        throw error
+      }
+
       // Send a minimal confirmation email. We don't have the rich shipping
       // address (that came from the checkout form which wasn't persisted),
       // so this email is intentionally lighter than the verify-route emails.

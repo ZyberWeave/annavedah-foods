@@ -11,6 +11,7 @@ import { getClientIp, rateLimitOr429 } from '@/lib/rate-limit'
 import { priceCart } from '@/lib/pricing'
 import { PAID_ORDER_STATUSES } from '@/lib/order-status'
 import { isTestServiceablePincode } from '@/lib/serviceability-overrides'
+import { deductInventoryForOrder, restoreInventoryForRefund } from '@/lib/inventory'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -192,18 +193,30 @@ export async function POST(req: NextRequest) {
     }
 
     if (paymentMethod === 'COD' && !codAlreadyProcessed) {
-      await persistOrderRecord({
-        orderId,
-        paymentId: paymentId || 'COD',
-        // Bind the order to the verified account email, not the client-supplied
-        // shipping-form email — keeps ownership/recovery consistent with the
-        // prepaid path and prevents arbitrary-recipient abuse.
-        customerEmail: sessionEmail,
-        total: numericTotal,
-        items: validatedItems,
-        status: 'success',
-        userId: session.userId,
-      })
+      const inventoryItems = validatedItems
+        .filter((item): item is typeof item & { slug: string } => typeof item.slug === 'string')
+        .map((item) => ({ slug: item.slug, qty: item.qty }))
+      const deduction = await deductInventoryForOrder(inventoryItems)
+      if (!deduction.success) {
+        return NextResponse.json({ error: 'One or more items are out of stock' }, { status: 409 })
+      }
+      try {
+        await persistOrderRecord({
+          orderId,
+          paymentId: paymentId || 'COD',
+          // Bind the order to the verified account email, not the client-supplied
+          // shipping-form email — keeps ownership/recovery consistent with the
+          // prepaid path and prevents arbitrary-recipient abuse.
+          customerEmail: sessionEmail,
+          total: numericTotal,
+          items: validatedItems,
+          status: 'success',
+          userId: session.userId,
+        })
+      } catch (persistError) {
+        await restoreInventoryForRefund(inventoryItems)
+        throw persistError
+      }
     }
 
     // Claim the row atomically BEFORE calling Shiprocket. This pattern

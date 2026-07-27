@@ -22,12 +22,12 @@ export default function POSHeader() {
         <div>
           <div className="flex items-center gap-2">
             <span className="bg-[#8b1a1a] text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-widest">
-              OFFLINE POS SUITE
+              DATABASE-BACKED POS
             </span>
             <span className="text-xs text-[#c9a45c] font-semibold">Store Counter Terminal</span>
           </div>
           <h1 className="text-lg md:text-xl font-black text-white mt-1 uppercase tracking-tight">
-            OFFLINE COUNTER & MULTI-BATCH SUITE
+            STORE COUNTER & MULTI-BATCH SUITE
           </h1>
           <p className="text-xs text-[#e8ddd0]/80 mt-0.5">
             Real-time barcode scanning, batch expiry tracking (FEFO), customer directory, and thermal receipt billing.

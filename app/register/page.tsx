@@ -27,7 +27,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [userProfile, setUserProfile] = useState<any>(null);
   const router = useRouter();
 
   const [step, setStep] = useState<'details' | 'otp'>('details');
@@ -38,17 +37,11 @@ export default function RegisterPage() {
 
   useEffect(() => {
     setMounted(true);
-    // Check if user is already logged in
-    try {
-      const raw = localStorage.getItem('annavedah-user-profile');
-      if (raw) {
-        const u = JSON.parse(raw);
-        setUserProfile(u);
-        if (u.email && u.phone && u.phone.replace(/\D/g, '').length >= 10) {
-          router.replace('/dashboard');
-        }
-      }
-    } catch {}
+    fetch('/api/auth/me', { cache: 'no-store' })
+      .then((response) => {
+        if (response.ok) router.replace('/dashboard');
+      })
+      .catch(() => {});
   }, [router]);
 
   const validateField = (field: string, value: string) => {
@@ -136,13 +129,11 @@ export default function RegisterPage() {
         return;
       }
 
-      const profile = { name, email, phone };
-      localStorage.setItem('annavedah-user-profile', JSON.stringify(profile));
       window.dispatchEvent(new Event('auth-changed'));
 
       const params = new URLSearchParams(window.location.search);
       const redirectPath = params.get('redirect');
-      if (redirectPath) {
+      if (redirectPath?.startsWith('/') && !redirectPath.startsWith('//') && !redirectPath.includes('\\')) {
         router.push(redirectPath);
       } else {
         router.push('/dashboard');
@@ -302,9 +293,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    const googleUser = { name: "Google User", email: "user.google@gmail.com", phone: "" };
-                    localStorage.setItem("annavedah-user-profile", JSON.stringify(googleUser));
-                    setUserProfile(googleUser);
+                    setError("Google sign-up is not configured. Please register with email.");
                   }}
                   className="w-full bg-white border-2 border-[#e8ddd0] hover:border-[#c9a45c] text-[#2d1b15] font-bold text-xs py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-3 transition-all cursor-pointer"
                 >
@@ -320,9 +309,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    const fbUser = { name: "Facebook User", email: "user.fb@facebook.com", phone: "" };
-                    localStorage.setItem("annavedah-user-profile", JSON.stringify(fbUser));
-                    setUserProfile(fbUser);
+                    setError("Facebook sign-up is not configured. Please register with email.");
                   }}
                   className="w-full bg-[#1877F2] hover:bg-[#166FE5] text-white font-bold text-xs py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-3 transition-all cursor-pointer"
                 >

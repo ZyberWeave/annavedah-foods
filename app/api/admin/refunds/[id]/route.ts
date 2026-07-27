@@ -6,9 +6,22 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { Resend } from 'resend';
 import { getRazorpay } from '@/lib/razorpay';
 import { toPositiveInt } from '@/lib/validate-id';
-import { restoreInventoryForRefund, type OrderItem } from '@/lib/inventory';
+import { restoreInventoryForRefundOnce, type OrderItem } from '@/lib/inventory';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+async function restoreRefundInventory(refundId: number, orderId: string): Promise<boolean> {
+  try {
+    const [ord] = await db.select().from(orders).where(eq(orders.orderId, orderId)).limit(1);
+    if (!ord?.items) return false;
+    const parsedItems: OrderItem[] = JSON.parse(ord.items);
+    const restored = await restoreInventoryForRefundOnce(refundId, parsedItems);
+    return restored.success;
+  } catch (error) {
+    console.error('[Refund Stock Restoration] Error restoring inventory:', error);
+    return false;
+  }
+}
 
 function escapeHtml(input: string): string {
   return String(input)
@@ -57,7 +70,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     // atomically setting razorpay_refund_id from NULL to an IN_PROGRESS
     // sentinel. If the WHERE clause matches zero rows, another concurrent
     // approval already claimed it — return 409 instead of double-charging.
-    let razorpayRefundId: string | null = null;
+    if (existing.razorpayRefundId?.startsWith('IN_PROGRESS_')) {
+      return NextResponse.json(
+        { error: 'A previous gateway attempt is unresolved. Reconcile it before retrying.' },
+        { status: 409 },
+      );
+    }
+    // A real id means the gateway already refunded successfully but a later
+    // local step failed. Reuse it and never call Razorpay twice.
+    let razorpayRefundId: string | null = existing.razorpayRefundId;
     if (status === 'approved') {
       const [order] = await db
         .select()
@@ -68,7 +89,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       const isCod = order?.paymentId === 'COD' || (order?.paymentId ?? '').startsWith('COD');
       const needsGatewayCall = !!(order && order.paymentId && !isCod);
 
-      if (needsGatewayCall) {
+      if (needsGatewayCall && !razorpayRefundId) {
         const sentinel = 'IN_PROGRESS_' + crypto.randomUUID();
         // Claim must require BOTH "no gateway call yet" AND "still pending".
         // Without the status check, a concurrent reject could flip status to
@@ -150,6 +171,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       // For COD or missing paymentId, no gateway call — operator handles cash-side.
     }
 
+    // Inventory is part of refund completion, not a best-effort side effect.
+    // If it fails, leave the request pending. A retry reuses the stored
+    // gateway refund id and only retries inventory/finalization.
+    if (status === 'approved' && !(await restoreRefundInventory(refundId, existing.orderId))) {
+      return NextResponse.json(
+        {
+          error: 'Payment refund is recorded, but inventory restoration failed. Retry approval to finish reconciliation.',
+          razorpayRefundId,
+          retryInventory: true,
+        },
+        { status: 503 },
+      );
+    }
+
     // Final state flip is atomic. We additionally refuse to flip if a
     // gateway refund is already in flight or completed (razorpayRefundId set
     // to something OTHER than null). For the gateway-approval path above, we
@@ -183,19 +218,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         { error: 'Refund state changed concurrently. Please refresh.' },
         { status: 409 },
       );
-    }
-
-    // Automatically restore inventory when a refund is approved
-    if (status === 'approved' && updatedRefund.orderId) {
-      try {
-        const [ord] = await db.select().from(orders).where(eq(orders.orderId, updatedRefund.orderId)).limit(1);
-        if (ord?.items) {
-          const parsedItems: OrderItem[] = JSON.parse(ord.items);
-          restoreInventoryForRefund(parsedItems);
-        }
-      } catch (stockRestoreErr) {
-        console.error('[Refund Stock Restoration] Error restoring inventory:', stockRestoreErr);
-      }
     }
 
     // Look up user email to send notification

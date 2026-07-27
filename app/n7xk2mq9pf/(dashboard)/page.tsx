@@ -433,7 +433,7 @@ export default function AdminDashboardPage() {
                   <BarChart3 className="w-4 h-4 mr-3 text-green-600" /> Product Profitability
                 </Button>
                 <Button onClick={() => router.push(`/${ADMIN_SLUG}/pos`)} className="w-full justify-start bg-[#8b1a1a] text-white hover:bg-[#6d1414]">
-                  <ShoppingBag className="w-4 h-4 mr-3 text-[#c9a45c]" /> Offline POS Counter Terminal
+                  <ShoppingBag className="w-4 h-4 mr-3 text-[#c9a45c]" /> Store POS Counter Terminal
                 </Button>
               </div>
             </div>

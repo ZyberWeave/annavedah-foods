@@ -9,6 +9,8 @@ import { escapeHtml, getAdminEmails } from '@/lib/email-utils'
 import { getClientIp, rateLimitOr429 } from '@/lib/rate-limit'
 import { verifySession } from '@/lib/auth'
 import { PAID_ORDER_STATUSES } from '@/lib/order-status'
+import { deductInventoryForOrder, restoreInventoryForRefund } from '@/lib/inventory'
+import { getRazorpay } from '@/lib/razorpay'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -98,6 +100,58 @@ export async function POST(req: NextRequest) {
     }
 
     let flipped: { orderId: string }[] = []
+    const inventoryItems = validatedItems
+      .filter((item): item is typeof item & { slug: string } => typeof item.slug === 'string')
+      .map((item) => ({ slug: item.slug, qty: item.qty }))
+    const claimed = await db
+      .update(orders)
+      .set({ paymentId: razorpay_payment_id, status: 'finalizing' })
+      .where(and(
+        eq(orders.orderId, orderId),
+        eq(orders.userId, session.userId),
+        eq(orders.status, 'pending'),
+      ))
+      .returning({ orderId: orders.orderId })
+    if (claimed.length === 0) {
+      const after = await findOrderByOrderId(orderId)
+      const paidDuplicate =
+        after?.paymentId === razorpay_payment_id &&
+        (PAID_ORDER_STATUSES as readonly string[]).includes(after.status)
+      return paidDuplicate
+        ? NextResponse.json({ verified: true, payment_id: razorpay_payment_id, duplicate: true })
+        : NextResponse.json({ verified: false, error: 'Order is already being finalized.' }, { status: 409 })
+    }
+
+    const deduction = await deductInventoryForOrder(inventoryItems)
+    if (!deduction.success) {
+      let recoveryStatus = 'stock_failed'
+      try {
+        await getRazorpay().payments.refund(razorpay_payment_id, {
+          amount: Math.round(Number(existing.total) * 100),
+          notes: { reason: 'inventory_unavailable', orderId },
+        })
+        recoveryStatus = 'refunded_stock_failure'
+      } catch (refundError) {
+        console.error('[razorpay/verify] Automatic stock-failure refund failed', {
+          orderId,
+          paymentId: razorpay_payment_id,
+          refundError,
+        })
+      }
+      await db.update(orders)
+        .set({ paymentId: razorpay_payment_id, status: recoveryStatus })
+        .where(and(eq(orders.orderId, orderId), eq(orders.status, 'finalizing')))
+      return NextResponse.json(
+        {
+          verified: false,
+          refunded: recoveryStatus === 'refunded_stock_failure',
+          error: recoveryStatus === 'refunded_stock_failure'
+            ? 'One or more items are out of stock. Your payment was automatically refunded.'
+            : 'One or more items are out of stock. Automatic refund failed; support has been alerted.',
+        },
+        { status: 409 },
+      )
+    }
     try {
       // Persist the signed payment for every valid verify request. Customer
       // details are only needed for rich emails, not for the payment state
@@ -105,22 +159,41 @@ export async function POST(req: NextRequest) {
       flipped = await db
         .update(orders)
         .set({ paymentId: razorpay_payment_id, status: 'success' })
-        .where(and(eq(orders.orderId, orderId), eq(orders.status, 'pending')))
+        .where(and(eq(orders.orderId, orderId), eq(orders.status, 'finalizing')))
         .returning({ orderId: orders.orderId })
     } catch (dbErr) {
+      await restoreInventoryForRefund(inventoryItems)
+      let refunded = false
+      try {
+        await getRazorpay().payments.refund(razorpay_payment_id, {
+          amount: Math.round(Number(existing.total) * 100),
+          notes: { reason: 'order_persist_failure', orderId },
+        })
+        refunded = true
+      } catch (refundError) {
+        console.error('[razorpay/verify] persist-failure refund also failed', refundError)
+      }
+      await db.update(orders)
+        .set({ status: refunded ? 'refunded_persist_failure' : 'persist_failed' })
+        .where(and(eq(orders.orderId, orderId), eq(orders.status, 'finalizing')))
+        .catch(() => {})
       console.error('[razorpay/verify] persist failure', dbErr)
       return NextResponse.json(
         {
           verified: false,
           persisted: false,
           payment_id: razorpay_payment_id,
-          error: 'Payment received but order could not be saved. Please contact support with this payment id.',
+          refunded,
+          error: refunded
+            ? 'The order could not be finalized, so your payment was automatically refunded.'
+            : 'Payment received but order could not be saved or automatically refunded. Support has been alerted.',
         },
         { status: 500 },
       )
     }
 
     if (flipped.length === 0) {
+      await restoreInventoryForRefund(inventoryItems)
       // Zero rows updated. The row's status was no longer 'pending' at the
       // moment of UPDATE — three possibilities:
       //   1) The webhook handler / a parallel verify already flipped to a
@@ -141,6 +214,16 @@ export async function POST(req: NextRequest) {
           duplicate: true,
         })
       }
+      let refunded = false
+      try {
+        await getRazorpay().payments.refund(razorpay_payment_id, {
+          amount: Math.round(Number(existing.total) * 100),
+          notes: { reason: 'order_state_changed', orderId },
+        })
+        refunded = true
+      } catch (refundError) {
+        console.error('[razorpay/verify] state-change refund failed', refundError)
+      }
       console.error('[razorpay/verify] zero-row flip without paid duplicate', {
         orderId,
         razorpay_payment_id,
@@ -151,8 +234,11 @@ export async function POST(req: NextRequest) {
         {
           verified: false,
           payment_id: razorpay_payment_id,
+          refunded,
           error:
-            'Order is no longer in a payable state. Please contact support with this payment id.',
+            refunded
+              ? 'Order state changed before completion, so your payment was automatically refunded.'
+              : 'Order is no longer payable and automatic refund failed. Support has been alerted.',
         },
         { status: 409 },
       )

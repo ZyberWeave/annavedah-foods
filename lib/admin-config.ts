@@ -15,5 +15,5 @@
  * targets — it does not move the actual route or its auth gate.
  */
 
-export const ADMIN_SLUG = process.env.NEXT_PUBLIC_ADMIN_SLUG || 'n7xk2mq9pf';
+export const ADMIN_SLUG = 'n7xk2mq9pf';
 export const ADMIN_BASE_PATH = `/${ADMIN_SLUG}`;

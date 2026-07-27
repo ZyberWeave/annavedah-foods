@@ -31,25 +31,17 @@ export function saveCODOrders(orders: CODOrderDetails[]) {
   }
 }
 
+import { buildWhatsAppMessage } from "@/lib/whatsapp-automation";
+
 export function buildWhatsAppCODMessage(order: CODOrderDetails, siteUrl: string): string {
-  const confirmUrl = `${siteUrl}/cod-confirm?id=${order.orderId}&action=confirm`;
-  const cancelUrl = `${siteUrl}/cod-confirm?id=${order.orderId}&action=cancel`;
-
-  const msg = `Hi ${order.customerName},
-
-Thank you for shopping with us. We are glad you love our range of products!
-
-We have successfully received your order, with ID:
-*${order.orderId}*.
-
-Since you have placed your order with (Cash on Delivery) COD option, we need confirmation from you before we process your order and ship it.
-
-*${order.itemsSummary}*
-Your Order total is *INR ${order.totalAmount}.00*
-
-Click on the links below to confirm or cancel your order:
-Confirm Order: ${confirmUrl}
-Cancel Order: ${cancelUrl}`;
+  const msg = buildWhatsAppMessage('cod_order_confirmation', {
+    customerName: order.customerName,
+    customerPhone: order.customerPhone,
+    orderId: order.orderId,
+    productList: order.itemsSummary,
+    orderTotal: order.totalAmount,
+    websiteLink: siteUrl,
+  }, siteUrl);
 
   return encodeURIComponent(msg);
 }
