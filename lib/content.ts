@@ -666,6 +666,39 @@ const productCatalog: ProductSeed[] = [
     packPrices: [],
   },
 
+  // Photographed August 2026 range. These remain distinct records even where
+  // the supplied front labels do not identify a flavour. Prices are pending.
+  ...[
+    ['masala-makhana-photo-1', 'Masala Makhana', 'Makhana-Lifestyle.webp'],
+    ['roasted-makhana-photo-2', 'Roasted Makhana', 'Makhana-02-Lifestyle.webp'],
+    ['mixed-dried-vegetables-classic', 'Classic Mixed Dried Vegetables', 'Mix-Dried-Vegetables-Unlabelled-Lifestyle.webp'],
+    ['mixed-dried-vegetables-salted-photo-1', 'Salted Mixed Dried Vegetables', 'Mix-Dried-Vegetables-Salted-Lifestyle.webp'],
+    ['mixed-dried-vegetables-tangy', 'Tangy Mixed Dried Vegetables', 'Mix-Dried-Vegetables-Unlabelled-02-Lifestyle.webp'],
+    ['mixed-dried-vegetables-lightly-salted', 'Lightly Salted Mixed Dried Vegetables', 'Mix-Dried-Vegetables-Salted-02-Lifestyle.webp'],
+    ['mixed-dried-vegetables-masala', 'Masala Mixed Dried Vegetables', 'Mix-Dried-Vegetables-Unlabelled-03-Lifestyle.webp'],
+    ['mixed-dried-vegetables-peri-peri-photo-1', 'Peri-Peri Mixed Dried Vegetables', 'Mix-Dried-Vegetables-Peri-Peri-Lifestyle.webp'],
+    ['mixed-dried-vegetables-salted-crunch', 'Salted Vegetable Crunch', 'Mix-Dried-Vegetables-Salted-03-Lifestyle.webp'],
+    ['mixed-dried-vegetables-chaat-masala-photo', 'Chaat Masala Mixed Dried Vegetables', 'Mix-Dried-Vegetables-Chaat-Masala-Lifestyle.webp'],
+    ['mixed-dried-vegetables-spicy', 'Spicy Mixed Dried Vegetables', 'Mix-Dried-Vegetables-Unlabelled-04-Lifestyle.webp'],
+    ['mixed-dried-vegetables-classic-crunch', 'Classic Vegetable Crunch', 'Mix-Dried-Vegetables-Unlabelled-05-Lifestyle.webp'],
+    ['mixed-dried-vegetables-peri-peri-hot', 'Peri-Peri Hot Vegetable Crunch', 'Mix-Dried-Vegetables-Peri-Peri-02-Lifestyle.webp'],
+    ['mixed-dried-vegetables-chatpata', 'Chatpata Vegetable Crunch', 'Mix-Dried-Vegetables-Unlabelled-06-Lifestyle.webp'],
+    ['mixed-dried-vegetables-homestyle', 'Homestyle Vegetable Crunch', 'Mix-Dried-Vegetables-Unlabelled-07-Lifestyle.webp'],
+    ['mixed-dried-vegetables-peri-peri-extra-spicy', 'Peri-Peri Extra Spicy Vegetable Crunch', 'Mix-Dried-Vegetables-Peri-Peri-03-Lifestyle.webp'],
+    ['whole-wheat-photo', 'Whole Wheat', 'Wheat-Lifestyle.webp'],
+    ['hirve-mung-photo', 'Hirve Mung', 'Hirve-Mung-Lifestyle.webp'],
+    ['moong-dal-photo', 'Moong Dal', 'Moong-Dal-Lifestyle.webp'],
+    ['kala-vaal-photo', 'Kala Vaal', 'Kala-Vaal-Lifestyle.webp'],
+  ].map(([slug, name, filename]) => ({
+    slug,
+    name,
+    localName: name,
+    category: name.includes('Wheat') ? 'Grains' as const : name.includes('Mung') || name.includes('Dal') || name.includes('Vaal') ? 'Pulses' as const : 'Essentials' as const,
+    image: `/Products/lifestyle/${filename}`,
+    badge: 'New',
+    packPrices: [],
+  })),
+
   // ── TEST PRODUCTS (₹1) — remove before production ──
   {
     slug: 'test-powder-1rs',

@@ -1453,6 +1453,69 @@
       "Rajma is an excellent combination of taste, nutrition and energy. It is rich in protein, fiber and essential minerals, which makes it an important part of a balanced diet. Including Rajma in regular meals provides taste as well as nutrition, therefore it is considered an excellent option for people of all ages."
     ]
   },
+  "moong-dal": {
+    "productName": "Moong Dal (Yellow Moong Dal / Split Moong Dal)",
+    "sourceCategory": "Pulses",
+    "overview": [
+      "Moong Dal is de-husked and split green gram. It is a light, quick-cooking dal traditionally used for simple everyday meals, khichdi and soft foods."
+    ],
+    "features": [
+      "De-husked and split green gram.",
+      "Light and easy to digest.",
+      "Naturally low in fat.",
+      "Suitable for children, elderly people and everyday meals."
+    ],
+    "nutritionFacts": [
+      "Per 100 g raw: approximately 348 kcal.",
+      "Protein: approximately 24.5 g.",
+      "Carbohydrates: approximately 59.9 g.",
+      "Fiber: approximately 8.2 g.",
+      "Fat: approximately 1.2 g.",
+      "Potassium: approximately 1246 mg; iron: approximately 3.8 mg; calcium: approximately 132 mg.",
+      "Contains folate and vitamins B1, B2, B3, B6 and K."
+    ],
+    "uses": [
+      "Moong Dal",
+      "Khichdi",
+      "Dal soup",
+      "Soft meals for children and elderly people",
+      "Chilla and other traditional dishes"
+    ],
+    "speciality": [
+      "Compared with whole green moong, yellow Moong Dal has its skin removed and is lighter to digest, while whole green moong retains more fiber from the skin."
+    ]
+  },
+  "shengdana-chutney": {
+    "productName": "Peanut Chutney (Shengdana Chutney)",
+    "sourceCategory": "Chutney",
+    "overview": [
+      "Peanut Chutney is a traditional Maharashtrian accompaniment made primarily from roasted peanuts. It may be prepared as a dry chutney powder or as a fresh wet chutney."
+    ],
+    "ingredients": [
+      "Roasted peanuts",
+      "Garlic",
+      "Dry red chillies",
+      "Cumin seeds",
+      "Salt",
+      "Oil",
+      "Optional sesame seeds and dry coconut"
+    ],
+    "nutritionFacts": [
+      "A 15 g serving of dry chutney provides approximately 85 kcal.",
+      "Protein: approximately 3.5 g.",
+      "Fat: approximately 7 g.",
+      "Fiber: approximately 1.2 g."
+    ],
+    "uses": [
+      "Serve with varan-bhat",
+      "Serve with bhakri or roti",
+      "Use as a dry condiment with everyday meals",
+      "Mix with curd or oil when preferred"
+    ],
+    "storage": [
+      "Store the dry chutney in a clean, airtight container and follow the current pack label for shelf-life and storage instructions."
+    ]
+  },
   "urad-dal": {
     "productName": "Urad Dal (Black Gram)",
     "sourceCategory": "Pulses",
