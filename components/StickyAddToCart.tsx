@@ -39,7 +39,7 @@ export default function StickyAddToCart({ product, price, packLabel, onAdd, disa
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-[#2d1b15] truncate">{product.name}</p>
           <p className="text-base font-bold text-[#8b1a1a]">
-            ₹{price}
+            ₹{new Intl.NumberFormat('en-IN').format(price)}
             {packLabel && <span className="text-xs text-[#6b5347] font-medium ml-1">/ {packLabel}</span>}
           </p>
         </div>
