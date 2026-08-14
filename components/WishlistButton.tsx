@@ -8,6 +8,7 @@ type Props = {
   className?: string
   size?: 'sm' | 'md' | 'lg'
   variant?: 'icon' | 'pill'
+  showIcon?: boolean
 }
 
 const sizes = {
@@ -22,7 +23,7 @@ const iconSizes = {
   lg: 'w-6 h-6',
 }
 
-export default function WishlistButton({ productId, className = '', size = 'md', variant = 'icon' }: Props) {
+export default function WishlistButton({ productId, className = '', size = 'md', variant = 'icon', showIcon = true }: Props) {
   const { has, toggle, isFull } = useWishlist()
   const active = has(productId)
   // Disable add when full (still allow removal)
@@ -48,7 +49,7 @@ export default function WishlistButton({ productId, className = '', size = 'md',
         aria-pressed={active}
         title={isDisabled ? 'Wishlist is full (max 10 items)' : undefined}
       >
-        <Heart className={`w-4 h-4 ${active ? 'fill-[#8b1a1a]' : ''}`} />
+        {showIcon && <Heart className={`w-4 h-4 ${active ? 'fill-[#8b1a1a]' : ''}`} />}
         {active ? 'Saved' : isFull ? 'Full' : 'Save'}
       </button>
     )

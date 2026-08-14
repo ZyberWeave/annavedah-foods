@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
-import { ShoppingCart } from 'lucide-react'
 import type { Product } from '@/lib/content'
 
 type Props = {
@@ -46,9 +45,8 @@ export default function StickyAddToCart({ product, price, packLabel, onAdd, disa
         <button
           onClick={onAdd}
           disabled={disabled}
-          className="h-12 px-5 bg-[#8b1a1a] hover:bg-[#6d1414] disabled:opacity-50 text-white font-bold rounded-xl flex items-center gap-2 transition-colors"
+          className="h-12 px-5 bg-[#8b1a1a] hover:bg-[#6d1414] disabled:opacity-50 text-white font-bold flex items-center transition-colors"
         >
-          <ShoppingCart className="w-4 h-4" />
           Add
         </button>
       </div>

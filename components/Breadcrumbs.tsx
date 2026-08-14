@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { ChevronRight, Home } from 'lucide-react'
 
 export type Crumb = {
   label: string
@@ -11,18 +10,15 @@ export type Crumb = {
 export default function Breadcrumbs({ items }: { items: Crumb[] }) {
   return (
     <nav aria-label="Breadcrumb" className="text-sm">
-      <ol className="flex flex-wrap items-center gap-1.5 text-[#6b5347]">
+      <ol className="flex flex-wrap items-center gap-2 text-[#6b5347]">
         <li>
-          <Link href="/" className="flex items-center hover:text-[#8b1a1a] transition-colors">
-            <Home className="w-4 h-4" />
-            <span className="sr-only">Home</span>
-          </Link>
+          <Link href="/" className="hover:text-[#8b1a1a] transition-colors">Home</Link>
         </li>
         {items.map((crumb, i) => {
           const isLast = i === items.length - 1
           return (
-            <li key={`${crumb.label}-${i}`} className="flex items-center gap-1.5">
-              <ChevronRight className="w-3.5 h-3.5 text-[#c9a45c]" aria-hidden="true" />
+            <li key={`${crumb.label}-${i}`} className="flex items-center gap-2">
+              <span className="text-[#b4935b]" aria-hidden="true">/</span>
               {crumb.href && !isLast ? (
                 <Link href={crumb.href} className="hover:text-[#8b1a1a] transition-colors font-medium">
                   {crumb.label}

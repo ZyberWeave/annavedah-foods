@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, Check, Leaf, MessageCircle, PackageCheck, ShieldCheck, ShoppingBag, Truck } from 'lucide-react'
 import { useCart } from '@/components/cart-context'
 import type { BundleItem, PackPrice, Product } from '@/lib/content'
 import type { ProductDetails } from '@/lib/product-details'
@@ -73,12 +72,11 @@ export default function ProductDetailClient({ product, details }: { product: Pro
 
             <div className="py-6">
               <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.22em] text-[#9d722f]">Why it belongs in your pantry</p>
-              <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-                {product.benefits.slice(0, 4).map((benefit) => (
-                  <div key={benefit} className="flex items-start gap-3 text-sm leading-5 text-[#3f3029]">
-                    <span className="mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-full bg-[#ece0c7] text-[#7d5b24]"><Check className="h-3 w-3" strokeWidth={2.5} /></span>
-                    <span>{benefit}</span>
-                  </div>
+              <div className="grid border-t border-[#d8cabd] sm:grid-cols-2">
+                {product.benefits.slice(0, 4).map((benefit, index) => (
+                  <p key={benefit} className={`border-b border-[#d8cabd] py-3 text-sm leading-5 text-[#3f3029] sm:px-4 ${index % 2 === 0 ? 'sm:border-r sm:pl-0' : 'sm:pr-0'}`}>
+                    {benefit}
+                  </p>
                 ))}
               </div>
             </div>
@@ -100,8 +98,7 @@ export default function ProductDetailClient({ product, details }: { product: Pro
               </div>
             )}
 
-            <section className="relative overflow-hidden rounded-[2rem] border border-[#dacbbb] bg-[#fffdf9] p-5 shadow-[0_24px_60px_-42px_rgba(67,31,20,0.65)] sm:p-7">
-              <div className="absolute inset-y-0 left-0 w-1 bg-[#8b1a1a]" aria-hidden="true" />
+            <section className="border-y border-[#2d1b15] py-6">
               {hasPrice ? (
                 <>
                   <div className="flex items-end justify-between gap-4">
@@ -124,11 +121,11 @@ export default function ProductDetailClient({ product, details }: { product: Pro
                               type="button"
                               onClick={() => setSelectedPack(pack)}
                               aria-pressed={isSelected}
-                              className={`relative min-h-20 rounded-xl border p-3 text-left transition-all ${isSelected ? 'border-[#8b1a1a] bg-[#8b1a1a] text-white shadow-md' : 'border-[#dfd2c4] bg-white text-[#2d1b15] hover:border-[#b98d47]'}`}
+                              className={`relative min-h-20 border p-3 text-left transition-colors ${isSelected ? 'border-[#8b1a1a] bg-[#8b1a1a] text-white' : 'border-[#cfc0b1] bg-transparent text-[#2d1b15] hover:border-[#8b1a1a]'}`}
                             >
                               <span className="block text-sm font-bold">{pack.size}</span>
                               <span className={`mt-1 block text-xs font-semibold ${isSelected ? 'text-[#f5d998]' : 'text-[#8b1a1a]'}`}>₹{formatPrice(pack.price)}</span>
-                              {isSelected && <Check className="absolute right-3 top-3 h-4 w-4 text-[#f5d998]" />}
+                              {isSelected && <span className="absolute right-3 top-3 text-[10px] font-bold uppercase tracking-wider text-[#f5d998]">Selected</span>}
                             </button>
                           )
                         })}
@@ -137,45 +134,42 @@ export default function ProductDetailClient({ product, details }: { product: Pro
                   )}
 
                   <div className="mt-6 grid gap-3 sm:grid-cols-[128px_minmax(0,1fr)]">
-                    <div className="flex h-14 items-center justify-between rounded-xl border border-[#dfd2c4] bg-white" aria-label="Quantity selector">
+                    <div className="flex h-14 items-center justify-between border border-[#cfc0b1] bg-white" aria-label="Quantity selector">
                       <button type="button" onClick={() => setQty((value) => Math.max(1, value - 1))} className="h-full w-10 text-xl text-[#5c453a] hover:bg-[#faf6f0]" aria-label="Decrease quantity">−</button>
                       <span className="font-bold tabular-nums text-[#2d1b15]" aria-live="polite">{qty}</span>
                       <button type="button" onClick={() => setQty((value) => value + 1)} className="h-full w-10 text-xl text-[#5c453a] hover:bg-[#faf6f0]" aria-label="Increase quantity">+</button>
                     </div>
-                    <button type="button" onClick={handleAddToCart} className="group flex h-14 items-center justify-center gap-3 rounded-xl bg-[#8b1a1a] px-6 text-base font-bold text-white shadow-[0_14px_30px_-16px_rgba(139,26,26,.75)] transition-all hover:bg-[#6d1414] hover:shadow-lg">
-                      {added ? <Check className="h-5 w-5" /> : <ShoppingBag className="h-5 w-5" />}
+                    <button type="button" onClick={handleAddToCart} className="flex h-14 items-center justify-center bg-[#8b1a1a] px-6 text-base font-bold text-white transition-colors hover:bg-[#6d1414]">
                       <span aria-live="polite">{added ? 'Added to cart' : 'Add to cart'}</span>
-                      {!added && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
                     </button>
                   </div>
                 </>
               ) : (
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                   <div><p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#9d722f]">Availability</p><h2 className="mt-1 text-2xl font-semibold text-[#2d1b15]">Price on request</h2></div>
-                  <Link href="/contact" className="inline-flex h-12 items-center justify-center rounded-xl bg-[#8b1a1a] px-6 font-bold text-white hover:bg-[#6d1414]">Enquire now</Link>
+                  <Link href="/contact" className="inline-flex h-12 items-center justify-center bg-[#8b1a1a] px-6 font-bold text-white hover:bg-[#6d1414]">Enquire now</Link>
                 </div>
               )}
 
               <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-[#e4d8cb] pt-4">
-                <WishlistButton productId={product.id} variant="pill" className="!border-0 !p-0" />
-                <Link href="/contact" className="inline-flex items-center gap-2 text-sm font-bold text-[#6f5143] hover:text-[#8b1a1a]"><MessageCircle className="h-4 w-4" /> Ask about this product</Link>
+                <WishlistButton productId={product.id} variant="pill" showIcon={false} className="!border-0 !p-0" />
+                <Link href="/contact" className="border-b border-[#6f5143] pb-0.5 text-sm font-bold text-[#6f5143] hover:border-[#8b1a1a] hover:text-[#8b1a1a]">Ask about this product</Link>
               </div>
             </section>
 
-            <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-[#dfd2c4] bg-[#dfd2c4] sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
+            <dl className="mt-6 grid grid-cols-2 border-y border-[#cfc0b1] sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
               {[
-                { icon: Leaf, label: 'Farm-led', sub: 'Carefully selected' },
-                { icon: PackageCheck, label: 'Food-grade', sub: 'Securely packed' },
-                { icon: Truck, label: 'Pan-India', sub: 'Tracked delivery' },
-                { icon: ShieldCheck, label: 'FSSAI', sub: 'Quality standards' },
-              ].map(({ icon: Icon, label, sub }) => (
-                <div key={label} className="bg-[#f6f0e7] px-3 py-4 text-center">
-                  <Icon className="mx-auto h-4 w-4 text-[#9d722f]" />
-                  <p className="mt-2 text-xs font-bold text-[#2d1b15]">{label}</p>
-                  <p className="mt-0.5 text-[10px] text-[#766054]">{sub}</p>
+                { label: 'Farm-led', sub: 'Carefully selected' },
+                { label: 'Food-grade', sub: 'Securely packed' },
+                { label: 'Pan-India', sub: 'Tracked delivery' },
+                { label: 'FSSAI', sub: 'Quality standards' },
+              ].map(({ label, sub }, index) => (
+                <div key={label} className={`py-4 text-center ${index < 3 ? 'border-r border-[#cfc0b1]' : ''}`}>
+                  <dt className="text-xs font-bold text-[#2d1b15]">{label}</dt>
+                  <dd className="mt-0.5 text-[10px] text-[#766054]">{sub}</dd>
                 </div>
               ))}
-            </div>
+            </dl>
           </div>
         </section>
 
@@ -193,7 +187,7 @@ export default function ProductDetailClient({ product, details }: { product: Pro
           <section className="border-t border-[#ded0c1] py-16 lg:py-24">
             <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div><p className="text-xs font-bold uppercase tracking-[0.24em] text-[#9d722f]">Continue exploring</p><h2 className="mt-3 text-4xl font-semibold leading-none text-[#2d1b15]">More from this collection.</h2></div>
-              <Link href={`/products?category=${encodeURIComponent(product.category)}`} className="inline-flex items-center gap-2 text-sm font-bold text-[#8b1a1a] hover:underline">View the collection <ArrowRight className="h-4 w-4" /></Link>
+              <Link href={`/products?category=${encodeURIComponent(product.category)}`} className="border-b border-[#8b1a1a] pb-1 text-sm font-bold text-[#8b1a1a]">View the collection</Link>
             </div>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
               {related.map((item) => {
@@ -201,10 +195,9 @@ export default function ProductDetailClient({ product, details }: { product: Pro
                 const price = firstPack?.price || item.price
                 return (
                   <Link key={item.id} href={`/products/${item.slug}`} className="group block">
-                    <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] border border-[#dfd2c4] bg-[#eee5d8]">
-                      <div className="absolute inset-5 rounded-full border border-[#c9a45c]/25" aria-hidden="true" />
+                    <div className="relative aspect-[4/5] overflow-hidden border border-[#dfd2c4] bg-[#eee5d8]">
+                      <div className="absolute inset-y-5 left-1/2 w-[70%] -translate-x-1/2 border-x border-[#d7c8b9] bg-[#f4efe7]" aria-hidden="true" />
                       <Image src={item.image} alt={item.name} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-contain p-7 drop-shadow-xl transition-transform duration-500 group-hover:scale-105" />
-                      <span className="absolute bottom-4 right-4 flex h-9 w-9 items-center justify-center rounded-full bg-[#8b1a1a] text-white transition-transform group-hover:translate-x-1"><ArrowRight className="h-4 w-4" /></span>
                     </div>
                     <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.2em] text-[#9d722f]">{item.category}</p>
                     <h3 className="mt-1 text-lg font-semibold leading-tight text-[#2d1b15] transition-colors group-hover:text-[#8b1a1a]">{item.name}</h3>
