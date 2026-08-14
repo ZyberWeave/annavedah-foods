@@ -731,7 +731,10 @@ export const products: ProductWithCosts[] = productCatalog
     if (item.badge === 'Test') return true
     const hasImage = !!item.image
     const hasPrice = (item.packPrices ?? []).some((pp) => pp.price > 0)
-    return hasImage && hasPrice
+    // Newly photographed catalog items remain visible while commercial pack
+    // pricing is being entered in admin. Their cards show the existing
+    // zero-price/pending state instead of disappearing from the storefront.
+    return hasImage && (hasPrice || item.badge === 'New')
   })
   .map((item, index) => {
     const defaults = categoryDefaults[item.category]
