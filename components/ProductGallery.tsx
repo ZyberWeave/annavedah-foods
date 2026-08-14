@@ -28,7 +28,7 @@ export default function ProductGallery({ images, alt, category }: Props) {
   }
 
   return (
-    <div className="space-y-4 lg:sticky site-sticky-top self-start">
+    <div className="space-y-4 lg:sticky site-sticky-top self-start" data-reveal>
       <div
         ref={ref}
         className="group relative overflow-hidden border border-[#cfc0b1] bg-[#eee8df] cursor-zoom-in"

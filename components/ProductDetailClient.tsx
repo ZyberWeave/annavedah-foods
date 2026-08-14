@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCart } from '@/components/cart-context'
@@ -25,10 +25,32 @@ export default function ProductDetailClient({ product, details }: { product: Pro
   const { add } = useCart()
   const { products } = useProductsData()
   const { push } = useRecentlyViewed()
+  const pageRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     push(product.id)
   }, [product.id, push])
+
+  useEffect(() => {
+    const page = pageRef.current
+    if (!page) return
+
+    page.classList.add('reveal-enabled')
+    const elements = page.querySelectorAll<HTMLElement>('[data-reveal]')
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return
+          entry.target.classList.add('is-visible')
+          observer.unobserve(entry.target)
+        })
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -8% 0px' },
+    )
+
+    elements.forEach((element) => observer.observe(element))
+    return () => observer.disconnect()
+  }, [product.id])
 
   const hasPrice = product.price > 0 || product.packPrices.length > 0
   const currentPrice = selectedPack ? selectedPack.price : product.price
@@ -46,7 +68,7 @@ export default function ProductDetailClient({ product, details }: { product: Pro
     .slice(0, 4)
 
   return (
-    <main className="overflow-hidden pb-24 lg:pb-20">
+    <main ref={pageRef} className="overflow-hidden pb-24 lg:pb-20">
       <div className="mx-auto w-full max-w-[1440px] px-4 site-page-gap sm:px-6 lg:px-10">
         <div className="py-4 lg:py-6">
           <Breadcrumbs items={[{ label: product.category, href: `/products?category=${encodeURIComponent(product.category)}` }, { label: product.name }]} />
@@ -55,7 +77,7 @@ export default function ProductDetailClient({ product, details }: { product: Pro
         <section className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,.92fr)] lg:gap-12 xl:gap-16">
           <ProductGallery images={[product.image]} alt={product.name} category={product.category} />
 
-          <div className="lg:pt-3">
+          <div className="lg:pt-3" data-reveal data-reveal-delay="1">
             <header className="border-b border-[#dfd2c4] pb-7">
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                 <span className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#8b1a1a]">{product.category}</span>
@@ -176,16 +198,16 @@ export default function ProductDetailClient({ product, details }: { product: Pro
         <ProductTabs product={product} details={details} />
 
         <section id="reviews" className="scroll-mt-48 py-16 lg:py-24">
-          <div className="mb-8 max-w-2xl">
+          <div className="mb-8 max-w-2xl" data-reveal>
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#9d722f]">Shared by our customers</p>
             <h2 className="mt-3 text-4xl font-semibold leading-none text-[#2d1b15]">From kitchens across India.</h2>
           </div>
-          <ProductReviews productSlug={product.slug} />
+          <div data-reveal data-reveal-delay="1"><ProductReviews productSlug={product.slug} /></div>
         </section>
 
         {related.length > 0 && (
           <section className="border-t border-[#ded0c1] py-16 lg:py-24">
-            <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between" data-reveal>
               <div><p className="text-xs font-bold uppercase tracking-[0.24em] text-[#9d722f]">Continue exploring</p><h2 className="mt-3 text-4xl font-semibold leading-none text-[#2d1b15]">More from this collection.</h2></div>
               <Link href={`/products?category=${encodeURIComponent(product.category)}`} className="border-b border-[#8b1a1a] pb-1 text-sm font-bold text-[#8b1a1a]">View the collection</Link>
             </div>
@@ -194,7 +216,7 @@ export default function ProductDetailClient({ product, details }: { product: Pro
                 const firstPack = item.packPrices[0]
                 const price = firstPack?.price || item.price
                 return (
-                  <Link key={item.id} href={`/products/${item.slug}`} className="group block">
+                  <Link key={item.id} href={`/products/${item.slug}`} className="group block" data-reveal data-reveal-delay={String((item.id % 4) + 1)}>
                     <div className="relative aspect-[4/5] overflow-hidden border border-[#dfd2c4] bg-[#eee5d8]">
                       <div className="absolute inset-y-5 left-1/2 w-[70%] -translate-x-1/2 border-x border-[#d7c8b9] bg-[#f4efe7]" aria-hidden="true" />
                       <Image src={item.image} alt={item.name} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-contain p-7 drop-shadow-xl transition-transform duration-500 group-hover:scale-105" />

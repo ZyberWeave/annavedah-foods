@@ -43,7 +43,7 @@ export default function ProductTabs({ product, details }: Props) {
   return (
     <section id="product-story" className="scroll-mt-48 border-t border-[#cab9aa] pt-16 lg:pt-24">
       <div className="grid gap-10 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-16">
-        <aside className="h-fit lg:sticky site-sticky-top">
+        <aside className="h-fit lg:sticky site-sticky-top" data-reveal>
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#9d722f]">Product notes</p>
           <h2 className="mt-4 text-4xl font-semibold leading-[0.98] text-[#2d1b15]">Everything worth knowing.</h2>
           <nav className="mt-8 hidden border-t border-[#cab9aa] text-sm lg:block" aria-label="Product information">
@@ -61,7 +61,7 @@ export default function ProductTabs({ product, details }: Props) {
         </aside>
 
         <div>
-          <article id="story-overview" className="scroll-mt-48 border-t border-[#2d1b15] py-10 first:pt-0 first:border-t-0 sm:py-14">
+          <article id="story-overview" className="scroll-mt-48 border-t border-[#2d1b15] py-10 first:pt-0 first:border-t-0 sm:py-14" data-reveal>
             <SectionTitle number="01" label="Origin and character" title={`The story of ${product.name}`} />
             <div className="grid gap-8 sm:grid-cols-[80px_minmax(0,1fr)] sm:gap-6">
               <div />
@@ -96,7 +96,7 @@ export default function ProductTabs({ product, details }: Props) {
             ) : null}
           </article>
 
-          <article id="story-composition" className="scroll-mt-48 border-t border-[#2d1b15] py-10 sm:py-14">
+          <article id="story-composition" className="scroll-mt-48 border-t border-[#2d1b15] py-10 sm:py-14" data-reveal>
             <SectionTitle number="02" label="Composition and quality" title="A closer look inside the pack" />
             <div className="grid gap-10 md:grid-cols-2">
               <div>
@@ -121,7 +121,7 @@ export default function ProductTabs({ product, details }: Props) {
             <p className="mt-8 border-t border-[#d8cabd] pt-4 text-xs italic leading-5 text-[#776154]">Product information is provided for general guidance and is not medical advice. Pack declarations take precedence.</p>
           </article>
 
-          <article id="story-use" className="scroll-mt-48 border-t border-[#2d1b15] py-10 sm:py-14">
+          <article id="story-use" className="scroll-mt-48 border-t border-[#2d1b15] py-10 sm:py-14" data-reveal>
             <SectionTitle number="03" label="Everyday use" title="Make it part of your routine" />
             <div className="grid gap-10 md:grid-cols-[1.2fr_.8fr]">
               <div>
@@ -136,7 +136,7 @@ export default function ProductTabs({ product, details }: Props) {
             </div>
           </article>
 
-          <article id="story-delivery" className="scroll-mt-48 border-y border-[#2d1b15] py-10 sm:py-14">
+          <article id="story-delivery" className="scroll-mt-48 border-y border-[#2d1b15] py-10 sm:py-14" data-reveal>
             <SectionTitle number="04" label="From us to your shelf" title="Packed and delivered with care" />
             <dl className="grid border-t border-[#cab9aa] sm:grid-cols-2">
               {[
