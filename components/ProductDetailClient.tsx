@@ -68,7 +68,7 @@ export default function ProductDetailClient({ product, details }: { product: Pro
     .slice(0, 4)
 
   return (
-    <main ref={pageRef} className="overflow-hidden pb-24 lg:pb-20">
+    <main ref={pageRef} className="overflow-x-clip pb-24 lg:pb-20">
       <div className="mx-auto w-full max-w-[1440px] px-4 site-page-gap sm:px-6 lg:px-10">
         <div className="py-4 lg:py-6">
           <Breadcrumbs items={[{ label: product.category, href: `/products?category=${encodeURIComponent(product.category)}` }, { label: product.name }]} />
