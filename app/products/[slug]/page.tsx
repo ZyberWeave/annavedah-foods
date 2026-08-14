@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getProducts } from '@/lib/products'
+import { getProductDetails } from '@/lib/product-details'
 import ProductDetailClient from '@/components/ProductDetailClient'
 
 type ProductPageProps = {
@@ -21,13 +22,17 @@ export async function generateMetadata(props: ProductPageProps): Promise<Metadat
     ? product.image
     : `${baseUrl}${product.image.startsWith('/') ? '' : '/'}${product.image}`
   const pageUrl = `${baseUrl}/products/${product.slug}`
+  const detailedDescription = getProductDetails(product.slug)?.overview?.join(' ') || product.description
+  const metadataDescription = detailedDescription.length > 200
+    ? `${detailedDescription.slice(0, 197).trimEnd()}...`
+    : detailedDescription
 
   return {
     title: `${product.name} | Annavedah Foods`,
-    description: product.description,
+    description: metadataDescription,
     openGraph: {
       title: product.name,
-      description: product.description,
+      description: metadataDescription,
       url: pageUrl,
       siteName: 'Annavedah Foods',
       type: 'article',
@@ -43,7 +48,7 @@ export async function generateMetadata(props: ProductPageProps): Promise<Metadat
     twitter: {
       card: 'summary_large_image',
       title: product.name,
-      description: product.description,
+      description: metadataDescription,
       images: [imageUrl],
     },
   }
@@ -58,5 +63,7 @@ export default async function ProductDetailPage(props: ProductPageProps) {
     notFound()
   }
 
-  return <ProductDetailClient product={product} />
+  const details = getProductDetails(product.slug)
+
+  return <ProductDetailClient product={product} details={details} />
 }

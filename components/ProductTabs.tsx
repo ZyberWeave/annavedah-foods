@@ -2,10 +2,12 @@
 
 import { useState } from 'react'
 import type { Product } from '@/lib/content'
+import type { ProductDetails } from '@/lib/product-details'
 import { Truck, RefreshCcw, ShieldCheck, Leaf } from 'lucide-react'
 
 type Props = {
   product: Product
+  details: ProductDetails | null
 }
 
 const tabs = [
@@ -17,8 +19,26 @@ const tabs = [
 
 type TabId = (typeof tabs)[number]['id']
 
-export default function ProductTabs({ product }: Props) {
+function DetailList({ items }: { items: string[] }) {
+  return (
+    <ul className="space-y-2 pl-5 list-disc marker:text-[#c9a45c]">
+      {items.map((item, index) => (
+        <li key={`${index}-${item}`} className="pl-1 text-sm leading-relaxed text-[#2d1b15]">
+          {item}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+export default function ProductTabs({ product, details }: Props) {
   const [active, setActive] = useState<TabId>('description')
+  const overview = details?.overview?.length ? details.overview : [product.description]
+  const features = details?.features?.length ? details.features : product.highlights
+  const uses = details?.uses?.length ? details.uses : [product.usage]
+  const storage = details?.storage?.length
+    ? details.storage
+    : ['Store in a cool, dry place in an airtight container. Use a clean, dry spoon.']
 
   return (
     <div className="rounded-3xl border-2 border-[#e8ddd0] bg-white overflow-hidden">
@@ -45,78 +65,139 @@ export default function ProductTabs({ product }: Props) {
 
       <div className="p-6 md:p-8">
         {active === 'description' && (
-          <div className="space-y-4">
-            <p className="text-[#2d1b15] leading-relaxed">{product.description}</p>
-            <div>
-              <h4 className="text-sm font-bold uppercase tracking-widest text-[#c9a45c] mb-3">Why it works</h4>
-              <ul className="space-y-2">
-                {product.highlights.map((h) => (
-                  <li key={h} className="flex gap-2 text-[#2d1b15]">
-                    <Leaf className="w-4 h-4 text-[#c9a45c] flex-shrink-0 mt-0.5" />
-                    <span className="text-sm leading-relaxed">{h}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="flex flex-wrap gap-2 pt-2">
-              {product.benefits.map((b) => (
-                <span key={b} className="rounded-full bg-[#c9a45c]/10 border border-[#c9a45c]/20 px-3 py-1 text-xs font-semibold text-[#8b1a1a]">
-                  {b}
-                </span>
+          <div className="space-y-6">
+            <div className="space-y-3">
+              {overview.map((paragraph, index) => (
+                <p key={`${index}-${paragraph}`} className="text-[#2d1b15] leading-relaxed">
+                  {paragraph}
+                </p>
               ))}
+            </div>
+
+            {features.length > 0 && (
+              <div>
+                <h4 className="text-sm font-bold uppercase tracking-widest text-[#c9a45c] mb-3">
+                  Product characteristics
+                </h4>
+                <DetailList items={features} />
+              </div>
+            )}
+
+            {details?.speciality?.length ? (
+              <div className="rounded-2xl border border-[#c9a45c]/30 bg-[#faf6f0]/60 p-5">
+                <h4 className="text-sm font-bold uppercase tracking-widest text-[#8b1a1a] mb-3">
+                  What makes it distinctive
+                </h4>
+                <DetailList items={details.speciality} />
+              </div>
+            ) : null}
+
+            {details?.cultivation?.length ? (
+              <div>
+                <h4 className="text-sm font-bold uppercase tracking-widest text-[#c9a45c] mb-3">
+                  Cultivation
+                </h4>
+                <DetailList items={details.cultivation} />
+              </div>
+            ) : null}
+
+            <div>
+              <h4 className="text-sm font-bold uppercase tracking-widest text-[#c9a45c] mb-3">
+                At a glance
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {product.benefits.map((benefit) => (
+                  <span key={benefit} className="rounded-full bg-[#c9a45c]/10 border border-[#c9a45c]/20 px-3 py-1 text-xs font-semibold text-[#8b1a1a]">
+                    {benefit}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         )}
 
         {active === 'ingredients' && (
-          <div className="space-y-5">
+          <div className="space-y-6">
             <div>
-              <h4 className="text-sm font-bold uppercase tracking-widest text-[#c9a45c] mb-2">Ingredients</h4>
-              <p className="text-[#2d1b15]">100% pure {product.name}. Nothing added, nothing taken away. No preservatives, no artificial colors, no fillers.</p>
+              <h4 className="text-sm font-bold uppercase tracking-widest text-[#c9a45c] mb-3">
+                Ingredients and composition
+              </h4>
+              {details?.ingredients?.length ? (
+                <DetailList items={details.ingredients} />
+              ) : (
+                <p className="text-sm leading-relaxed text-[#6b5347]">
+                  A product-specific ingredient list was not included in the supplied detail document. Please check the pack label for the final ingredient declaration.
+                </p>
+              )}
             </div>
-            <div>
-              <h4 className="text-sm font-bold uppercase tracking-widest text-[#c9a45c] mb-3">Typical nutritional values (per 100g)</h4>
-              <div className="rounded-2xl border border-[#e8ddd0] overflow-hidden">
-                <table className="w-full text-sm">
-                  <tbody className="divide-y divide-[#e8ddd0]">
-                    {[
-                      ['Energy', '~ 350 kcal'],
-                      ['Protein', '8 - 22 g'],
-                      ['Carbohydrate', '40 - 70 g'],
-                      ['Fat', '1 - 5 g'],
-                      ['Dietary Fibre', '5 - 15 g'],
-                    ].map(([k, v]) => (
-                      <tr key={k} className="hover:bg-[#faf6f0]/40">
-                        <td className="px-4 py-2.5 font-semibold text-[#2d1b15]">{k}</td>
-                        <td className="px-4 py-2.5 text-right text-[#6b5347]">{v}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+
+            {details?.certification?.length ? (
+              <div>
+                <h4 className="text-sm font-bold uppercase tracking-widest text-[#c9a45c] mb-3">
+                  Source and label notes
+                </h4>
+                <DetailList items={details.certification} />
               </div>
-              <p className="text-xs text-[#6b5347] mt-2 italic">Indicative values. Actual values vary by season, harvest, and pack.</p>
-            </div>
+            ) : null}
+
+            {details?.nutritionFacts?.length ? (
+              <div>
+                <h4 className="text-sm font-bold uppercase tracking-widest text-[#c9a45c] mb-3">
+                  Nutritional values
+                </h4>
+                <DetailList items={details.nutritionFacts} />
+              </div>
+            ) : details?.nutrition?.length ? (
+              <div>
+                <h4 className="text-sm font-bold uppercase tracking-widest text-[#c9a45c] mb-3">
+                  Nutritional properties
+                </h4>
+                <DetailList items={details.nutrition} />
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-[#e8ddd0] bg-[#faf6f0]/50 p-5">
+                <p className="text-sm leading-relaxed text-[#6b5347]">
+                  Product-specific nutritional values are not available in the supplied detail document. Refer to the current pack label for declared values.
+                </p>
+              </div>
+            )}
+
+            {details?.quality?.length ? (
+              <div>
+                <h4 className="text-sm font-bold uppercase tracking-widest text-[#c9a45c] mb-3">
+                  Quality indicators
+                </h4>
+                <DetailList items={details.quality} />
+              </div>
+            ) : null}
+
+            <p className="text-xs italic leading-relaxed text-[#6b5347]">
+              Product information is provided for general guidance and is not medical advice. Pack declarations take precedence.
+            </p>
           </div>
         )}
 
         {active === 'usage' && (
-          <div className="space-y-4">
-            <p className="text-[#2d1b15] leading-relaxed">{product.usage}</p>
-            <div className="grid sm:grid-cols-3 gap-3 pt-2">
-              {[
-                { title: 'Daily smoothie', desc: '1 tsp blended with milk or plant-milk and seasonal fruit.' },
-                { title: 'Cooking boost', desc: 'Stir into dals, curries, or atta dough for added nutrition.' },
-                { title: 'Warm drink', desc: 'Mix with warm water and a hint of jaggery for an evening tonic.' },
-              ].map((c) => (
-                <div key={c.title} className="rounded-xl border border-[#e8ddd0] bg-[#faf6f0]/40 p-4">
-                  <p className="text-sm font-bold text-[#2d1b15] mb-1">{c.title}</p>
-                  <p className="text-xs text-[#6b5347] leading-relaxed">{c.desc}</p>
-                </div>
-              ))}
+          <div className="space-y-6">
+            <div>
+              <h4 className="text-sm font-bold uppercase tracking-widest text-[#c9a45c] mb-3">
+                Suggested uses
+              </h4>
+              <DetailList items={uses} />
             </div>
-            <div className="bg-[#c9a45c]/10 border border-[#c9a45c]/30 rounded-xl p-4 mt-3">
-              <p className="text-xs font-bold uppercase tracking-widest text-[#8b1a1a] mb-1">Storage</p>
-              <p className="text-sm text-[#2d1b15]">Store in a cool, dry place in an airtight container. Use a clean dry spoon.</p>
+
+            {details?.preparation?.length ? (
+              <div>
+                <h4 className="text-sm font-bold uppercase tracking-widest text-[#c9a45c] mb-3">
+                  Preparation
+                </h4>
+                <DetailList items={details.preparation} />
+              </div>
+            ) : null}
+
+            <div className="bg-[#c9a45c]/10 border border-[#c9a45c]/30 rounded-xl p-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-[#8b1a1a] mb-2">Storage</p>
+              <DetailList items={storage} />
             </div>
           </div>
         )}

@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { useCart } from '@/components/cart-context'
 import type { Product, PackPrice, BundleItem } from '@/lib/content'
+import type { ProductDetails } from '@/lib/product-details'
 import { useProductsData } from '@/components/products-context'
 import { useRecentlyViewed } from '@/components/recently-viewed-context'
 import { ShoppingCart, Check, Truck, ShieldCheck, RefreshCcw, Star } from 'lucide-react'
@@ -17,7 +18,13 @@ import StickyAddToCart from '@/components/StickyAddToCart'
 import WishlistButton from '@/components/WishlistButton'
 import RecentlyViewed from '@/components/RecentlyViewed'
 
-export default function ProductDetailClient({ product }: { product: Product }) {
+export default function ProductDetailClient({
+  product,
+  details,
+}: {
+  product: Product
+  details: ProductDetails | null
+}) {
   const [selectedPack, setSelectedPack] = useState(product.packPrices[0] || null)
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
@@ -204,7 +211,7 @@ export default function ProductDetailClient({ product }: { product: Product }) {
         </div>
       </div>
 
-      <ProductTabs product={product} />
+      <ProductTabs product={product} details={details} />
 
       <div id="reviews">
         <ProductReviews productSlug={product.slug} />
