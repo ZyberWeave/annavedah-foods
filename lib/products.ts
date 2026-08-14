@@ -195,7 +195,21 @@ const getCachedActiveProducts = unstable_cache(
       .where(eq(productsTable.active, true))
       .orderBy(asc(productsTable.displayOrder), asc(productsTable.id));
 
-    return rows.map((row) => toPublicProduct(mapRowToProductWithCosts(row)));
+    const databaseProducts = rows.map((row) => toPublicProduct(mapRowToProductWithCosts(row)));
+    const databaseSlugs = new Set(databaseProducts.map((product) => product.slug));
+
+    // The photographed range is committed with the application so a Vercel
+    // environment pointing at an older database cannot silently drop it from
+    // the public catalog. Database records continue to win when present.
+    const missingPhotographedProducts = staticProducts
+      .filter(
+        (product) =>
+          product.image.startsWith('/Products/lifestyle/') &&
+          !databaseSlugs.has(product.slug),
+      )
+      .map(toPublicProduct);
+
+    return [...databaseProducts, ...missingPhotographedProducts];
   },
   ['active-products'],
   { tags: [PRODUCT_CACHE_TAG] },
