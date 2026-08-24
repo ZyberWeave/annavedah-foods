@@ -299,7 +299,7 @@ const productCatalog: ProductSeed[] = [
   },
   {
     slug: 'unpolished-indrayani-rice',
-    name: 'Unpolished Indrayani Rice',
+    name: 'Semi-Polished Indrayani Rice',
     localName: 'Haatsadicha Indrayani Tandul',
     category: 'Grains',
     image: '/Products/grains/unpolished indrayani tandul.webp',
@@ -1242,4 +1242,4 @@ export const benefits = [
   },
 ]
 
-export const categories: string[] = ['All', 'Grains', 'Pulses', 'Powders', 'Atta', 'Essentials', 'Papad', 'Chutney']
+export const categories: string[] = ['All', 'Grains', 'Pulses', 'Powders', 'Essentials']

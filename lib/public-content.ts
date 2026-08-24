@@ -18,28 +18,10 @@ export interface BlogPost {
 
 export const banners = [
   {
-    category: 'Atta',
-    desktop: '/Banners/landscape/Atta.png',
-    tablet: '/Banners/landscape/Atta.png',
-    mobile: '/Banners/square/Atta.png',
-  },
-  {
-    category: 'Chutney',
-    desktop: '/Banners/landscape/Chutney.png',
-    tablet: '/Banners/landscape/Chutney.png',
-    mobile: '/Banners/square/Chutney.jpeg',
-  },
-  {
     category: 'Grains',
     desktop: '/Banners/landscape/Grains..png',
     tablet: '/Banners/landscape/Grains..png',
     mobile: '/Banners/square/Grains.png',
-  },
-  {
-    category: 'Papad',
-    desktop: '/Banners/landscape/Papad.png',
-    tablet: '/Banners/landscape/Papad.png',
-    mobile: '/Banners/square/Papad.png',
   },
   {
     category: 'Powders',
@@ -76,7 +58,7 @@ export const testimonials: Testimonial[] = [
   },
 ]
 
-export const categories: string[] = ['All', 'Grains', 'Pulses', 'Powders', 'Atta', 'Essentials', 'Papad', 'Chutney']
+export const categories: string[] = ['All', 'Grains', 'Pulses', 'Powders', 'Essentials']
 
 export const blogPosts: BlogPost[] = [
   {
@@ -129,14 +111,14 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: 'unpolished-indrayani-rice',
-    title: 'Why Unpolished Indrayani Rice Belongs in Your Pantry',
+    title: 'Why Semi-Polished Indrayani Rice Belongs in Your Pantry',
     date: '2026-02-05',
-    summary: 'Understanding the nutritional difference between polished and unpolished traditional rice.',
+    summary: 'Understanding the nutritional difference between fully polished and semi-polished traditional rice.',
     tags: ['Grains', 'Rice', 'Health'],
     body: [
-      'Unpolished rice retains the nutrient-dense bran layer, providing more fiber and essential minerals than its polished counterpart.',
+      'Semi-polished rice retains part of the bran layer, providing more fiber and minerals than a fully polished grain.',
       'Indrayani rice is known for its sweet aroma and slightly sticky texture, making it perfect for traditional comfort foods like khichdi.',
-      'Switching to unpolished rice helps regulate blood sugar levels due to its lower glycemic index.',
+      'Semi-polished rice offers a practical balance between the familiar texture of white rice and a less-refined grain.',
     ],
   },
   {

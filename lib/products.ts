@@ -1,4 +1,4 @@
-import { asc, eq, sql } from 'drizzle-orm';
+import { asc, sql } from 'drizzle-orm';
 import { revalidateTag, unstable_cache } from 'next/cache';
 
 import { db } from './db';
@@ -22,6 +22,19 @@ export const PRODUCT_CATEGORY_VALUES: ProductCategory[] = [
   'Chutney',
   'Gift Boxes & Bundles',
 ];
+
+const PUBLICLY_RETIRED_CATEGORIES = new Set<ProductCategory>(['Atta', 'Papad', 'Chutney']);
+const PUBLICLY_RETIRED_SLUGS = new Set(['gahu-chik-powder']);
+
+function isPubliclyListedProduct(product: Pick<Product, 'slug' | 'category'>) {
+  if (PUBLICLY_RETIRED_CATEGORIES.has(product.category)) return false;
+  if (PUBLICLY_RETIRED_SLUGS.has(product.slug)) return false;
+
+  return !(
+    product.slug.startsWith('mix-dried-vegetables-') ||
+    product.slug.startsWith('mixed-dried-vegetables-')
+  );
+}
 
 type ProductRow = typeof productsTable.$inferSelect;
 
@@ -138,10 +151,16 @@ function mapRowToProductWithCosts(row: ProductRow): ProductWithCosts {
 function toPublicProduct(product: ProductWithCosts): Product {
   const { costPrice: _costPrice, packPrices, ...publicProduct } = product;
 
-  return {
+  const sanitizedProduct: Product = {
     ...publicProduct,
     packPrices: packPrices.map(({ size, price }) => ({ size, price })),
   };
+
+  if (sanitizedProduct.slug === 'unpolished-indrayani-rice') {
+    return { ...sanitizedProduct, name: 'Semi-Polished Indrayani Rice' };
+  }
+
+  return sanitizedProduct;
 }
 
 function mapRowToAdminProduct(row: ProductRow): AdminProduct {
@@ -192,18 +211,22 @@ const getCachedActiveProducts = unstable_cache(
     const rows = await db
       .select()
       .from(productsTable)
-      .where(eq(productsTable.active, true))
       .orderBy(asc(productsTable.displayOrder), asc(productsTable.id));
 
-    const databaseProducts = rows.map((row) => toPublicProduct(mapRowToProductWithCosts(row)));
-    const databaseSlugs = new Set(databaseProducts.map((product) => product.slug));
+    const databaseProducts = rows
+      .filter((row) => row.active)
+      .map((row) => toPublicProduct(mapRowToProductWithCosts(row)))
+      .filter(isPubliclyListedProduct);
+    const databaseSlugs = new Set(rows.map((row) => row.slug));
 
     // The photographed range is committed with the application so a Vercel
     // environment pointing at an older database cannot silently drop it from
-    // the public catalog. Database records continue to win when present.
+    // the public catalog. Any database record, including an inactive one,
+    // suppresses the bundled fallback so the admin Hide control stays durable.
     const missingPhotographedProducts = staticProducts
       .filter(
         (product) =>
+          isPubliclyListedProduct(product) &&
           product.image.startsWith('/Products/lifestyle/') &&
           !databaseSlugs.has(product.slug),
       )
@@ -222,7 +245,7 @@ export async function getProducts(): Promise<Product[]> {
     console.error('Load products error:', error);
     // The static fallback also carries buyPrice/costPrice, so it must be
     // sanitized before being served, same as the DB path.
-    return staticProducts.map(toPublicProduct);
+    return staticProducts.filter(isPubliclyListedProduct).map(toPublicProduct);
   }
 }
 
