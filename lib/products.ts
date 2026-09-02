@@ -239,6 +239,12 @@ const getCachedActiveProducts = unstable_cache(
 );
 
 export async function getProducts(): Promise<Product[]> {
+  // Local storefront development can run without Neon. Avoid issuing a query
+  // at all so Next.js does not surface an expected fallback as a console error.
+  if (!process.env.DATABASE_URL) {
+    return staticProducts.filter(isPubliclyListedProduct).map(toPublicProduct);
+  }
+
   try {
     return await getCachedActiveProducts();
   } catch (error) {
