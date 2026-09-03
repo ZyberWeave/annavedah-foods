@@ -52,6 +52,12 @@
   }
 }
 
+@media (min-width: 640px) and (max-width: 1023px) {
+  :root {
+    --site-page-gap-home: 0px;
+  }
+}
+
 .dark {
   --background: oklch(0.12 0.03 30);
   --foreground: oklch(0.97 0.01 60);

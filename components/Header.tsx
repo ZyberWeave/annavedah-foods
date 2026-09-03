@@ -282,7 +282,7 @@ export default function Header() {
                   ) : (
                     <Link
                       href="/login"
-                      className="relative p-2 rounded-full transition-colors hover:text-[#c9a45c] text-[#2d1b15] hover:bg-[#8b1a1a]/10"
+                      className="relative inline-flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:text-[#c9a45c] text-[#2d1b15] hover:bg-[#8b1a1a]/10"
                       aria-label="Log in"
                     >
                       <User className="w-5 h-5" />

@@ -7,6 +7,7 @@ import { Resend } from 'resend';
 import { getRazorpay } from '@/lib/razorpay';
 import { toPositiveInt } from '@/lib/validate-id';
 import { restoreInventoryForRefundOnce, type OrderItem } from '@/lib/inventory';
+import { isCancellationReason } from '@/lib/order-cancellation';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -218,6 +219,25 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         { error: 'Refund state changed concurrently. Please refresh.' },
         { status: 409 },
       );
+    }
+
+    if (status === 'approved' && isCancellationReason(updatedRefund.reason)) {
+      try {
+        await db
+          .update(orders)
+          .set({ status: 'cancelled' })
+          .where(and(eq(orders.orderId, updatedRefund.orderId), eq(orders.status, 'success')));
+      } catch (orderUpdateError) {
+        console.error('[refund] cancellation approved but order status update failed', {
+          refundId,
+          orderId: updatedRefund.orderId,
+          orderUpdateError,
+        });
+        return NextResponse.json(
+          { error: 'Cancellation was approved, but the order status needs manual reconciliation.' },
+          { status: 500 },
+        );
+      }
     }
 
     // Look up user email to send notification

@@ -1,5 +1,6 @@
 import { getProductBySlug } from './products';
 import { validateCouponForUser } from './coupons';
+import { calculateGst, calculateOrderTotal } from './tax';
 
 export type CartLineInput = { slug: unknown; packSize?: unknown; qty: unknown };
 
@@ -16,6 +17,7 @@ export type PricingResult = {
   subtotal: number;
   discount: number;
   couponCode: string | null;
+  gst: number;
   codCharge: number;
   total: number;
 };
@@ -88,7 +90,9 @@ export async function priceCart(
   }
 
   const codCharge = opts.paymentMethod === 'COD' ? COD_CHARGE : 0;
-  const total = Math.max(0, subtotal - discount + codCharge);
+  const taxableAmount = Math.max(0, subtotal - discount);
+  const gst = calculateGst(taxableAmount);
+  const total = calculateOrderTotal(taxableAmount, gst, codCharge);
 
-  return { items, subtotal, discount, couponCode: appliedCode, codCharge, total };
+  return { items, subtotal, discount, couponCode: appliedCode, gst, codCharge, total };
 }

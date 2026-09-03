@@ -156,7 +156,7 @@ export default function HeritageContent() {
   return (
     <div className="bg-[#faf6f0] overflow-hidden">
       {/* ─── Hero ─────────────────────────────────────────── */}
-      <section ref={heroRef} className="relative h-[100vh] min-h-[680px] overflow-hidden">
+      <section ref={heroRef} className="relative isolate h-[100vh] min-h-[680px] overflow-hidden">
         <motion.div style={{ y: heroY, scale: heroScale }} className="absolute inset-0">
           <Image
             src="/Products/Hero_section.jpeg"
@@ -172,7 +172,7 @@ export default function HeritageContent() {
 
         <motion.div
           style={{ opacity: heroOpacity }}
-          className="relative h-full container mx-auto px-4 flex flex-col justify-end pb-32 lg:pb-40"
+          className="relative h-full container mx-auto px-4 py-16 md:py-20 lg:py-24 flex flex-col justify-center"
         >
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -354,11 +354,22 @@ export default function HeritageContent() {
       {/* ─── Story / Timeline ─────────────────────────────────── */}
       <section id="story" className="py-12 md:py-32 bg-gradient-to-b from-white via-[#faf6f0] to-white relative">
         <div className="container mx-auto px-4">
-          <motion.div {...fadeUp} className="text-center mb-10 md:mb-20 max-w-2xl mx-auto space-y-4">
-            <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#c9a45c]">Our Story</p>
-            <h2 className="text-4xl md:text-6xl font-bold text-[#2d1b15] tracking-tight">
-              A thread that runs through <span className="italic text-[#8b1a1a]">centuries.</span>
-            </h2>
+          <motion.div
+            {...fadeUp}
+            className="relative overflow-hidden text-center mb-10 md:mb-20 max-w-3xl mx-auto rounded-[2rem] border border-[#c9a45c]/45 bg-gradient-to-br from-white via-[#fffaf1] to-[#f8edda] px-6 py-10 md:px-14 md:py-14 shadow-[0_22px_60px_-32px_rgba(91,54,32,0.45)]"
+          >
+            <div className="absolute -left-12 -top-12 h-36 w-36 rounded-full border border-[#c9a45c]/20" aria-hidden="true" />
+            <div className="absolute -bottom-16 -right-12 h-44 w-44 rounded-full bg-[#8b1a1a]/[0.035]" aria-hidden="true" />
+            <div className="relative space-y-4">
+              <div className="flex items-center justify-center gap-3">
+                <span className="h-px w-8 bg-[#c9a45c]/70" aria-hidden="true" />
+                <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#c9a45c]">Our Story</p>
+                <span className="h-px w-8 bg-[#c9a45c]/70" aria-hidden="true" />
+              </div>
+              <h2 className="text-4xl md:text-6xl font-bold text-[#2d1b15] tracking-tight">
+                A thread that runs through <span className="italic text-[#8b1a1a]">centuries.</span>
+              </h2>
+            </div>
           </motion.div>
 
           <div className="relative max-w-4xl mx-auto">

@@ -58,7 +58,7 @@ export const testimonials: Testimonial[] = [
   },
 ]
 
-export const categories: string[] = ['All', 'Grains', 'Pulses', 'Powders', 'Essentials']
+export const categories: string[] = ['All', 'Grains', 'Pulses', 'Powders', 'Essentials', 'Snacks']
 
 export const blogPosts: BlogPost[] = [
   {

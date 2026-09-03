@@ -256,7 +256,7 @@ export default function CartPage() {
                       <Tag className="w-4 h-4 text-[#c9a45c] flex-shrink-0" />
                       <input
                         type="text"
-                        placeholder="Enter promo code"
+                        placeholder="Enter promo or coupon code"
                         value={promoCode}
                         onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoError('') }}
                         className="flex-1 px-3 py-2 rounded-lg border-2 border-[#e8ddd0] text-sm focus:outline-none focus:border-[#c9a45c] uppercase tracking-wider font-bold"

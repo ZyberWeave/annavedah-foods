@@ -18,6 +18,7 @@ export type ProductCategory =
   | 'Pulses'
   | 'Atta'
   | 'Essentials'
+  | 'Snacks'
   | 'Papad'
   | 'Chutney'
   | 'Gift Boxes & Bundles'
@@ -136,6 +137,16 @@ const categoryDefaults: Record<
       'Complements core meal preparation',
       'Includes cooking and ready-to-eat options',
       'Select products offer multiple gram variants',
+    ],
+  },
+  Snacks: {
+    description: 'Wholesome ready-to-enjoy snacks made for everyday cravings and sharing.',
+    benefits: ['Convenient serving', 'Traditional flavors', 'Everyday snack option'],
+    usage: 'Serve directly as a tea-time snack, lunchbox addition, or light accompaniment.',
+    highlights: [
+      'Ready to enjoy with minimal preparation',
+      'Suitable for family sharing and travel',
+      'Packed for convenient pantry storage',
     ],
   },
   Papad: {
@@ -1242,4 +1253,4 @@ export const benefits = [
   },
 ]
 
-export const categories: string[] = ['All', 'Grains', 'Pulses', 'Powders', 'Essentials']
+export const categories: string[] = ['All', 'Grains', 'Pulses', 'Powders', 'Essentials', 'Snacks']

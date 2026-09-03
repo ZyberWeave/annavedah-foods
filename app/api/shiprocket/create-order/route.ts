@@ -12,6 +12,7 @@ import { priceCart } from '@/lib/pricing'
 import { PAID_ORDER_STATUSES } from '@/lib/order-status'
 import { isTestServiceablePincode } from '@/lib/serviceability-overrides'
 import { deductInventoryForOrder, restoreInventoryForRefund } from '@/lib/inventory'
+import { GST_PERCENT } from '@/lib/tax'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -181,7 +182,7 @@ export async function POST(req: NextRequest) {
         units: item.qty,
         selling_price: item.price,
         discount: 0,
-        tax: 0,
+        tax: GST_PERCENT,
         hsn: 0,
       })),
       payment_method: paymentMethod,

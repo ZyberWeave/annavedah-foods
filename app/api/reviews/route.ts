@@ -5,6 +5,31 @@ import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { verifySession } from '@/lib/auth';
 import { rateLimitOr429 } from '@/lib/rate-limit';
 import { PAID_ORDER_STATUSES } from '@/lib/order-status';
+import { getProductBySlug } from '@/lib/products';
+
+function normalizeProductName(value: string) {
+  return value.trim().toLocaleLowerCase('en-IN').replace(/\s+/g, ' ');
+}
+
+function orderItemMatchesProduct(
+  item: unknown,
+  productSlug: string,
+  legacyProductNames: Set<string>,
+) {
+  if (!item || typeof item !== 'object') return false;
+
+  if ('slug' in item && typeof item.slug === 'string' && item.slug.trim()) {
+    return item.slug === productSlug;
+  }
+
+  // Orders created before slugs were persisted only contain a display name,
+  // optionally followed by the selected pack size in parentheses.
+  if (!('name' in item) || typeof item.name !== 'string') return false;
+  const itemName = normalizeProductName(item.name);
+  return [...legacyProductNames].some(
+    (productName) => itemName === productName || itemName.startsWith(`${productName} (`),
+  );
+}
 
 // Public GET — approved reviews for a product
 export async function GET(request: NextRequest) {
@@ -76,6 +101,16 @@ export async function POST(request: NextRequest) {
     }
     const trimmedLocation = String(location ?? '').trim().slice(0, 100);
 
+    const product = await getProductBySlug(productSlug);
+    if (!product) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+    const legacyProductNames = new Set(
+      [product.name, product.localName, product.nameHindi]
+        .filter((name): name is string => Boolean(name?.trim()))
+        .map(normalizeProductName),
+    );
+
     // Reviews are purchase-gated. A prepaid order is eligible once payment is
     // captured; COD is eligible only after delivery so an unfulfilled COD order
     // cannot be used as proof of purchase.
@@ -89,10 +124,9 @@ export async function POST(request: NextRequest) {
       for (const order of userOrders) {
         try {
           const items = JSON.parse(order.items);
-          const containsProduct = Array.isArray(items) && items.some((item: unknown) => {
-            if (!item || typeof item !== 'object') return false;
-            return 'slug' in item && item.slug === productSlug;
-          });
+          const containsProduct = Array.isArray(items) && items.some((item: unknown) =>
+            orderItemMatchesProduct(item, productSlug, legacyProductNames)
+          );
           if (!containsProduct) continue;
 
           const isPrepaidPurchase = Boolean(order.paymentId && order.paymentId !== 'COD');

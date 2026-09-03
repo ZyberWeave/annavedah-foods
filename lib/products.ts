@@ -18,6 +18,7 @@ export const PRODUCT_CATEGORY_VALUES: ProductCategory[] = [
   'Pulses',
   'Atta',
   'Essentials',
+  'Snacks',
   'Papad',
   'Chutney',
   'Gift Boxes & Bundles',

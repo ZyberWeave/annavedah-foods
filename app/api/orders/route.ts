@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { orders } from '@/lib/schema'
+import { orders, refundRequests } from '@/lib/schema'
 import { and, desc, eq, inArray } from 'drizzle-orm'
 import { verifySession } from '@/lib/auth'
 import { PAID_ORDER_STATUSES } from '@/lib/order-status'
+import { isCancellationReason } from '@/lib/order-cancellation'
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,19 +17,36 @@ export async function GET(req: NextRequest) {
     // users can change their account email at any time. Guest orders should
     // be stamped with userId at registration time (claimGuestOrders).
     //
-    // Filter out 'pending' / 'cancelled' rows: pending rows are abandoned
-    // Razorpay create-order leftovers (user opened checkout but never
-    // completed payment) and should not appear in the customer dashboard.
+    // Pending rows are abandoned Razorpay create-order leftovers. Cancelled
+    // orders remain visible so customers retain a complete order history.
     const userOrders = await db
       .select()
       .from(orders)
       .where(and(
         eq(orders.userId, session.userId),
-        inArray(orders.status, [...PAID_ORDER_STATUSES]),
+        inArray(orders.status, [...PAID_ORDER_STATUSES, 'cancelled']),
       ))
       .orderBy(desc(orders.createdAt))
 
-    return NextResponse.json({ orders: userOrders }, { status: 200 })
+    const cancellationRequests = await db
+      .select({ orderId: refundRequests.orderId, status: refundRequests.status, reason: refundRequests.reason })
+      .from(refundRequests)
+      .where(and(
+        eq(refundRequests.userId, session.userId),
+        inArray(refundRequests.status, ['pending', 'approved']),
+      ))
+    const cancellationStatusByOrderId = new Map(
+      cancellationRequests
+        .filter((request) => isCancellationReason(request.reason))
+        .map((request) => [request.orderId, request.status]),
+    )
+
+    return NextResponse.json({
+      orders: userOrders.map((order) => ({
+        ...order,
+        cancellationStatus: cancellationStatusByOrderId.get(order.orderId) ?? null,
+      })),
+    }, { status: 200 })
   } catch (err: unknown) {
     console.error('[orders/get]', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

@@ -44,11 +44,11 @@ export default function MegaMenu() {
       </Link>
 
       <div
-        className={`absolute left-1/2 -translate-x-1/2 top-full pt-2 transition-all duration-300 ${
+        className={`fixed left-1/2 -translate-x-1/2 top-[var(--site-header-offset)] pt-2 transition-all duration-300 ${
           open ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2 pointer-events-none'
         }`}
       >
-        <div className="bg-white shadow-2xl rounded-2xl border border-[#e8ddd0] overflow-hidden w-[880px] max-w-[92vw]">
+        <div className="bg-white shadow-2xl rounded-2xl border border-[#e8ddd0] overflow-hidden w-[calc(100vw-2rem)] max-w-[880px]">
           <div className="grid grid-cols-12 gap-0">
             <div className="col-span-4 bg-[#faf6f0] p-6 border-r border-[#e8ddd0]">
               <p className="text-[10px] font-bold uppercase tracking-widest text-[#c9a45c] mb-3">Shop by category</p>

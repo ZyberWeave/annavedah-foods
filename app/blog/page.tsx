@@ -22,19 +22,18 @@ export default function BlogIndexPage() {
   return (
     <div className="min-h-screen" style={{ background: '#faf6f0' }}>
       {/* Hero Header */}
-      <div
-        className="relative overflow-hidden site-page-gap pb-16"
-        style={{
-          background: 'linear-gradient(135deg, #2d1b15 0%, #8b1a1a 50%, #6d1414 100%)',
-        }}
-      >
-        {/* Decorative circles */}
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #c9a45c, transparent)', transform: 'translate(30%, -30%)' }} />
-        <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #c9a45c, transparent)', transform: 'translate(-30%, 30%)' }} />
-        {/* Dot grid */}
-        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(circle, #c9a45c 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+      <div className="relative overflow-hidden site-page-gap pb-16 min-h-[430px] flex items-center">
+        <Image
+          src="/Banners/blog-header.png"
+          alt="Traditional grains, powders, and an open journal"
+          fill
+          priority
+          className="object-cover object-center"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#2d1b15]/85 via-[#2d1b15]/60 to-[#2d1b15]/20" />
 
-        <div className="container mx-auto px-4 relative z-10 text-center">
+        <div className="container mx-auto px-4 relative z-10 text-left">
           <span className="inline-block px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-5" style={{ background: 'rgba(201,164,92,0.2)', color: '#c9a45c', border: '1px solid rgba(201,164,92,0.3)' }}>
             Annavedah Journal
           </span>
@@ -42,7 +41,7 @@ export default function BlogIndexPage() {
             Ideas for Everyday<br />
             <span style={{ color: '#c9a45c' }}>Nourishment</span>
           </h1>
-          <p className="text-white/70 text-lg max-w-2xl mx-auto mb-8">
+          <p className="text-white/80 text-lg max-w-xl mb-8">
             Practical recipes, routines, and traditional wisdom to help you use Annavedah products with confidence.
           </p>
           <p className="text-white/40 text-sm">{blogPosts.length} articles</p>
@@ -138,14 +137,17 @@ export default function BlogIndexPage() {
 
                   {/* Title */}
                   <h2
-                    className={`font-bold leading-snug mb-3 group-hover:text-[#8b1a1a] transition-colors ${isFeatured ? 'text-3xl md:text-4xl' : 'text-xl'}`}
+                    className={`font-bold leading-snug mb-3 group-hover:text-[#8b1a1a] transition-colors ${isFeatured ? 'text-3xl md:text-4xl' : 'text-xl md:min-h-14'}`}
                     style={{ color: '#2d1b15' }}
                   >
                     {post.title}
                   </h2>
 
                   {/* Summary */}
-                  <p className="text-sm leading-relaxed mb-5" style={{ color: '#6b5347' }}>
+                  <p
+                    className={`text-sm leading-relaxed mb-5 ${isFeatured ? '' : 'md:min-h-[3.75rem]'}`}
+                    style={{ color: '#6b5347' }}
+                  >
                     {post.summary}
                   </p>
 

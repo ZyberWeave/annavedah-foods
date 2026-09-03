@@ -108,7 +108,7 @@ function PLPProductCard({ product, add }: { product: Product; add: (id: number, 
           </div>
         )}
 
-        <div className="space-y-1 md:space-y-2 pt-1 md:pt-2">
+        <div className="mt-auto space-y-1 md:space-y-2 pt-1 md:pt-2">
           {currentPrice > 0 ? (
             <div className="flex items-baseline gap-2">
               <span className="text-xl md:text-3xl font-bold text-primary">Rs {currentPrice}</span>
@@ -120,7 +120,7 @@ function PLPProductCard({ product, add }: { product: Product; add: (id: number, 
           )}
         </div>
 
-        <div className="flex gap-1 md:gap-2 pt-3 md:pt-4 mt-auto border-t border-[#e8ddd0]/50">
+        <div className="flex gap-1 md:gap-2 pt-3 md:pt-4 border-t border-[#e8ddd0]/50">
           <Button asChild variant="outline" className="flex-1 h-9 md:h-12 px-2 border-2 border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10 font-semibold rounded-lg md:rounded-xl transition-all text-xs md:text-sm">
             <Link href={`/products/${product.slug}`}>Details</Link>
           </Button>
@@ -444,7 +444,7 @@ export default function ProductsPage() {
 
               {/* Category quick-links */}
               <div className="flex flex-wrap gap-2 pt-2">
-                {['Grains', 'Pulses', 'Powders', 'Essentials'].map((cat) => (
+                {['Grains', 'Pulses', 'Powders', 'Essentials', 'Snacks'].map((cat) => (
                   <button
                     key={cat}
                     onClick={() => { setSelectedCategory(cat); document.getElementById('shop-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}

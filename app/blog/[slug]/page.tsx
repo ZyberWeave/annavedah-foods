@@ -137,9 +137,6 @@ export default async function BlogPostPage({ params }: BlogPageProps) {
               </svg>
               {readTime} min read
             </span>
-            <span className="ml-auto text-white/30 text-xs font-mono">
-              #{String(postIndex + 1).padStart(2, '0')}
-            </span>
           </div>
         </div>
       </div>

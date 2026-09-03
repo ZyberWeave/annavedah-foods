@@ -7,7 +7,7 @@ import Link from 'next/link';
 import {
   Loader2, Package, Settings, LogOut, User, AlertCircle, LayoutDashboard,
   ShoppingBag, Heart, ChevronRight, CheckCircle2, Clock, Eye, EyeOff,
-  Mail, Shield, Calendar, ArrowRight, Truck, CreditCard, Tag, Lock, Pencil
+  Mail, Shield, Calendar, ArrowRight, Truck, CreditCard, Tag, Lock, Pencil, XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -29,6 +29,7 @@ function DashboardContent() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<any[]>([]);
+  const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
@@ -110,6 +111,30 @@ function DashboardContent() {
     finally { setPwSaving(false); }
   };
 
+  const handleCancelOrder = async (orderId: string) => {
+    if (!window.confirm('Cancel this order? Prepaid orders will be sent for refund approval.')) return;
+
+    setCancellingOrderId(orderId);
+    try {
+      const res = await fetch('/api/orders/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || 'Could not cancel this order');
+
+      setOrders((current) => current.map((order) =>
+        order.orderId === orderId ? { ...order, cancellationStatus: 'pending' } : order
+      ));
+      toast.success('Cancellation request submitted');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not cancel this order');
+    } finally {
+      setCancellingOrderId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen site-page-gap pb-16 flex items-center justify-center bg-[#faf6f0]">
@@ -118,7 +143,7 @@ function DashboardContent() {
     );
   }
 
-  const totalSpent = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+  const totalSpent = orders.reduce((sum, o) => o.status === 'cancelled' ? sum : sum + (o.total || 0), 0);
   const recentOrders = orders.slice(0, 3);
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
@@ -260,7 +285,14 @@ function DashboardContent() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {recentOrders.map((order) => <OrderCard key={order.id} order={order} />)}
+                    {recentOrders.map((order) => (
+                      <OrderCard
+                        key={order.id}
+                        order={order}
+                        onCancel={handleCancelOrder}
+                        cancelling={cancellingOrderId === order.orderId}
+                      />
+                    ))}
                   </div>
                 )}
               </div>
@@ -294,7 +326,15 @@ function DashboardContent() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {orders.map((order) => <OrderCard key={order.id} order={order} expanded />)}
+                    {orders.map((order) => (
+                      <OrderCard
+                        key={order.id}
+                        order={order}
+                        expanded
+                        onCancel={handleCancelOrder}
+                        cancelling={cancellingOrderId === order.orderId}
+                      />
+                    ))}
                   </div>
                 )}
               </div>
@@ -426,14 +466,26 @@ function DashboardContent() {
 }
 
 /* ────── Order Card Component ────── */
-function OrderCard({ order, expanded = false }: { order: any; expanded?: boolean }) {
+function OrderCard({
+  order,
+  expanded = false,
+  onCancel,
+  cancelling = false,
+}: {
+  order: any;
+  expanded?: boolean;
+  onCancel?: (orderId: string) => void;
+  cancelling?: boolean;
+}) {
   let parsedItems: any[] = [];
   try { parsedItems = JSON.parse(order.items); } catch {}
 
   const isCOD = order.paymentId === 'COD';
   const statusColor = order.status === 'success'
     ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-    : 'bg-amber-100 text-amber-800 border-amber-200';
+    : order.status === 'cancelled'
+      ? 'bg-red-100 text-red-800 border-red-200'
+      : 'bg-amber-100 text-amber-800 border-amber-200';
 
   return (
     <div className="border border-[#e8ddd0] rounded-2xl p-5 bg-[#faf6f0] hover:border-[#c9a45c]/50 transition-colors">
@@ -450,7 +502,12 @@ function OrderCard({ order, expanded = false }: { order: any; expanded?: boolean
         <div className="flex items-center gap-3 sm:text-right">
           <div className="flex flex-wrap gap-2">
             <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusColor}`}>
-              <CheckCircle2 className="w-3 h-3" /> {order.status || 'Confirmed'}
+              {order.status === 'cancelled'
+                ? <XCircle className="w-3 h-3" />
+                : order.status === 'success'
+                  ? <CheckCircle2 className="w-3 h-3" />
+                  : <Clock className="w-3 h-3" />}
+              {order.status || 'Confirmed'}
             </span>
             <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${isCOD ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-purple-50 text-purple-700 border-purple-200'}`}>
               {isCOD ? <Truck className="w-3 h-3" /> : <CreditCard className="w-3 h-3" />}
@@ -477,6 +534,24 @@ function OrderCard({ order, expanded = false }: { order: any; expanded?: boolean
           {parsedItems.length} items in this order
         </p>
       )}
+      {order.status !== 'cancelled' && order.cancellationStatus ? (
+        <div className="mt-3 pt-3 border-t border-[#e8ddd0]/60 flex items-center gap-2 text-xs font-semibold text-amber-700">
+          <Clock className="w-4 h-4" />
+          {order.cancellationStatus === 'approved' ? 'Cancellation approved' : 'Cancellation request pending'}
+        </div>
+      ) : order.status === 'success' && onCancel ? (
+        <div className="mt-3 pt-3 border-t border-[#e8ddd0]/60 flex justify-end">
+          <button
+            type="button"
+            onClick={() => onCancel(order.orderId)}
+            disabled={cancelling}
+            className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {cancelling ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+            {cancelling ? 'Submitting…' : 'Cancel order'}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

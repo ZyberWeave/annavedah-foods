@@ -87,7 +87,7 @@ export default function GiftingPage() {
   const handleSubmitCorporateInquiry = (e: React.FormEvent) => {
     e.preventDefault();
     setCorpSuccess(true);
-    setTimeout(() => setCorpSuccess(false), 5000);
+    setTimeout(() => setCorpSuccess(false), 3000);
     setCorpName('');
     setCorpEmail('');
     setCorpPhone('');
@@ -266,7 +266,12 @@ export default function GiftingPage() {
                 required
                 placeholder="Phone Number *"
                 value={corpPhone}
-                onChange={(e) => setCorpPhone(e.target.value)}
+                onChange={(e) => setCorpPhone(e.target.value.replace(/\D/g, '').slice(0, 12))}
+                inputMode="numeric"
+                minLength={10}
+                maxLength={12}
+                pattern="[0-9]{10,12}"
+                title="Enter a phone number containing 10 to 12 digits"
                 className="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-amber-400"
               />
               <input

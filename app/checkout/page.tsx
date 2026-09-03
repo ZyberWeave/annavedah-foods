@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/components/cart-context'
 import { validateCoupon, coupons } from '@/lib/coupons'
@@ -10,6 +10,7 @@ import { CheckCircle2, Loader2, MapPin, ShieldCheck, Truck, ChevronRight, AlertC
 import { validateEmail, validatePhone, validateName, validateRequired } from '@/lib/validations'
 import Breadcrumbs from '@/components/Breadcrumbs'
 import { toast } from 'sonner'
+import { calculateGst, calculateOrderTotal } from '@/lib/tax'
 
 declare global {
   interface Window {
@@ -36,7 +37,8 @@ export default function CheckoutPage() {
   const { items, total, remove, updateQty, appliedCoupon, applyCoupon, removeCoupon } = useCart()
   const [step, setStep] = useState<Step>('address')
   const [loading, setLoading] = useState(false)
-  const [serviceability, setServiceability] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle')
+  const [serviceability, setServiceability] = useState<'idle' | 'checking' | 'available' | 'unavailable' | 'cod-unavailable' | 'error'>('idle')
+  const serviceabilityRequestRef = useRef(0)
   const [orderId, setOrderId] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [form, setForm] = useState<FormData>({
@@ -53,7 +55,10 @@ export default function CheckoutPage() {
 
   const codCharge = paymentMethod === 'COD' ? 99 : 0
   const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0
-  const finalTotal = total - couponDiscount + codCharge
+  const taxableAmount = Math.max(0, total - couponDiscount)
+  const gstAmount = calculateGst(taxableAmount)
+  const finalTotal = calculateOrderTotal(taxableAmount, gstAmount, codCharge)
+  const formattedGst = Number.isInteger(gstAmount) ? String(gstAmount) : gstAmount.toFixed(2)
 
   const [isAuthChecking, setIsAuthChecking] = useState(true)
 
@@ -146,19 +151,50 @@ export default function CheckoutPage() {
   function set(field: keyof FormData, value: string) {
     setForm(f => ({ ...f, [field]: value }))
     setErrors(e => ({ ...e, [field]: '' }))
-    if (field === 'pincode' && value.length === 6) checkPin(value, paymentMethod)
+    if (field === 'pincode') {
+      if (value.length === 6) {
+        checkPin(value, paymentMethod)
+      } else {
+        serviceabilityRequestRef.current += 1
+        setServiceability('idle')
+      }
+    }
   }
 
   async function checkPin(pin: string, method: 'Prepaid' | 'COD' = paymentMethod) {
+    const requestId = ++serviceabilityRequestRef.current
     setServiceability('checking')
-    try {
-      const codFlag = method === 'COD' ? 1 : 0
+    setErrors(current => ({ ...current, pincode: '' }))
+
+    const isAvailable = async (codFlag: 0 | 1) => {
       const res = await fetch(`/api/shiprocket/serviceability?delivery=${pin}&cod=${codFlag}`)
-      const data = await res.json()
-      const available = data?.data?.available_courier_companies?.length > 0
-      setServiceability(available ? 'available' : 'unavailable')
-    } catch {
+      const data = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(data?.error || 'Serviceability check failed')
+
+      const couriers = data?.data?.available_courier_companies
+      if (!Array.isArray(couriers)) throw new Error('Invalid serviceability response')
+      return couriers.length > 0
+    }
+
+    try {
+      const availableForMethod = await isAvailable(method === 'COD' ? 1 : 0)
+      if (requestId !== serviceabilityRequestRef.current) return
+
+      if (availableForMethod) {
+        setServiceability('available')
+        return
+      }
+
+      if (method === 'COD') {
+        const availableForPrepaid = await isAvailable(0)
+        if (requestId !== serviceabilityRequestRef.current) return
+        setServiceability(availableForPrepaid ? 'cod-unavailable' : 'unavailable')
+        return
+      }
+
       setServiceability('unavailable')
+    } catch {
+      if (requestId === serviceabilityRequestRef.current) setServiceability('error')
     }
   }
 
@@ -181,6 +217,8 @@ export default function CheckoutPage() {
       errs.pincode = 'Enter a valid 6-digit pincode'
     } else if (serviceability === 'unavailable') {
       errs.pincode = 'Sorry, we don\'t deliver to this pincode yet'
+    } else if (serviceability === 'cod-unavailable') {
+      errs.pincode = 'Cash on Delivery is unavailable here. Please choose Online Payment'
     } else if (serviceability === 'checking') {
       errs.pincode = 'Please wait — checking serviceability'
     }
@@ -507,6 +545,12 @@ export default function CheckoutPage() {
                   {serviceability === 'unavailable' && (
                     <span className="absolute right-3 top-3 text-xs text-red-500">Not serviceable</span>
                   )}
+                  {serviceability === 'cod-unavailable' && (
+                    <span className="absolute right-3 top-3 text-xs text-amber-600">Use online payment</span>
+                  )}
+                  {serviceability === 'error' && (
+                    <span className="absolute right-3 top-3 text-xs text-amber-600">Will verify at checkout</span>
+                  )}
                 </div>
                 {errors.pincode && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.pincode}</p>}
               </div>
@@ -592,7 +636,7 @@ export default function CheckoutPage() {
               <div className="border-t border-border pt-4 space-y-3">
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   <Tag className="w-4 h-4" style={{ color: '#c9a45c' }} />
-                  Promo Code
+                  Promo / Coupon Code
                 </h3>
 
                 {appliedCoupon ? (
@@ -618,7 +662,7 @@ export default function CheckoutPage() {
                       <input
                         id="checkout-promo-input"
                         type="text"
-                        placeholder="Enter coupon code"
+                        placeholder="Enter promo or coupon code"
                         value={promoCode}
                         onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoError('') }}
                         className="flex-1 px-3 py-2.5 rounded-xl border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400 uppercase tracking-wider font-bold transition-all"
@@ -739,6 +783,10 @@ export default function CheckoutPage() {
                     <span>Shipping</span>
                     <span className="text-green-600 font-medium">Free</span>
                   </div>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>GST (5%)</span>
+                    <span>₹{formattedGst}</span>
+                  </div>
                   {paymentMethod === 'COD' && (
                     <div className="flex justify-between text-sm text-muted-foreground">
                       <span>COD Charge</span>
@@ -757,7 +805,7 @@ export default function CheckoutPage() {
                 className="w-full h-12 font-semibold text-base"
                 style={{ background: '#c9a45c', color: '#2d1b15' }}
                 onClick={handlePayment}
-                disabled={loading || serviceability === 'checking' || serviceability === 'unavailable'}
+                disabled={loading || serviceability === 'checking' || serviceability === 'unavailable' || serviceability === 'cod-unavailable'}
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
