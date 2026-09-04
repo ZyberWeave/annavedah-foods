@@ -198,7 +198,7 @@ export default function ProductDetailClient({ product, details }: { product: Pro
         <ProductTabs product={product} details={details} />
 
         <section id="reviews" className="scroll-mt-48 py-16 lg:py-24">
-          <div className="mb-8 max-w-2xl" data-reveal>
+          <div className="mx-auto mb-8 max-w-2xl text-center" data-reveal>
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#9d722f]">Shared by our customers</p>
             <h2 className="mt-3 text-4xl font-semibold leading-none text-[#2d1b15]">From kitchens across India.</h2>
           </div>

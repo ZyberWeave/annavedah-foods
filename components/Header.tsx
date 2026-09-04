@@ -142,7 +142,7 @@ export default function Header() {
                 </button>
 
                 <div
-                  className="hidden lg:flex items-center gap-8 text-[11px] tracking-[0.32em] uppercase"
+                  className="hidden xl:flex items-center gap-8 text-[11px] tracking-[0.32em] uppercase"
                   style={{ fontFamily: "'Cinzel', 'Cormorant Garamond', serif", fontWeight: 600 }}
                 >
                   <Link href="/heritage" className={`transition-colors duration-300 hover:text-[#c9a45c] ${pathname === '/heritage' ? 'text-[#c9a45c]' : 'text-[#2d1b15]'}`}>
@@ -164,7 +164,7 @@ export default function Header() {
                     className="hidden sm:flex items-center gap-2 text-[#c9a45c] select-none"
                     style={{ fontFamily: "'Cormorant Garamond', serif" }}
                   >
-                    <span className="block h-px w-8 lg:w-12" style={{ background: 'linear-gradient(90deg, transparent, #c9a45c)' }} />
+                    <span className="block h-px w-8 xl:w-12" style={{ background: 'linear-gradient(90deg, transparent, #c9a45c)' }} />
                     <span className="text-base leading-none">❦</span>
                   </span>
 
@@ -200,7 +200,7 @@ export default function Header() {
                       ✦  Est. Heritage  ✦
                     </div>
                     <h1
-                      className="mt-1.5 whitespace-nowrap text-[20px] lg:text-[28px] tracking-[0.22em] uppercase"
+                      className="mt-1.5 whitespace-nowrap text-[20px] xl:text-[28px] tracking-[0.22em] uppercase"
                       style={{
                         fontFamily: "'Cinzel', 'Cormorant Garamond', serif",
                         fontWeight: 700,
@@ -211,7 +211,7 @@ export default function Header() {
                       Annavedah <span style={{ color: '#c9a45c' }}>Foods</span>
                     </h1>
                     <div
-                      className="mt-2 text-[10px] lg:text-[11px] italic tracking-[0.18em] text-[#6b5347] whitespace-nowrap"
+                      className="mt-2 text-[10px] xl:text-[11px] italic tracking-[0.18em] text-[#6b5347] whitespace-nowrap"
                       style={{ fontFamily: "'Cormorant Garamond', serif" }}
                     >
                       अन्नवेद &middot; सात्विक · पौष्टिक · परिपूर्ण
@@ -224,17 +224,17 @@ export default function Header() {
                     className="hidden sm:flex items-center gap-2 text-[#c9a45c] select-none"
                   >
                     <span className="text-base leading-none">❦</span>
-                    <span className="block h-px w-8 lg:w-12" style={{ background: 'linear-gradient(90deg, #c9a45c, transparent)' }} />
+                    <span className="block h-px w-8 xl:w-12" style={{ background: 'linear-gradient(90deg, #c9a45c, transparent)' }} />
                   </span>
                 </Link>
               </div>
 
               {/* Right */}
-              <div className="flex-1 flex items-center justify-end gap-2 sm:gap-3 lg:gap-4">
+              <div className="flex-1 flex items-center justify-end gap-2 sm:gap-3 xl:gap-4">
 
                 <button
                   onClick={() => setSearchOpen(true)}
-                  className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-full border text-[10px] font-bold tracking-[0.1em] uppercase transition-all duration-300 bg-transparent border-[#e8ddd0] text-[#6b5347] hover:border-[#c9a45c] hover:text-[#2d1b15] w-32 xl:w-48"
+                  className="hidden xl:flex items-center gap-2 px-4 py-2 rounded-full border text-[10px] font-bold tracking-[0.1em] uppercase transition-all duration-300 bg-transparent border-[#e8ddd0] text-[#6b5347] hover:border-[#c9a45c] hover:text-[#2d1b15] w-48"
                   aria-label="Search products"
                 >
                   <Search className="w-4 h-4 flex-shrink-0" />
@@ -243,7 +243,7 @@ export default function Header() {
 
                 <button
                   onClick={() => setSearchOpen(true)}
-                  className="lg:hidden relative p-2 rounded-full transition-colors hover:bg-[#8b1a1a]/10"
+                  className="xl:hidden relative p-2 rounded-full transition-colors hover:bg-[#8b1a1a]/10"
                   aria-label="Search"
                 >
                   <Search className="w-5 h-5 text-[#8b1a1a]" />

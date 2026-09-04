@@ -120,11 +120,11 @@ export default function BenefitsPage() {
               Thoughtfully crafted blends that fit seamlessly into daily meals while protecting the integrity of every ingredient.
             </p>
 
-            <div className="flex flex-wrap justify-center gap-4 pt-4">
+            <div className="mx-auto grid max-w-2xl grid-cols-2 gap-4 pt-4 md:grid-cols-4">
               {trustStats.map((s) => (
-                <div key={s.label} className="flex flex-col items-center px-6 py-3 bg-white/70 rounded-2xl border border-[#e8ddd0] backdrop-blur-sm min-w-[110px]">
+                <div key={s.label} className="flex min-h-[88px] w-full flex-col items-center justify-center px-4 py-3 bg-white/70 rounded-2xl border border-[#e8ddd0] backdrop-blur-sm">
                   <span className="text-2xl md:text-3xl font-bold text-[#8b1a1a]">{s.value}</span>
-                  <span className="text-xs text-[#6b5347] font-medium uppercase tracking-wide">{s.label}</span>
+                  <span className="text-center text-xs text-[#6b5347] font-medium uppercase tracking-wide">{s.label}</span>
                 </div>
               ))}
             </div>

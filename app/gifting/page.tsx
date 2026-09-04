@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { products, type Product } from '@/lib/content';
 import { useCart } from '@/components/cart-context';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import { validateEmail } from '@/lib/validations';
 
 const GIFT_PACKAGING_OPTIONS = [
   { id: 'heritage-wood', name: 'Heritage Carved Wooden Box', price: 299, desc: 'Handcrafted royal wooden gift box with velvet lining.' },
@@ -21,7 +22,7 @@ const PRE_CURATED_GIFTS = [
     price: 899,
     originalPrice: 1099,
     badge: 'BESTSELLER HAMPER',
-    image: '/gifting-hamper.jpg',
+    image: '/gifting/wellness-gift-box.webp',
     description: 'A curated boost of organic Moringa, Wild Turmeric, and Amla powder packed in a premium gift box.',
     items: ['Moringa Powder (250g)', 'Turmeric Powder (250g)', 'Amla Powder (250g)'],
   },
@@ -32,7 +33,7 @@ const PRE_CURATED_GIFTS = [
     price: 1499,
     originalPrice: 1799,
     badge: 'FESTIVE SPECIAL',
-    image: '/gifting-hamper.jpg',
+    image: '/gifting/heritage-grains-hamper.webp',
     description: 'Farm-fresh unpolished pulses, organic jaggery powder, and heritage grains for festive gifting.',
     items: ['Unpolished Toor Dal (1kg)', 'Organic Jaggery Powder (500g)', 'Heritage Rice (1kg)'],
   },
@@ -43,7 +44,7 @@ const PRE_CURATED_GIFTS = [
     price: 2199,
     originalPrice: 2699,
     badge: 'CORPORATE GIFTING',
-    image: '/gifting-hamper.jpg',
+    image: '/gifting/corporate-wellness-set.webp',
     description: 'Exclusive luxury box featuring handcrafted copper bottle, organic immunity powders, and dry fruits.',
     items: ['Copper Water Bottle (750ml)', 'Moringa Powder (250g)', 'Organic Honey (500g)', 'Wild Turmeric (250g)'],
   },
@@ -63,6 +64,8 @@ export default function GiftingPage() {
   const [corpQty, setCorpQty] = useState('50');
   const [corpMsg, setCorpMsg] = useState('');
   const [corpSuccess, setCorpSuccess] = useState(false);
+  const [corpSubmitting, setCorpSubmitting] = useState(false);
+  const [corpError, setCorpError] = useState('');
 
   const toggleCustomItem = (p: Product) => {
     if (customItems.some((item) => item.id === p.id)) {
@@ -75,6 +78,8 @@ export default function GiftingPage() {
 
   const customItemsTotal = customItems.reduce((sum, item) => sum + item.price, 0);
   const customBoxTotalPrice = selectedBox.price + customItemsTotal;
+  const corporateEmailValidation = validateEmail(corpEmail);
+  const showCorporateEmailError = corpEmail.length > 0 && !corporateEmailValidation.valid;
 
   const handleAddCustomBoxToCart = () => {
     if (customItems.length === 0) return;
@@ -84,14 +89,54 @@ export default function GiftingPage() {
     setTimeout(() => setAddedBoxSuccess(false), 3000);
   };
 
-  const handleSubmitCorporateInquiry = (e: React.FormEvent) => {
+  const handleSubmitCorporateInquiry = async (e: React.FormEvent) => {
     e.preventDefault();
-    setCorpSuccess(true);
-    setTimeout(() => setCorpSuccess(false), 3000);
-    setCorpName('');
-    setCorpEmail('');
-    setCorpPhone('');
-    setCorpMsg('');
+    setCorpError('');
+
+    const emailValidation = validateEmail(corpEmail);
+    if (!emailValidation.valid) {
+      setCorpError(emailValidation.message);
+      return;
+    }
+
+    setCorpSubmitting(true);
+
+    try {
+      const quantity = Number(corpQty);
+      if (!Number.isInteger(quantity) || quantity < 1) {
+        throw new Error('Please enter a valid number of gift boxes.');
+      }
+
+      const requirements = corpMsg.trim() || 'No additional requirements provided.';
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: corpName.trim(),
+          email: corpEmail.trim(),
+          phone: corpPhone,
+          company: corpName.trim(),
+          reason: 'Corporate gifting inquiry',
+          message: `Estimated gift boxes: ${quantity}\n\nRequirements: ${requirements}`,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Could not submit your inquiry. Please try again.');
+      }
+
+      setCorpSuccess(true);
+      setCorpName('');
+      setCorpEmail('');
+      setCorpPhone('');
+      setCorpQty('50');
+      setCorpMsg('');
+    } catch (error) {
+      setCorpError(error instanceof Error ? error.message : 'Could not submit your inquiry. Please try again.');
+    } finally {
+      setCorpSubmitting(false);
+    }
   };
 
   return (
@@ -186,13 +231,13 @@ export default function GiftingPage() {
 
                 <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
                   <div className="space-y-2">
-                    <h3 className="text-xl font-extrabold text-[#2d1b15]">{g.name}</h3>
-                    <p className="text-xs text-[#6b5347] font-medium leading-relaxed">
+                    <h3 className="text-xl font-extrabold text-[#2d1b15] md:min-h-[3.5rem]">{g.name}</h3>
+                    <p className="text-xs text-[#6b5347] font-medium leading-relaxed md:min-h-12">
                       {g.description}
                     </p>
                   </div>
 
-                  <div className="bg-[#faf6f0] p-4 rounded-2xl space-y-2 border border-[#e8ddd0]">
+                  <div className="bg-[#faf6f0] p-4 rounded-2xl space-y-2 border border-[#e8ddd0] md:min-h-[10.5rem]">
                     <span className="text-[10px] font-extrabold text-[#2d1b15] uppercase tracking-wider block">
                       INCLUDED IN THIS HAMPER:
                     </span>
@@ -207,7 +252,7 @@ export default function GiftingPage() {
                   </div>
                 </div>
 
-                <div className="p-6 pt-0 border-t border-[#e8ddd0] bg-gray-50 flex items-center justify-between mt-4">
+                <div className="px-6 py-4 border-t border-[#e8ddd0] bg-gray-50 flex items-center justify-between mt-4">
                   <div>
                     <span className="text-xs text-gray-400 line-through mr-2">₹{g.originalPrice}</span>
                     <span className="text-2xl font-extrabold text-[#8b1a1a]">₹{g.price}</span>
@@ -226,7 +271,7 @@ export default function GiftingPage() {
         </section>
 
         {/* ════════════ CORPORATE BULK GIFTING INQUIRY ════════════ */}
-        <section className="bg-[#2d1b15] text-white rounded-3xl p-6 sm:p-10 border-2 border-[#e8ddd0] shadow-xl space-y-6">
+        <section id="corporate" className="scroll-mt-[calc(var(--site-header-offset)+1rem)] bg-[#2d1b15] text-white rounded-3xl p-6 sm:p-10 border-2 border-[#e8ddd0] shadow-xl space-y-6">
           <div className="max-w-xl space-y-2">
             <span className="bg-amber-500 text-black text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full inline-block">
               CORPORATE & BULK ORDERS
@@ -253,30 +298,41 @@ export default function GiftingPage() {
                 onChange={(e) => setCorpName(e.target.value)}
                 className="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-amber-400"
               />
-              <input
-                type="email"
-                required
-                placeholder="Work Email Address *"
-                value={corpEmail}
-                onChange={(e) => setCorpEmail(e.target.value)}
-                className="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-amber-400"
-              />
+              <div>
+                <input
+                  type="email"
+                  required
+                  placeholder="Work Email Address *"
+                  value={corpEmail}
+                  onChange={(e) => setCorpEmail(e.target.value)}
+                  aria-invalid={showCorporateEmailError}
+                  aria-describedby={showCorporateEmailError ? 'corporate-email-error' : undefined}
+                  className={`w-full bg-white/10 border rounded-xl px-4 py-3 text-xs text-white placeholder-gray-400 focus:outline-none ${showCorporateEmailError ? 'border-red-400 focus:border-red-400' : 'border-white/20 focus:border-amber-400'}`}
+                />
+                {showCorporateEmailError && (
+                  <p id="corporate-email-error" className="mt-1.5 text-xs font-semibold text-red-300">
+                    {corporateEmailValidation.message}
+                  </p>
+                )}
+              </div>
               <input
                 type="tel"
                 required
                 placeholder="Phone Number *"
                 value={corpPhone}
-                onChange={(e) => setCorpPhone(e.target.value.replace(/\D/g, '').slice(0, 12))}
+                onChange={(e) => setCorpPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                 inputMode="numeric"
                 minLength={10}
-                maxLength={12}
-                pattern="[0-9]{10,12}"
-                title="Enter a phone number containing 10 to 12 digits"
+                maxLength={10}
+                pattern="[0-9]{10}"
+                title="Enter a 10-digit phone number"
                 className="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-amber-400"
               />
               <input
                 type="number"
                 required
+                min={1}
+                step={1}
                 placeholder="Estimated Boxes (e.g. 50, 200) *"
                 value={corpQty}
                 onChange={(e) => setCorpQty(e.target.value)}
@@ -291,10 +347,16 @@ export default function GiftingPage() {
               />
               <button
                 type="submit"
-                className="sm:col-span-2 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-extrabold text-xs py-3.5 rounded-xl uppercase tracking-wider shadow transition-all"
+                disabled={corpSubmitting}
+                className="sm:col-span-2 bg-[#8b1a1a] hover:bg-[#6d1414] disabled:cursor-not-allowed disabled:opacity-60 text-white font-extrabold text-xs py-3.5 rounded-xl uppercase tracking-wider shadow transition-all"
               >
-                SUBMIT CORPORATE GIFTING REQUEST
+                {corpSubmitting ? 'SUBMITTING REQUEST…' : 'SUBMIT CORPORATE GIFTING REQUEST'}
               </button>
+              {corpError && (
+                <p role="alert" className="sm:col-span-2 text-sm font-semibold text-red-300">
+                  {corpError}
+                </p>
+              )}
             </form>
           )}
         </section>

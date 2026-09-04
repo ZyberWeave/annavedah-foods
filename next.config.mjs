@@ -18,7 +18,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline' https:",
   `script-src ${scriptSources}`,
   "connect-src 'self' https:",
-  'frame-src https://api.razorpay.com https://checkout.razorpay.com',
+  'frame-src https://api.razorpay.com https://checkout.razorpay.com https://www.google.com https://maps.google.com',
 ].join('; ')
 
 const nextConfig = {

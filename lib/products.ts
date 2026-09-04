@@ -26,6 +26,9 @@ export const PRODUCT_CATEGORY_VALUES: ProductCategory[] = [
 
 const PUBLICLY_RETIRED_CATEGORIES = new Set<ProductCategory>(['Atta', 'Papad', 'Chutney']);
 const PUBLICLY_RETIRED_SLUGS = new Set(['gahu-chik-powder']);
+const BUNDLED_PRODUCT_IMAGE_OVERRIDES: Record<string, string> = {
+  'mango-powder': '/Products/dried powders/Mango powder.png',
+};
 
 function isPubliclyListedProduct(product: Pick<Product, 'slug' | 'category'>) {
   if (PUBLICLY_RETIRED_CATEGORIES.has(product.category)) return false;
@@ -131,7 +134,7 @@ function mapRowToProductWithCosts(row: ProductRow): ProductWithCosts {
     price: row.price ?? pricing.price,
     originalPrice: row.originalPrice ?? pricing.originalPrice,
     costPrice: row.costPrice ?? pricing.costPrice,
-    image: row.image || '/placeholder.jpg',
+    image: BUNDLED_PRODUCT_IMAGE_OVERRIDES[row.slug] || row.image || '/placeholder.jpg',
     description: row.description,
     benefits,
     usage: row.usage,

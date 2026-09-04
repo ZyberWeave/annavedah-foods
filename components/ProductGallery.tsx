@@ -50,7 +50,7 @@ export default function ProductGallery({ images, alt, category }: Props) {
             fill
             priority
             sizes="(max-width: 1024px) 100vw, 54vw"
-            className="object-contain p-12 sm:p-16 lg:p-14 xl:p-20 drop-shadow-[0_30px_28px_rgba(64,31,18,0.22)] transition-transform duration-300"
+            className="object-contain px-12 pt-12 pb-24 sm:p-16 lg:p-14 xl:p-20 drop-shadow-[0_30px_28px_rgba(64,31,18,0.22)] transition-transform duration-300"
             style={zoom ? { transform: 'scale(1.65)', transformOrigin: `${pos.x}% ${pos.y}%` } : undefined}
           />
         </div>

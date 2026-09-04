@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
-import { AlertCircle, CheckCircle2, ChevronDown, Loader2, MapPin, Phone, Mail, Clock, MessageCircle, Instagram, Sparkles, ShieldCheck, Truck } from 'lucide-react'
+import { AlertCircle, CheckCircle2, ChevronDown, Loader2, MapPin, Phone, Mail, Clock, MessageCircle, Instagram, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { validateEmail, validateName, validatePhone, validateMinLength } from '@/lib/validations'
 
@@ -208,23 +208,20 @@ export default function ContactPage() {
         </div>
 
         <div className="grid grid-cols-3 gap-3 pt-2">
-          <div className="flex flex-col items-center text-center gap-1.5 rounded-xl bg-card border border-border p-3">
-            <Truck className="w-5 h-5 text-accent" />
+          <div className="flex min-h-20 flex-col items-center justify-center rounded-xl border border-border bg-card p-3 text-center">
             <p className="text-[11px] font-semibold text-primary leading-tight">Free shipping<br/>across India</p>
           </div>
-          <div className="flex flex-col items-center text-center gap-1.5 rounded-xl bg-card border border-border p-3">
-            <ShieldCheck className="w-5 h-5 text-accent" />
+          <div className="flex min-h-20 flex-col items-center justify-center rounded-xl border border-border bg-card p-3 text-center">
             <p className="text-[11px] font-semibold text-primary leading-tight">100% authentic<br/>traditional recipes</p>
           </div>
-          <Link href="/products" className="flex flex-col items-center text-center gap-1.5 rounded-xl bg-card border border-border p-3 hover:border-accent transition-colors">
-            <Sparkles className="w-5 h-5 text-accent" />
+          <Link href="/products" className="flex min-h-20 flex-col items-center justify-center rounded-xl border border-border bg-card p-3 text-center transition-colors hover:border-accent">
             <p className="text-[11px] font-semibold text-primary leading-tight">Browse our<br/>collections →</p>
           </Link>
         </div>
 
         <div className="flex items-center gap-3 pt-2 border-t border-border">
           <p className="text-xs font-semibold text-muted-foreground">Follow us</p>
-          <a href="https://www.instagram.com/annavedahfoods" target="_blank" rel="noreferrer" className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-foreground/70 hover:border-accent hover:text-accent transition-colors">
+          <a href="https://www.instagram.com/annavedah.foods/" target="_blank" rel="noopener noreferrer" aria-label="Follow Annavedah Foods on Instagram" className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-foreground/70 hover:border-accent hover:text-accent transition-colors">
             <Instagram className="w-4 h-4" />
           </a>
           <a href="https://wa.me/919763456100" target="_blank" rel="noreferrer" className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-foreground/70 hover:border-green-600 hover:text-green-600 transition-colors">
@@ -393,11 +390,12 @@ export default function ContactPage() {
         <div className="rounded-3xl border border-border bg-card p-4">
           <iframe
             title="Annavedah location"
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3781.848444621026!2d73.8210328!3d18.580870200000003!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bc2b9ee9cf89765%3A0x80153b9a0219c59d!2sAnnavedah%20Foods!5e0!3m2!1sen!2sin!4v1777973947944!5m2!1sen!2sin"
+            src="https://www.google.com/maps?q=Annavedah+Foods,+Shivdatta+Nagar,+Pimple+Gurav,+Pune,+Maharashtra+411061&output=embed"
             width="100%"
             height="280"
             allowFullScreen
             loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
             className="rounded-2xl border border-border"
           />
         </div>

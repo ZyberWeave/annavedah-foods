@@ -205,7 +205,7 @@ export default function HeritageContent() {
               <Button asChild className="h-12 px-6 bg-[#c9a45c] hover:bg-[#b8944d] text-[#2d1b15] font-bold rounded-xl">
                 <Link href="/products">Explore the Collection</Link>
               </Button>
-              <Button asChild variant="outline" className="h-12 px-6 border-2 border-white/40 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 font-bold rounded-xl">
+              <Button asChild variant="outline" className="h-12 px-6 border-2 border-[#f5e6c8] bg-[#2d1b15]/90 backdrop-blur-md text-white shadow-lg hover:border-[#c9a45c] hover:bg-[#8b1a1a] hover:text-white focus-visible:ring-[#f5e6c8] font-bold rounded-xl">
                 <Link href="#story">Read Our Story</Link>
               </Button>
             </div>

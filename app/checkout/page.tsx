@@ -182,6 +182,7 @@ export default function CheckoutPage() {
 
       if (availableForMethod) {
         setServiceability('available')
+        setErrors(current => ({ ...current, pincode: '' }))
         return
       }
 
@@ -245,7 +246,15 @@ export default function CheckoutPage() {
   }
 
   async function handlePayment() {
-    if (!validate()) return
+    if (!validate()) {
+      toast.error('Please review the highlighted checkout details')
+      window.setTimeout(() => {
+        const firstInvalidField = document.querySelector<HTMLElement>('.border-red-400')
+        firstInvalidField?.focus()
+        firstInvalidField?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 0)
+      return
+    }
     setLoading(true)
     try {
       // Server-priced cart shape — never send prices from the client.
@@ -802,10 +811,11 @@ export default function CheckoutPage() {
 
               <Button
                 id="pay-now-btn"
+                type="button"
                 className="w-full h-12 font-semibold text-base"
                 style={{ background: '#c9a45c', color: '#2d1b15' }}
                 onClick={handlePayment}
-                disabled={loading || serviceability === 'checking' || serviceability === 'unavailable' || serviceability === 'cod-unavailable'}
+                disabled={loading}
               >
                 {loading ? (
                   <span className="flex items-center gap-2">

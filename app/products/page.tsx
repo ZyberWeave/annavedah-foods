@@ -78,7 +78,7 @@ function PLPProductCard({ product, add }: { product: Product; add: (id: number, 
           <span className="truncate">{product.category}</span>
         </div>
         <Link href={`/products/${product.slug}`} className="block space-y-1 group-hover:text-[#8b1a1a] transition-colors">
-          <h3 className="text-sm sm:text-base md:text-2xl leading-tight font-bold text-[#2d1b15] group-hover:text-[#8b1a1a] line-clamp-2">{product.name}</h3>
+          <h3 className="min-h-10 md:min-h-[3.75rem] text-sm sm:text-base md:text-2xl leading-tight font-bold text-[#2d1b15] group-hover:text-[#8b1a1a] line-clamp-2">{product.name}</h3>
           {product.localName !== product.name && (
             <p className="text-xs md:text-sm text-muted-foreground line-clamp-1">{product.localName}</p>
           )}
@@ -121,17 +121,24 @@ function PLPProductCard({ product, add }: { product: Product; add: (id: number, 
         </div>
 
         <div className="flex gap-1 md:gap-2 pt-3 md:pt-4 border-t border-[#e8ddd0]/50">
-          <Button asChild variant="outline" className="flex-1 h-9 md:h-12 px-2 border-2 border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10 font-semibold rounded-lg md:rounded-xl transition-all text-xs md:text-sm">
+          <Button asChild variant="outline" className="min-w-0 flex-1 shrink h-9 md:h-12 px-1.5 sm:px-2 border-2 border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10 font-semibold rounded-lg md:rounded-xl transition-all text-[11px] sm:text-xs md:text-sm">
             <Link href={`/products/${product.slug}`}>Details</Link>
           </Button>
-          <Button
-            className="flex-1 h-9 md:h-12 px-2 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-semibold rounded-lg md:rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 text-xs md:text-sm"
-            onClick={() => add(product.id, selectedPack)}
-            disabled={currentPrice <= 0}
-          >
-            <ShoppingCart className="w-3.5 h-3.5 md:w-4 md:h-4 mr-1 md:mr-2" />
-            {currentPrice > 0 ? 'Add' : 'Enquire'}
-          </Button>
+          {currentPrice > 0 ? (
+            <Button
+              className="min-w-0 flex-1 shrink h-9 md:h-12 px-1.5 sm:px-2 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-semibold rounded-lg md:rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 text-[11px] sm:text-xs md:text-sm gap-1 md:gap-2"
+              onClick={() => add(product.id, selectedPack)}
+            >
+              <ShoppingCart className="hidden sm:block w-3.5 h-3.5 md:w-4 md:h-4" />
+              Add
+            </Button>
+          ) : (
+            <Button asChild className="min-w-0 flex-1 shrink h-9 md:h-12 px-1.5 sm:px-2 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-semibold rounded-lg md:rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 text-[11px] sm:text-xs md:text-sm">
+              <Link href={`/contact?reason=Product%20enquiry&product=${encodeURIComponent(product.slug)}`}>
+                Enquire
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
     </div>

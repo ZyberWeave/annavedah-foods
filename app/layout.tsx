@@ -22,7 +22,7 @@ import './globals.css'
 const footerProductLinks = [
   { label: 'Vegetable Powders', href: '/products/tomato-powder' },
   { label: 'Greens & Superfoods', href: '/products/moringa-powder' },
-  { label: 'Functional Mixes', href: '/products/mix-dried-vegetables-peri-peri' },
+  { label: 'Functional Mixes', href: '/products?category=Powders' },
   { label: 'Heritage Grains', href: '/products/indrayani-rice' },
 ]
 

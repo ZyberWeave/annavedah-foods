@@ -137,7 +137,7 @@ export default function BlogIndexPage() {
 
                   {/* Title */}
                   <h2
-                    className={`font-bold leading-snug mb-3 group-hover:text-[#8b1a1a] transition-colors ${isFeatured ? 'text-3xl md:text-4xl' : 'text-xl md:min-h-14'}`}
+                    className={`font-bold leading-snug mb-3 group-hover:text-[#8b1a1a] transition-colors ${isFeatured ? 'text-3xl md:text-4xl' : 'text-xl'}`}
                     style={{ color: '#2d1b15' }}
                   >
                     {post.title}
@@ -145,7 +145,7 @@ export default function BlogIndexPage() {
 
                   {/* Summary */}
                   <p
-                    className={`text-sm leading-relaxed mb-5 ${isFeatured ? '' : 'md:min-h-[3.75rem]'}`}
+                    className="text-sm leading-relaxed mb-5"
                     style={{ color: '#6b5347' }}
                   >
                     {post.summary}

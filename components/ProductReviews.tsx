@@ -196,8 +196,8 @@ export default function ProductReviews({ productSlug }: { productSlug: string })
   return (
     <div className="rounded-3xl border-2 border-[#e8ddd0] bg-white overflow-hidden">
       {/* Header / Summary */}
-      <div className="p-6 md:p-8 border-b border-[#e8ddd0] grid md:grid-cols-[260px_1fr] gap-8">
-        <div className="flex flex-col items-center text-center md:items-start md:text-left">
+      <div className={`gap-8 border-b border-[#e8ddd0] p-6 md:p-8 ${stats.count > 0 ? 'grid md:grid-cols-[260px_1fr]' : 'flex justify-center'}`}>
+        <div className={`flex flex-col items-center text-center ${stats.count > 0 ? 'md:items-start md:text-left' : ''}`}>
           <h3 className="text-xl font-bold text-[#2d1b15] mb-3">Customer Reviews</h3>
 
           {loading ? (
