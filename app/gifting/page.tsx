@@ -328,16 +328,25 @@ export default function GiftingPage() {
                 title="Enter a 10-digit phone number"
                 className="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-amber-400"
               />
-              <input
-                type="number"
-                required
-                min={1}
-                step={1}
-                placeholder="Estimated Boxes (e.g. 50, 200) *"
-                value={corpQty}
-                onChange={(e) => setCorpQty(e.target.value)}
-                className="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-amber-400"
-              />
+              <div className="relative">
+                <label
+                  htmlFor="corporate-estimated-boxes"
+                  className="pointer-events-none absolute left-4 top-2 text-[10px] font-semibold text-gray-300"
+                >
+                  Estimated number of gift boxes *
+                </label>
+                <input
+                  id="corporate-estimated-boxes"
+                  type="number"
+                  required
+                  min={1}
+                  step={1}
+                  placeholder="e.g. 50, 200"
+                  value={corpQty}
+                  onChange={(e) => setCorpQty(e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 rounded-xl px-4 pb-2 pt-6 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-amber-400"
+                />
+              </div>
               <textarea
                 rows={2}
                 placeholder="Special requirements or custom branding notes..."
