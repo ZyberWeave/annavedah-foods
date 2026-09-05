@@ -1,4 +1,5 @@
 import { pgSchema, serial, bigserial, bigint, text, timestamp, varchar, integer, boolean, decimal, primaryKey, date, jsonb, numeric, index } from 'drizzle-orm/pg-core';
+import type { SavedAddress } from './saved-address';
 
 // Keep every Annavedah table in its own PostgreSQL namespace. Roots & Reefs
 // may intentionally use the same Neon project, but it must never share rows,
@@ -58,6 +59,7 @@ export const users = pgTable('users', {
   role: varchar('role', { length: 20 }).default('user').notNull(),
   avatarUrl: text('avatar_url'),
   cartData: text('cart_data'), // JSON string of saved cart
+  savedAddress: jsonb('saved_address').$type<SavedAddress>(),
   // Bumped on every password change. JWTs minted before this timestamp are
   // rejected by verifySession() so a stolen cookie loses validity the moment
   // the user resets their password.

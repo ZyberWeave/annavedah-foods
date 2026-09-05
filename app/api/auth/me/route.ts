@@ -17,6 +17,8 @@ export async function GET() {
     email: users.email,
     role: users.role,
     avatarUrl: users.avatarUrl,
+    phone: users.phone,
+    savedAddress: users.savedAddress,
     createdAt: users.createdAt,
   }).from(users).where(eq(users.id, session.userId)).limit(1);
 

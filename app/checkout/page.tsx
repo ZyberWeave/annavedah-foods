@@ -1,20 +1,20 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/components/cart-context'
 import { validateCoupon, coupons } from '@/lib/coupons'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
-import { CheckCircle2, Loader2, MapPin, ShieldCheck, Truck, ChevronRight, AlertCircle, Tag, X, Ticket, ChevronDown, ChevronUp, Minus, Plus } from 'lucide-react'
+import { CheckCircle2, Loader2, MapPin, ShieldCheck, Truck, ChevronRight, AlertCircle, Tag, X, Ticket, ChevronDown, ChevronUp, Minus, Plus, Save } from 'lucide-react'
 import { validateEmail, validatePhone, validateName, validateRequired } from '@/lib/validations'
 import Breadcrumbs from '@/components/Breadcrumbs'
 import { toast } from 'sonner'
 import { calculateGst, calculateOrderTotal } from '@/lib/tax'
+import type { SavedAddress } from '@/lib/saved-address'
 
 declare global {
   interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Razorpay: any
   }
 }
@@ -52,6 +52,9 @@ export default function CheckoutPage() {
   const [promoLoading, setPromoLoading] = useState(false)
   const [showAvailableCoupons, setShowAvailableCoupons] = useState(false)
   const [hasPriorOrders, setHasPriorOrders] = useState(false)
+  const [hasSavedAddress, setHasSavedAddress] = useState(false)
+  const [savingAddress, setSavingAddress] = useState(false)
+  const [addressSaved, setAddressSaved] = useState(false)
 
   const codCharge = paymentMethod === 'COD' ? 99 : 0
   const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0
@@ -61,6 +64,44 @@ export default function CheckoutPage() {
   const formattedGst = Number.isInteger(gstAmount) ? String(gstAmount) : gstAmount.toFixed(2)
 
   const [isAuthChecking, setIsAuthChecking] = useState(true)
+
+  const checkPin = useCallback(async (pin: string, method: 'Prepaid' | 'COD') => {
+    const requestId = ++serviceabilityRequestRef.current
+    setServiceability('checking')
+    setErrors(current => ({ ...current, pincode: '' }))
+
+    const isAvailable = async (codFlag: 0 | 1) => {
+      const res = await fetch(`/api/shiprocket/serviceability?delivery=${pin}&cod=${codFlag}`)
+      const data = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(data?.error || 'Serviceability check failed')
+
+      const couriers = data?.data?.available_courier_companies
+      if (!Array.isArray(couriers)) throw new Error('Invalid serviceability response')
+      return couriers.length > 0
+    }
+
+    try {
+      const availableForMethod = await isAvailable(method === 'COD' ? 1 : 0)
+      if (requestId !== serviceabilityRequestRef.current) return
+
+      if (availableForMethod) {
+        setServiceability('available')
+        setErrors(current => ({ ...current, pincode: '' }))
+        return
+      }
+
+      if (method === 'COD') {
+        const availableForPrepaid = await isAvailable(0)
+        if (requestId !== serviceabilityRequestRef.current) return
+        setServiceability(availableForPrepaid ? 'cod-unavailable' : 'unavailable')
+        return
+      }
+
+      setServiceability('unavailable')
+    } catch {
+      if (requestId === serviceabilityRequestRef.current) setServiceability('error')
+    }
+  }, [])
 
   // Redirect if cart is empty
   useEffect(() => {
@@ -75,13 +116,26 @@ export default function CheckoutPage() {
         if (!data.user) {
           router.push('/login?redirect=/checkout');
         } else {
-          // Pre-fill form if user is logged in
+          const savedAddress = data.user.savedAddress as SavedAddress | null
+          // Pre-fill account details and reuse the customer's saved delivery
+          // address when one is available.
           setForm(f => ({
             ...f,
             firstName: data.user.name?.split(' ')[0] || '',
             lastName: data.user.name?.split(' ').slice(1).join(' ') || '',
             email: data.user.email || '',
+            phone: savedAddress?.phone || data.user.phone || '',
+            address: savedAddress?.address || '',
+            city: savedAddress?.city || '',
+            state: savedAddress?.state || '',
+            pincode: savedAddress?.pincode || '',
+            ...(savedAddress && {
+              firstName: savedAddress.firstName,
+              lastName: savedAddress.lastName,
+            }),
           }));
+          setHasSavedAddress(Boolean(savedAddress))
+          setAddressSaved(Boolean(savedAddress))
           setIsAuthChecking(false);
           // Check if the user has any prior successful orders — used to hide
           // first-order-only coupons (e.g. WELCOME10) for returning customers.
@@ -130,15 +184,19 @@ export default function CheckoutPage() {
     }
   }, [form.email, form.phone, form.firstName, form.lastName, items, step])
 
-  // Re-check serviceability when the payment method flips, since COD coverage
-  // is often narrower than prepaid coverage. Must live above any early-return
-  // so the hook order stays stable across renders.
+  // Check restored and manually entered pincodes, and re-check when the payment
+  // method flips because COD coverage is often narrower than prepaid coverage.
   useEffect(() => {
-    if (/^\d{6}$/.test(form.pincode)) {
-      checkPin(form.pincode, paymentMethod)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paymentMethod])
+    const timer = window.setTimeout(() => {
+      if (/^\d{6}$/.test(form.pincode)) {
+        checkPin(form.pincode, paymentMethod)
+      } else {
+        serviceabilityRequestRef.current += 1
+        setServiceability('idle')
+      }
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [checkPin, form.pincode, paymentMethod])
 
   if (isAuthChecking && step !== 'success') {
     return (
@@ -151,52 +209,7 @@ export default function CheckoutPage() {
   function set(field: keyof FormData, value: string) {
     setForm(f => ({ ...f, [field]: value }))
     setErrors(e => ({ ...e, [field]: '' }))
-    if (field === 'pincode') {
-      if (value.length === 6) {
-        checkPin(value, paymentMethod)
-      } else {
-        serviceabilityRequestRef.current += 1
-        setServiceability('idle')
-      }
-    }
-  }
-
-  async function checkPin(pin: string, method: 'Prepaid' | 'COD' = paymentMethod) {
-    const requestId = ++serviceabilityRequestRef.current
-    setServiceability('checking')
-    setErrors(current => ({ ...current, pincode: '' }))
-
-    const isAvailable = async (codFlag: 0 | 1) => {
-      const res = await fetch(`/api/shiprocket/serviceability?delivery=${pin}&cod=${codFlag}`)
-      const data = await res.json().catch(() => null)
-      if (!res.ok) throw new Error(data?.error || 'Serviceability check failed')
-
-      const couriers = data?.data?.available_courier_companies
-      if (!Array.isArray(couriers)) throw new Error('Invalid serviceability response')
-      return couriers.length > 0
-    }
-
-    try {
-      const availableForMethod = await isAvailable(method === 'COD' ? 1 : 0)
-      if (requestId !== serviceabilityRequestRef.current) return
-
-      if (availableForMethod) {
-        setServiceability('available')
-        setErrors(current => ({ ...current, pincode: '' }))
-        return
-      }
-
-      if (method === 'COD') {
-        const availableForPrepaid = await isAvailable(0)
-        if (requestId !== serviceabilityRequestRef.current) return
-        setServiceability(availableForPrepaid ? 'cod-unavailable' : 'unavailable')
-        return
-      }
-
-      setServiceability('unavailable')
-    } catch {
-      if (requestId === serviceabilityRequestRef.current) setServiceability('error')
-    }
+    if (field !== 'email') setAddressSaved(false)
   }
 
 
@@ -239,6 +252,40 @@ export default function CheckoutPage() {
       setShowAvailableCoupons(false)
     }
     setPromoLoading(false)
+  }
+
+  async function handleSaveAddress() {
+    if (!validate()) {
+      toast.error('Please complete the delivery address before saving')
+      return
+    }
+
+    setSavingAddress(true)
+    try {
+      const response = await fetch('/api/auth/address', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          phone: form.phone,
+          address: form.address,
+          city: form.city,
+          state: form.state,
+          pincode: form.pincode,
+        }),
+      })
+      const data = await response.json().catch(() => null)
+      if (!response.ok) throw new Error(data?.error || 'Could not save address')
+
+      setHasSavedAddress(true)
+      setAddressSaved(true)
+      toast.success('Delivery address saved for future orders')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not save address')
+    } finally {
+      setSavingAddress(false)
+    }
   }
 
   function updateCheckoutQty(id: number, size: string | undefined, qty: number) {
@@ -562,6 +609,35 @@ export default function CheckoutPage() {
                   )}
                 </div>
                 {errors.pincode && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.pincode}</p>}
+              </div>
+
+              <div className="flex flex-col gap-3 rounded-xl border border-[#e8ddd0] bg-[#faf6f0] p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    {addressSaved ? 'Saved address ready' : hasSavedAddress ? 'Update saved address' : 'Save this address'}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {addressSaved
+                      ? 'This address will be filled automatically on your next checkout.'
+                      : 'Store it securely in your account for faster future checkouts.'}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSaveAddress}
+                  disabled={savingAddress || addressSaved}
+                  className="shrink-0 border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10"
+                >
+                  {savingAddress ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : addressSaved ? (
+                    <CheckCircle2 className="mr-2 h-4 w-4 text-green-600" />
+                  ) : (
+                    <Save className="mr-2 h-4 w-4" />
+                  )}
+                  {savingAddress ? 'Saving…' : addressSaved ? 'Address saved' : hasSavedAddress ? 'Update address' : 'Save address'}
+                </Button>
               </div>
             </div>
 

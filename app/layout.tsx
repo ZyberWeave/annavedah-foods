@@ -30,7 +30,7 @@ const footerCompanyLinks = [
   { label: 'About Us', href: '/heritage' },
   { label: 'Our Story', href: '/heritage#story' },
   { label: 'Sustainability', href: '/blog/sustainable-eating-with-millets' },
-  { label: 'Careers', href: '/contact' },
+  { label: 'Contact Us', href: '/contact' },
 ]
 
 export const metadata: Metadata = {
