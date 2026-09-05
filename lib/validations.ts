@@ -48,6 +48,21 @@ export function validateName(name: string, label = 'Name'): ValidationResult {
   return { valid: true, message: '' }
 }
 
+// ─── City ─────────────────────────────────────────────────────────────────────
+// Supports international letters (including combining marks) and punctuation
+// commonly used in place names, while rejecting digits and other symbols.
+const CITY_REGEX = /^[\p{L}\p{M}][\p{L}\p{M}\s.'-]*$/u
+
+export function validateCity(city: string): ValidationResult {
+  const value = city.trim()
+  if (!value) return { valid: false, message: 'City is required' }
+  if (value.length < 2) return { valid: false, message: 'City must be at least 2 characters' }
+  if (!CITY_REGEX.test(value)) {
+    return { valid: false, message: 'City can only contain letters, spaces, apostrophes, periods, or hyphens' }
+  }
+  return { valid: true, message: '' }
+}
+
 // ─── Indian Phone ─────────────────────────────────────────────────────────────
 const PHONE_REGEX = /^[6-9]\d{9}$/
 

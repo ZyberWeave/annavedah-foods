@@ -7,7 +7,7 @@ import { validateCoupon, coupons } from '@/lib/coupons'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import { CheckCircle2, Loader2, MapPin, ShieldCheck, Truck, ChevronRight, AlertCircle, Tag, X, Ticket, ChevronDown, ChevronUp, Minus, Plus, Save } from 'lucide-react'
-import { validateEmail, validatePhone, validateName, validateRequired } from '@/lib/validations'
+import { validateCity, validateEmail, validatePhone, validateName, validateRequired } from '@/lib/validations'
 import Breadcrumbs from '@/components/Breadcrumbs'
 import { toast } from 'sonner'
 import { calculateGst, calculateOrderTotal } from '@/lib/tax'
@@ -212,6 +212,18 @@ export default function CheckoutPage() {
     if (field !== 'email') setAddressSaved(false)
   }
 
+  function setCity(value: string) {
+    const sanitized = value.replace(/[^\p{L}\p{M}\s.'-]/gu, '')
+    setForm(current => ({ ...current, city: sanitized }))
+    setAddressSaved(false)
+    setErrors(current => ({
+      ...current,
+      city: value === sanitized
+        ? ''
+        : 'City can only contain letters, spaces, apostrophes, periods, or hyphens',
+    }))
+  }
+
 
   function validate(): boolean {
     const errs: Partial<FormData> = {}
@@ -223,7 +235,7 @@ export default function CheckoutPage() {
     if (!phoneResult.valid) errs.phone = phoneResult.message
     const addrResult = validateRequired(form.address, 'Address')
     if (!addrResult.valid) errs.address = addrResult.message
-    const cityResult = validateRequired(form.city, 'City')
+    const cityResult = validateCity(form.city)
     if (!cityResult.valid) errs.city = cityResult.message
     const stateResult = validateRequired(form.state, 'State')
     if (!stateResult.valid) errs.state = stateResult.message
@@ -354,6 +366,7 @@ export default function CheckoutPage() {
       if (!order.id) throw new Error(order?.error || 'Could not create payment order')
 
       // 2. Open Razorpay modal
+      let paymentOutcome: 'pending' | 'processing' | 'failed' = 'pending'
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: order.amount,
@@ -373,6 +386,7 @@ export default function CheckoutPage() {
           razorpay_order_id: string
           razorpay_signature: string
         }) => {
+          paymentOutcome = 'processing'
           // 3. Verify payment
           const verifyRes = await fetch('/api/razorpay/verify', {
             method: 'POST',
@@ -415,11 +429,22 @@ export default function CheckoutPage() {
           items.forEach(i => remove(i.product.id, i.selectedPack?.size))
           setStep('success')
         },
-        modal: { ondismiss: () => setLoading(false) },
+        modal: {
+          ondismiss: () => {
+            setLoading(false)
+            if (paymentOutcome === 'pending') {
+              toast.error('Payment Cancelled')
+            }
+          },
+        },
       }
 
       const rzp = new window.Razorpay(options)
-      rzp.on('payment.failed', () => setLoading(false))
+      rzp.on('payment.failed', () => {
+        paymentOutcome = 'failed'
+        setLoading(false)
+        toast.error('Payment failed. Please try again')
+      })
       rzp.open()
     } catch (err) {
       console.error(err)
@@ -561,7 +586,18 @@ export default function CheckoutPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-1 block">City *</label>
-                  <input className={inputClass('city')} placeholder="Pune" value={form.city} onChange={e => set('city', e.target.value)} />
+                  <input
+                    className={inputClass('city')}
+                    placeholder="Pune"
+                    value={form.city}
+                    maxLength={100}
+                    autoComplete="address-level2"
+                    onChange={e => setCity(e.target.value)}
+                    onBlur={() => {
+                      const result = validateCity(form.city)
+                      setErrors(current => ({ ...current, city: result.valid ? '' : result.message }))
+                    }}
+                  />
                   {errors.city && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" />{errors.city}</p>}
                 </div>
                 <div>
