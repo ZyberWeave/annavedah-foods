@@ -2,10 +2,8 @@ import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { abandonedCarts } from '@/lib/schema'
 import { eq, and, isNull, lt } from 'drizzle-orm'
-import { Resend } from 'resend'
+import { resend } from '@/lib/resend'
 import { escapeHtml } from '@/lib/email-utils'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function GET(request: Request) {
   // Cron auth: CRON_SECRET MUST be set, and the caller must present it.

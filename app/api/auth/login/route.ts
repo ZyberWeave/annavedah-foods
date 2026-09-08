@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, ensureDbSchema } from '@/lib/db';
 import { users } from '@/lib/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
@@ -9,6 +9,8 @@ import { normalizeEmail } from '@/lib/normalize-email';
 
 export async function POST(req: Request) {
   try {
+    await ensureDbSchema();
+
     const { email: rawEmail, password } = await req.json();
     const email = normalizeEmail(rawEmail);
 
@@ -27,23 +29,35 @@ export async function POST(req: Request) {
     const emailBlock = await rateLimitOr429(`login:email:${email}`, 5, 60);
     if (emailBlock) return emailBlock;
 
-    const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const [user] = await db
+      .select({ id: users.id, name: users.name, email: users.email, password: users.password, role: users.role })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
 
     if (!user) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+      return NextResponse.json({ error: 'Incorrect email or password' }, { status: 401 });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+      return NextResponse.json({ error: 'Incorrect email or password' }, { status: 401 });
     }
 
     await createSession(user.id, user.role);
 
     return NextResponse.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role } }, { status: 200 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const message = error?.message || '';
+    const causeMessage = error?.cause?.message || '';
+    if (message.includes('DATABASE_URL is not configured') || causeMessage.includes('DATABASE_URL is not configured')) {
+      return NextResponse.json(
+        { error: 'Database connection is not configured. Please set DATABASE_URL in .env.local.' },
+        { status: 503 }
+      );
+    }
+    return NextResponse.json({ error: error?.message || 'Internal server error' }, { status: 500 });
   }
 }

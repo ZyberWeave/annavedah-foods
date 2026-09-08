@@ -72,12 +72,15 @@ type ProductSeed = {
   localName: string
   category: ProductCategory
   packPrices?: AdminPackPrice[]
+  originalPrice?: number
   image?: string
   badge?: string
   description?: string
   benefits?: string[]
   usage?: string
   highlights?: string[]
+  isGift?: boolean
+  bundleItems?: BundleItem[]
 }
 
 const categoryDefaults: Record<
@@ -710,6 +713,67 @@ const productCatalog: ProductSeed[] = [
     packPrices: [],
   })),
 
+  // ── CURATED GIFT HAMPERS ──
+  {
+    slug: 'superfood-wellness-gift-box',
+    name: 'Superfood Wellness Gift Box',
+    localName: 'Superfood Wellness Gift Box',
+    category: 'Gift Boxes & Bundles',
+    badge: 'Bestseller Hamper',
+    image: '/gifting/wellness-gift-box.webp',
+    description: 'A curated boost of organic Moringa, Wild Turmeric, and Amla powder packed in a premium gift box.',
+    originalPrice: 1099,
+    packPrices: [p('1 Box', 899, 495)],
+    benefits: ['Pure farm-sourced ingredients', 'Festive gift packaging', 'Boosts daily wellness & immunity'],
+    usage: 'Unbox and enjoy authentic traditional superfood powders daily.',
+    highlights: ['Moringa Powder (250g)', 'Turmeric Powder (250g)', 'Amla Powder (250g)'],
+    isGift: true,
+    bundleItems: [
+      { productSlug: 'moringa-powder', quantity: 1 },
+      { productSlug: 'turmeric-powder', quantity: 1 },
+      { productSlug: 'amla-powder', quantity: 1 },
+    ],
+  },
+  {
+    slug: 'heritage-organic-hampers',
+    name: 'Heritage Organic Spices & Grains Hamper',
+    localName: 'Heritage Organic Spices & Grains Hamper',
+    category: 'Gift Boxes & Bundles',
+    badge: 'Festive Special',
+    image: '/gifting/heritage-grains-hamper.webp',
+    description: 'Farm-fresh unpolished pulses, organic jaggery powder, and heritage grains for festive gifting.',
+    originalPrice: 1799,
+    packPrices: [p('1 Box', 1499, 825)],
+    benefits: ['Unpolished heirloom grains', 'Traditional natural processing', 'Ideal festive gift for health enthusiasts'],
+    usage: 'Enjoy farm-fresh staples for wholesome daily family meals.',
+    highlights: ['Unpolished Toor Dal (1kg)', 'Organic Jaggery Powder (500g)', 'Heritage Rice (1kg)'],
+    isGift: true,
+    bundleItems: [
+      { productSlug: 'toor-dal', quantity: 1 },
+      { productSlug: 'unpolished-indrayani-rice', quantity: 1 },
+    ],
+  },
+  {
+    slug: 'corporate-executive-wellness-set',
+    name: 'Corporate Executive Wellness Set',
+    localName: 'Corporate Executive Wellness Set',
+    category: 'Gift Boxes & Bundles',
+    badge: 'Corporate Gifting',
+    image: '/gifting/corporate-wellness-set.webp',
+    description: 'Exclusive luxury box featuring handcrafted copper bottle, organic immunity powders, and dry fruits.',
+    originalPrice: 2699,
+    packPrices: [p('1 Box', 2199, 1200)],
+    benefits: ['Handcrafted pure copper bottle', 'Immunity-boosting superfoods', 'Signature luxury presentation'],
+    usage: 'Perfect luxury corporate or executive wellness present.',
+    highlights: ['Copper Water Bottle (750ml)', 'Moringa Powder (250g)', 'Organic Honey (500g)', 'Wild Turmeric (250g)'],
+    isGift: true,
+    bundleItems: [
+      { productSlug: 'moringa-powder', quantity: 1 },
+      { productSlug: 'raw-forest-honey', quantity: 1 },
+      { productSlug: 'turmeric-powder', quantity: 1 },
+    ],
+  },
+
   // ── TEST PRODUCTS (₹1) — remove before production ──
   {
     slug: 'test-powder-1rs',
@@ -759,10 +823,10 @@ export const products: ProductWithCosts[] = productCatalog
       slug: item.slug,
       name: item.name,
       nameHindi: item.name,
-      localName: item.name,
+      localName: item.localName || item.name,
       category: item.category,
       price: basePrice,
-      originalPrice: topPrice,
+      originalPrice: item.originalPrice ?? topPrice,
       costPrice: baseCost,
       image: item.image ?? '/placeholder.jpg',
       description: item.description ?? defaults.description,
@@ -771,6 +835,8 @@ export const products: ProductWithCosts[] = productCatalog
       highlights: item.highlights ?? defaults.highlights,
       packPrices,
       badge: item.badge,
+      isGift: item.isGift,
+      bundleItems: item.bundleItems,
     }
   })
 

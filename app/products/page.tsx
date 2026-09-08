@@ -410,7 +410,7 @@ export default function ProductsPage() {
         {/* Background image */}
         <Image
           src="/Banners/shop-hero.png"
-          alt="Annavedah Foods — Premium organic products"
+          alt="Annavedah Foods — Premium natural products"
           fill
           priority
           sizes="100vw"
@@ -463,20 +463,30 @@ export default function ProductsPage() {
               </div>
 
               {/* Trust stats */}
-              <div className="flex items-center gap-6 pt-4 border-t border-white/10">
-                <div>
-                  <p className="text-2xl font-bold text-[#c9a45c]">80+</p>
-                  <p className="text-[11px] text-white/50 uppercase tracking-wider font-semibold">Products</p>
+              <div className="pt-4 border-t border-white/10 space-y-3">
+                <div className="flex items-center gap-6">
+                  <div>
+                    <p className="text-2xl font-bold text-[#c9a45c]">80+</p>
+                    <p className="text-[11px] text-white/50 uppercase tracking-wider font-semibold">Products</p>
+                  </div>
+                  <div className="w-px h-10 bg-white/15" />
+                  <div>
+                    <p className="text-2xl font-bold text-[#c9a45c]">100%</p>
+                    <p className="text-[11px] text-white/50 uppercase tracking-wider font-semibold">Natural</p>
+                  </div>
+                  <div className="w-px h-10 bg-white/15" />
+                  <div>
+                    <p className="text-2xl font-bold text-[#c9a45c]">7+</p>
+                    <p className="text-[11px] text-white/50 uppercase tracking-wider font-semibold">Categories</p>
+                  </div>
                 </div>
-                <div className="w-px h-10 bg-white/15" />
-                <div>
-                  <p className="text-2xl font-bold text-[#c9a45c]">100%</p>
-                  <p className="text-[11px] text-white/50 uppercase tracking-wider font-semibold">Natural</p>
-                </div>
-                <div className="w-px h-10 bg-white/15" />
-                <div>
-                  <p className="text-2xl font-bold text-[#c9a45c]">7+</p>
-                  <p className="text-[11px] text-white/50 uppercase tracking-wider font-semibold">Categories</p>
+
+                {/* Clarification on Natural vs Organic */}
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 backdrop-blur-md text-xs text-white/90">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#c9a45c] shrink-0" />
+                  <span>
+                    <strong className="text-[#f5e6c8]">Please note:</strong> Our products are 100% natural, but not 100% organic.
+                  </span>
                 </div>
               </div>
             </div>

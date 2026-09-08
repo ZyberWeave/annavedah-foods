@@ -98,81 +98,92 @@ export default function SlideCart() {
               </Link>
             </div>
           ) : (
-            <ul className="divide-y divide-[#e8ddd0]">
-              {items.map((item, idx) => {
-                const unitPrice = item.selectedPack ? item.selectedPack.price : item.product.price
-                return (
-                  <li key={`${item.product.id}-${item.selectedPack?.size ?? 'std'}-${idx}`} className="px-6 py-4 flex gap-4">
-                    <Link
-                      href={`/products/${item.product.slug}`}
-                      onClick={closeCart}
-                      className="relative w-20 h-20 rounded-lg bg-[url('/product-bg.webp')] bg-cover bg-center overflow-hidden shadow-inner flex-shrink-0"
-                    >
-                      <Image
-                        src={item.product.image}
-                        alt={item.product.name}
-                        fill
-                        sizes="80px"
-                        className="object-contain p-2 drop-shadow-md"
-                      />
-                    </Link>
-                    <div className="flex-1 min-w-0">
+            <div>
+              <ul className="divide-y divide-[#e8ddd0]">
+                {items.map((item, idx) => {
+                  const unitPrice = item.selectedPack ? item.selectedPack.price : item.product.price
+                  return (
+                    <li key={`${item.product.id}-${item.selectedPack?.size ?? 'std'}-${idx}`} className="px-6 py-4 flex gap-4">
                       <Link
                         href={`/products/${item.product.slug}`}
                         onClick={closeCart}
-                        className="font-semibold text-[#2d1b15] hover:text-[#8b1a1a] text-sm line-clamp-2"
+                        className="relative w-20 h-20 rounded-lg bg-[url('/product-bg.webp')] bg-cover bg-center overflow-hidden shadow-inner flex-shrink-0"
                       >
-                        {item.product.name}
+                        <Image
+                          src={item.product.image}
+                          alt={item.product.name}
+                          fill
+                          sizes="80px"
+                          className="object-contain p-2 drop-shadow-md"
+                        />
                       </Link>
-                      {item.product.packPrices.length > 1 ? (
-                        <select
-                          value={item.selectedPack?.size ?? ''}
-                          onChange={(e) => {
-                            const pack = item.product.packPrices.find((pp) => pp.size === e.target.value)
-                            if (pack) changePack(item.product.id, item.selectedPack?.size, { size: pack.size, price: pack.price })
-                          }}
-                          className="mt-1 text-xs border border-[#e8ddd0] rounded-md px-2 py-1 bg-white text-[#2d1b15] focus:outline-none focus:border-[#c9a45c]"
-                          aria-label="Change pack size"
+                      <div className="flex-1 min-w-0">
+                        <Link
+                          href={`/products/${item.product.slug}`}
+                          onClick={closeCart}
+                          className="font-semibold text-[#2d1b15] hover:text-[#8b1a1a] text-sm line-clamp-2"
                         >
-                          {item.product.packPrices.map((pp) => (
-                            <option key={pp.size} value={pp.size}>{pp.size} — ₹{pp.price}</option>
-                          ))}
-                        </select>
-                      ) : item.selectedPack ? (
-                        <p className="text-xs text-[#6b5347] mt-1">{item.selectedPack.size}</p>
-                      ) : null}
-                      <p className="text-[#8b1a1a] font-bold text-sm mt-1">₹{unitPrice * item.qty}</p>
-                      <div className="flex items-center justify-between mt-2">
-                        <div className="flex items-center border border-[#e8ddd0] rounded-lg overflow-hidden">
-                          <button
-                            onClick={() => updateQty(item.product.id, item.selectedPack?.size, item.qty - 1)}
-                            className="w-7 h-7 flex items-center justify-center hover:bg-[#f0e8dc] transition-colors"
-                            aria-label="Decrease quantity"
+                          {item.product.name}
+                        </Link>
+                        {item.product.packPrices.length > 1 ? (
+                          <select
+                            value={item.selectedPack?.size ?? ''}
+                            onChange={(e) => {
+                              const pack = item.product.packPrices.find((pp) => pp.size === e.target.value)
+                              if (pack) changePack(item.product.id, item.selectedPack?.size, { size: pack.size, price: pack.price })
+                            }}
+                            className="mt-1 text-xs border border-[#e8ddd0] rounded-md px-2 py-1 bg-white text-[#2d1b15] focus:outline-none focus:border-[#c9a45c]"
+                            aria-label="Change pack size"
                           >
-                            <Minus className="w-3 h-3 text-[#2d1b15]" />
-                          </button>
-                          <span className="w-8 text-center text-sm font-semibold text-[#2d1b15]">{item.qty}</span>
+                            {item.product.packPrices.map((pp) => (
+                              <option key={pp.size} value={pp.size}>{pp.size} — ₹{pp.price}</option>
+                            ))}
+                          </select>
+                        ) : item.selectedPack ? (
+                          <p className="text-xs text-[#6b5347] mt-1">{item.selectedPack.size}</p>
+                        ) : null}
+                        <p className="text-[#8b1a1a] font-bold text-sm mt-1">₹{unitPrice * item.qty}</p>
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center border border-[#e8ddd0] rounded-lg overflow-hidden">
+                            <button
+                              onClick={() => updateQty(item.product.id, item.selectedPack?.size, item.qty - 1)}
+                              className="w-7 h-7 flex items-center justify-center hover:bg-[#f0e8dc] transition-colors"
+                              aria-label="Decrease quantity"
+                            >
+                              <Minus className="w-3 h-3 text-[#2d1b15]" />
+                            </button>
+                            <span className="w-8 text-center text-sm font-semibold text-[#2d1b15]">{item.qty}</span>
+                            <button
+                              onClick={() => updateQty(item.product.id, item.selectedPack?.size, item.qty + 1)}
+                              className="w-7 h-7 flex items-center justify-center hover:bg-[#f0e8dc] transition-colors"
+                              aria-label="Increase quantity"
+                            >
+                              <Plus className="w-3 h-3 text-[#2d1b15]" />
+                            </button>
+                          </div>
                           <button
-                            onClick={() => updateQty(item.product.id, item.selectedPack?.size, item.qty + 1)}
-                            className="w-7 h-7 flex items-center justify-center hover:bg-[#f0e8dc] transition-colors"
-                            aria-label="Increase quantity"
+                            onClick={() => remove(item.product.id, item.selectedPack?.size)}
+                            className="p-1.5 hover:bg-red-50 rounded-md transition-colors"
+                            aria-label="Remove item"
                           >
-                            <Plus className="w-3 h-3 text-[#2d1b15]" />
+                            <Trash2 className="w-4 h-4 text-red-500" />
                           </button>
                         </div>
-                        <button
-                          onClick={() => remove(item.product.id, item.selectedPack?.size)}
-                          className="p-1.5 hover:bg-red-50 rounded-md transition-colors"
-                          aria-label="Remove item"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </button>
                       </div>
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
+                    </li>
+                  )
+                })}
+              </ul>
+              <div className="px-6 py-3.5 border-t border-[#e8ddd0] bg-[#faf6f0]/40">
+                <Link
+                  href="/products"
+                  onClick={closeCart}
+                  className="w-full py-2.5 px-4 border-2 border-dashed border-[#c9a45c] hover:border-[#8b1a1a] bg-white hover:bg-[#c9a45c]/10 text-[#8b1a1a] rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-xs"
+                >
+                  <Plus className="w-4 h-4" /> Add More Items
+                </Link>
+              </div>
+            </div>
           )}
 
           {items.length > 0 && upsells.length > 0 && (
@@ -254,6 +265,15 @@ export default function SlideCart() {
                   className="h-12 flex items-center justify-center text-sm font-bold uppercase tracking-wider rounded-xl bg-[#8b1a1a] hover:bg-[#6d1414] text-white transition-colors"
                 >
                   Checkout →
+                </Link>
+              </div>
+              <div className="text-center pt-0.5">
+                <Link
+                  href="/products"
+                  onClick={closeCart}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#8b1a1a] hover:text-[#6d1414] hover:underline uppercase tracking-wider transition-colors py-1"
+                >
+                  ← Continue Shopping
                 </Link>
               </div>
             </div>

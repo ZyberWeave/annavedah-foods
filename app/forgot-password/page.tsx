@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Loader2, ArrowLeft, Mail, KeyRound, CheckCircle2 } from 'lucide-react';
+import { Loader2, ArrowLeft, Mail, KeyRound, CheckCircle2, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 type Step = 'email' | 'otp' | 'success';
 
@@ -36,9 +37,12 @@ export default function ForgotPasswordPage() {
         throw new Error(data.error || 'Failed to send reset code');
       }
 
+      toast.success('Reset code sent to your email');
       setStep('otp');
     } catch (err: any) {
-      setError(err.message);
+      const message = err.message || 'Failed to send reset code';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -49,12 +53,16 @@ export default function ForgotPasswordPage() {
     setError('');
 
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
+      const msg = 'Passwords do not match';
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
     if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters');
+      const msg = 'Password must be at least 6 characters';
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -73,9 +81,12 @@ export default function ForgotPasswordPage() {
         throw new Error(data.error || 'Failed to reset password');
       }
 
+      toast.success('Password reset successfully!');
       setStep('success');
     } catch (err: any) {
-      setError(err.message);
+      const message = err.message || 'Failed to reset password';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -99,8 +110,12 @@ export default function ForgotPasswordPage() {
             </div>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm text-center">
-                {error}
+              <div
+                role="alert"
+                className="mb-6 p-4 rounded-xl text-sm flex items-center gap-3 bg-red-50 border border-red-200 text-red-600 animate-in fade-in duration-200"
+              >
+                <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-500" />
+                <span className="font-medium text-left">{error}</span>
               </div>
             )}
 
@@ -110,7 +125,10 @@ export default function ForgotPasswordPage() {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError('');
+                  }}
                   className="w-full px-4 py-3 rounded-xl border border-[#e8ddd0] focus:outline-none focus:border-[#c9a45c] focus:ring-2 focus:ring-[#c9a45c]/20 transition-all"
                   placeholder="you@example.com"
                   required
@@ -120,7 +138,7 @@ export default function ForgotPasswordPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-bold rounded-xl transition-all"
+                className="w-full h-12 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-bold rounded-xl transition-all cursor-pointer"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send Reset Code'}
               </Button>
@@ -148,8 +166,12 @@ export default function ForgotPasswordPage() {
             </div>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm text-center">
-                {error}
+              <div
+                role="alert"
+                className="mb-6 p-4 rounded-xl text-sm flex items-center gap-3 bg-red-50 border border-red-200 text-red-600 animate-in fade-in duration-200"
+              >
+                <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-500" />
+                <span className="font-medium text-left">{error}</span>
               </div>
             )}
 
@@ -159,7 +181,10 @@ export default function ForgotPasswordPage() {
                 <input
                   type="text"
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onChange={(e) => {
+                    setOtp(e.target.value.replace(/\D/g, '').slice(0, 6));
+                    if (error) setError('');
+                  }}
                   className="w-full px-4 py-3 rounded-xl border border-[#e8ddd0] focus:outline-none focus:border-[#c9a45c] focus:ring-2 focus:ring-[#c9a45c]/20 transition-all text-center text-2xl tracking-[0.5em] font-bold"
                   placeholder="000000"
                   maxLength={6}
@@ -172,7 +197,10 @@ export default function ForgotPasswordPage() {
                 <input
                   type="password"
                   value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    if (error) setError('');
+                  }}
                   className="w-full px-4 py-3 rounded-xl border border-[#e8ddd0] focus:outline-none focus:border-[#c9a45c] focus:ring-2 focus:ring-[#c9a45c]/20 transition-all"
                   placeholder="••••••••"
                   minLength={6}
@@ -185,7 +213,10 @@ export default function ForgotPasswordPage() {
                 <input
                   type="password"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (error) setError('');
+                  }}
                   className="w-full px-4 py-3 rounded-xl border border-[#e8ddd0] focus:outline-none focus:border-[#c9a45c] focus:ring-2 focus:ring-[#c9a45c]/20 transition-all"
                   placeholder="••••••••"
                   minLength={6}
@@ -196,7 +227,7 @@ export default function ForgotPasswordPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-bold rounded-xl transition-all"
+                className="w-full h-12 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-bold rounded-xl transition-all cursor-pointer"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Reset Password'}
               </Button>
@@ -205,7 +236,7 @@ export default function ForgotPasswordPage() {
             <p className="mt-6 text-center">
               <button
                 onClick={() => { setStep('email'); setError(''); }}
-                className="text-sm font-semibold text-[#c9a45c] hover:text-[#8b1a1a] transition-colors inline-flex items-center gap-1"
+                className="text-sm font-semibold text-[#c9a45c] hover:text-[#8b1a1a] transition-colors inline-flex items-center gap-1 cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" /> Try a different email
               </button>
@@ -227,7 +258,7 @@ export default function ForgotPasswordPage() {
             </div>
             <Button
               onClick={() => router.push('/login')}
-              className="w-full h-12 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-bold rounded-xl transition-all"
+              className="w-full h-12 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-bold rounded-xl transition-all cursor-pointer"
             >
               Go to Login
             </Button>

@@ -3,13 +3,11 @@ import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { refundRequests, users, orders } from '@/lib/schema';
 import { and, eq, isNull } from 'drizzle-orm';
-import { Resend } from 'resend';
+import { resend } from '@/lib/resend';
 import { getRazorpay } from '@/lib/razorpay';
 import { toPositiveInt } from '@/lib/validate-id';
 import { restoreInventoryForRefundOnce, type OrderItem } from '@/lib/inventory';
 import { isCancellationReason } from '@/lib/order-cancellation';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 async function restoreRefundInventory(refundId: number, orderId: string): Promise<boolean> {
   try {

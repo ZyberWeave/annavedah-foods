@@ -84,7 +84,7 @@ const pillars = [
 
 const timeline = [
   {
-    year: 'पुरानकाल',
+    year: 'पुरातनकाळ',
     label: 'Ancient times',
     title: 'The wisdom takes root',
     body: 'Long before laboratories, our elders understood food as medicine — a knowledge encoded in the Ayurveda and the daily rituals of the Indian kitchen.',

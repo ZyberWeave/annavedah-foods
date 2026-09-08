@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
-import { Resend } from 'resend'
+import { resend } from '@/lib/resend'
 import { db } from '@/lib/db'
 import { orders } from '@/lib/schema'
 import { and, eq } from 'drizzle-orm'
@@ -11,8 +11,6 @@ import { verifySession } from '@/lib/auth'
 import { PAID_ORDER_STATUSES } from '@/lib/order-status'
 import { deductInventoryForOrder, restoreInventoryForRefund } from '@/lib/inventory'
 import { getRazorpay } from '@/lib/razorpay'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: NextRequest) {
   try {

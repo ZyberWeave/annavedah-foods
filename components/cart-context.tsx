@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
-import type { Product } from '@/lib/content'
+import { products as staticProducts, type Product } from '@/lib/content'
 import { validateCoupon } from '@/lib/coupons'
 import { useProductsData } from '@/components/products-context'
 import { toast } from 'sonner'
@@ -74,7 +74,13 @@ function hydrateCartItems(items: CartItem[], productMap: Map<number, Product>): 
   const hydrated: CartItem[] = []
 
   for (const item of items) {
-    const product = productMap.get(item.product.id)
+    const product =
+      productMap.get(item.product.id) ||
+      staticProducts.find(
+        (p) =>
+          p.id === item.product.id ||
+          (item.product?.slug && p.slug === item.product.slug),
+      )
     if (!product) continue
 
     const matchedPack = item.selectedPack?.size
@@ -314,7 +320,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return prev
       }
 
-      const product = productMap.get(id)
+      const product =
+        productMap.get(id) ||
+        staticProducts.find((p) => p.id === id)
       if (!product || product.price <= 0) return prev
       return [...prev, { product, qty, selectedPack: pack }]
     })

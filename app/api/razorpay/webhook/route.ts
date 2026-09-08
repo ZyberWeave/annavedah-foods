@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
-import { Resend } from 'resend'
+import { resend } from '@/lib/resend'
 import { db } from '@/lib/db'
 import { orders } from '@/lib/schema'
 import { and, eq } from 'drizzle-orm'
@@ -26,8 +26,6 @@ import { getRazorpay } from '@/lib/razorpay'
  * Idempotency: identical to /api/razorpay/verify — same razorpay_order_id +
  * payment_id pair is a no-op; mismatched bindings are rejected.
  */
-
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: NextRequest) {
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET

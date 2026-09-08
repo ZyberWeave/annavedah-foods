@@ -227,14 +227,24 @@ const getCachedActiveProducts = unstable_cache(
     // environment pointing at an older database cannot silently drop it from
     // the public catalog. Any database record, including an inactive one,
     // suppresses the bundled fallback so the admin Hide control stays durable.
+    const maxDbId = databaseProducts.reduce((max, p) => Math.max(max, p.id), 0);
     const missingPhotographedProducts = staticProducts
       .filter(
         (product) =>
           isPubliclyListedProduct(product) &&
-          product.image.startsWith('/Products/lifestyle/') &&
+          (product.image.startsWith('/Products/lifestyle/') ||
+            product.category === 'Gift Boxes & Bundles' ||
+            product.isGift) &&
           !databaseSlugs.has(product.slug),
       )
-      .map(toPublicProduct);
+      .map((product, index) => {
+        const pub = toPublicProduct(product);
+        const safeId = pub.id > maxDbId ? pub.id : maxDbId + 1 + index;
+        return {
+          ...pub,
+          id: safeId,
+        };
+      });
 
     return [...databaseProducts, ...missingPhotographedProducts];
   },

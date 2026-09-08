@@ -188,6 +188,15 @@ export default function CartPage() {
               )
             })}
 
+            <div className="pt-2">
+              <Link
+                href="/products"
+                className="w-full py-3 px-4 border-2 border-dashed border-[#c9a45c] hover:border-[#8b1a1a] bg-white hover:bg-[#faf6f0] text-[#8b1a1a] rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-xs"
+              >
+                <Plus className="w-4 h-4" /> Add More Items
+              </Link>
+            </div>
+
             {upsells.length > 0 && (
               <div className="rounded-2xl border-2 border-[#e8ddd0] bg-white p-5">
                 <h3 className="text-lg font-bold text-[#2d1b15] mb-4">Complete your order</h3>
@@ -306,6 +315,15 @@ export default function CartPage() {
               >
                 Proceed to Checkout
                 <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full h-11 border-2 border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10 font-bold uppercase tracking-wider text-xs rounded-xl"
+                asChild
+              >
+                <Link href="/products">
+                  Continue Shopping
+                </Link>
               </Button>
               <p className="text-[11px] text-[#6b5347] text-center">Shipping &amp; taxes calculated at checkout.</p>
             </div>

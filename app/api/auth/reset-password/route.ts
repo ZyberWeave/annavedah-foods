@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, ensureDbSchema } from '@/lib/db';
 import { users, otps } from '@/lib/schema';
 import { eq, and, gt, desc } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
@@ -8,6 +8,7 @@ import { normalizeEmail } from '@/lib/normalize-email';
 
 export async function POST(req: Request) {
   try {
+    await ensureDbSchema();
     const { email: rawEmail, otp, newPassword } = await req.json();
     const email = normalizeEmail(rawEmail);
 

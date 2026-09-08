@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
-import { Resend } from 'resend';
 import { escapeHtml, getAdminEmails, isSafeHeaderValue } from '@/lib/email-utils';
 import { getClientIp, rateLimitOr429 } from '@/lib/rate-limit';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { getResendClient } from '@/lib/resend';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -41,71 +39,77 @@ export async function POST(req: Request) {
     const eReason = escapeHtml(reasonLabel);
     const eMessage = escapeHtml(message);
     const eFirst = escapeHtml(String(name).split(' ')[0] || 'customer');
+    const adminEmails = getAdminEmails();
 
-    // Notification to admin
-    await resend.emails.send({
-      from: 'Annavedah Foods <noreply@annavedahfoods.com>',
-      to: getAdminEmails(),
-      replyTo: email,
-      subject: `📩 ${reasonLabel} — ${name} (${ticketRef})`,
-      html: `
-        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 640px; margin: 0 auto; background:#fff; border:1px solid #e8ddd0; border-radius:12px; overflow:hidden;">
-          <div style="background:#8b1a1a; padding:20px 24px;">
-            <h2 style="color:#fff; margin:0; font-size: 22px;">New Contact Form Submission</h2>
-            <p style="color:#ffe4e6; margin:6px 0 0; font-size:13px;">Ref ${ticketRef} &middot; ${submittedAt}</p>
-          </div>
-          <div style="padding: 28px 32px;">
-            <div style="background:#fffbeb; border-left:4px solid #d97706; padding:12px 16px; border-radius:6px; margin-bottom:20px;">
-              <p style="margin:0; color:#78350f; font-size:13px; font-weight:600;">Reason: ${eReason}</p>
+    const resend = getResendClient();
+    if (resend) {
+      // Send notification to admin(s)
+      await resend.emails.send({
+        from: 'Annavedah Foods <noreply@annavedahfoods.com>',
+        to: adminEmails,
+        replyTo: email,
+        subject: `[Contact Form] ${eReason} — from ${eName}`,
+        html: `
+          <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 640px; margin: 0 auto; background:#fff; border:1px solid #e8ddd0; border-radius:12px; overflow:hidden;">
+            <div style="background:#8b1a1a; padding:20px 24px;">
+              <h2 style="color:#fff; margin:0; font-size: 22px;">New Contact Form Submission</h2>
+              <p style="color:#ffe4e6; margin:6px 0 0; font-size:13px;">Ref ${ticketRef} &middot; ${submittedAt}</p>
             </div>
-            <h3 style="color:#8b1a1a; border-bottom:1px solid #e8ddd0; padding-bottom:6px; margin-top:0;">Sender</h3>
-            <table style="width: 100%; border-collapse: collapse; font-size:14px;">
-              <tr><td style="padding:6px 0; color:#6b5347; width:120px;">Name</td><td style="padding:6px 0; color:#2d1b15; font-weight:600;">${eName}</td></tr>
-              <tr><td style="padding:6px 0; color:#6b5347;">Email</td><td style="padding:6px 0;"><a href="mailto:${encodeURIComponent(email)}" style="color:#8b1a1a;">${eEmail}</a></td></tr>
-              ${ePhone ? `<tr><td style="padding:6px 0; color:#6b5347;">Phone</td><td style="padding:6px 0;"><a href="tel:${encodeURIComponent(phone)}" style="color:#8b1a1a;">${ePhone}</a></td></tr>` : ''}
-              ${eCompany ? `<tr><td style="padding:6px 0; color:#6b5347;">Company</td><td style="padding:6px 0; color:#2d1b15;">${eCompany}</td></tr>` : ''}
-              <tr><td style="padding:6px 0; color:#6b5347;">Reason</td><td style="padding:6px 0; color:#2d1b15;">${eReason}</td></tr>
-              <tr><td style="padding:6px 0; color:#6b5347;">Submitted</td><td style="padding:6px 0; color:#2d1b15;">${submittedAt}</td></tr>
-            </table>
-            <h3 style="color:#8b1a1a; border-bottom:1px solid #e8ddd0; padding-bottom:6px; margin-top:24px;">Message</h3>
-            <div style="background:#faf6f0; border:1px solid #e8ddd0; border-radius:8px; padding:16px; color:#2d1b15; line-height:1.6; white-space:pre-line; font-size:14px;">${eMessage}</div>
-          </div>
-          <div style="background:#faf6f0; padding:14px; text-align:center; border-top:1px solid #e8ddd0;">
-            <p style="color:#a39189; font-size:12px; margin:0;">Sent via the contact form on annavedahfoods.com</p>
-          </div>
-        </div>
-      `,
-    });
-
-    // Confirmation to customer
-    await resend.emails.send({
-      from: 'Annavedah Foods <noreply@annavedahfoods.com>',
-      to: email,
-      subject: `We received your message — Ref ${ticketRef}`,
-      html: `
-        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background:#fff; border:1px solid #e8ddd0; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.04);">
-          <div style="background:#faf6f0; padding:36px 20px; text-align:center; border-bottom:2px solid #c9a45c;">
-            <img src="https://annavedahfoods.com/Logo.webp" alt="Annavedah Foods" style="height:54px; margin-bottom:14px;" />
-            <h1 style="color:#8b1a1a; margin:0; font-size:26px;">Thanks for writing in!</h1>
-            <p style="color:#6b5347; font-size:13px; margin:8px 0 0;">Reference ${ticketRef} &middot; ${submittedAt}</p>
-          </div>
-          <div style="padding:36px 32px;">
-            <p style="color:#2d1b15; font-size:16px; margin:0 0 12px;">Hi ${eFirst},</p>
-            <p style="color:#6b5347; font-size:15px; line-height:1.6;">Your message has reached our team and we'll personally get back to you. Here's what you sent us, just so you have a copy:</p>
-
-            <div style="background:#faf6f0; border:1px solid #e8ddd0; border-radius:10px; padding:16px; margin:20px 0;">
-              <p style="margin:0 0 6px; font-size:12px; color:#a39189; text-transform:uppercase; letter-spacing:0.5px;">Topic — ${eReason}</p>
-              <p style="margin:0; color:#2d1b15; line-height:1.6; white-space:pre-line; font-size:14px;">${eMessage}</p>
+            <div style="padding: 28px 32px;">
+              <div style="background:#fffbeb; border-left:4px solid #d97706; padding:12px 16px; border-radius:6px; margin-bottom:20px;">
+                <p style="margin:0; color:#78350f; font-size:13px; font-weight:600;">Reason: ${eReason}</p>
+              </div>
+              <h3 style="color:#8b1a1a; border-bottom:1px solid #e8ddd0; padding-bottom:6px; margin-top:0;">Sender</h3>
+              <table style="width: 100%; border-collapse: collapse; font-size:14px;">
+                <tr><td style="padding:6px 0; color:#6b5347; width:120px;">Name</td><td style="padding:6px 0; color:#2d1b15; font-weight:600;">${eName}</td></tr>
+                <tr><td style="padding:6px 0; color:#6b5347;">Email</td><td style="padding:6px 0;"><a href="mailto:${encodeURIComponent(email)}" style="color:#8b1a1a;">${eEmail}</a></td></tr>
+                ${ePhone ? `<tr><td style="padding:6px 0; color:#6b5347;">Phone</td><td style="padding:6px 0;"><a href="tel:${encodeURIComponent(phone)}" style="color:#8b1a1a;">${ePhone}</a></td></tr>` : ''}
+                ${eCompany ? `<tr><td style="padding:6px 0; color:#6b5347;">Company</td><td style="padding:6px 0; color:#2d1b15;">${eCompany}</td></tr>` : ''}
+                <tr><td style="padding:6px 0; color:#6b5347;">Reason</td><td style="padding:6px 0; color:#2d1b15;">${eReason}</td></tr>
+                <tr><td style="padding:6px 0; color:#6b5347;">Submitted</td><td style="padding:6px 0; color:#2d1b15;">${submittedAt}</td></tr>
+              </table>
+              <h3 style="color:#8b1a1a; border-bottom:1px solid #e8ddd0; padding-bottom:6px; margin-top:24px;">Message</h3>
+              <div style="background:#faf6f0; border:1px solid #e8ddd0; border-radius:8px; padding:16px; color:#2d1b15; line-height:1.6; white-space:pre-line; font-size:14px;">${eMessage}</div>
             </div>
+            <div style="background:#faf6f0; padding:14px; text-align:center; border-top:1px solid #e8ddd0;">
+              <p style="color:#a39189; font-size:12px; margin:0;">Sent via the contact form on annavedahfoods.com</p>
+            </div>
+          </div>
+        `,
+      });
 
-            <p style="color:#6b5347; font-size:14px; margin-top:24px;">Warm regards,<br/><strong style="color:#2d1b15;">Team Annavedah</strong></p>
+      // Confirmation to customer
+      await resend.emails.send({
+        from: 'Annavedah Foods <noreply@annavedahfoods.com>',
+        to: email,
+        subject: `We received your message — Ref ${ticketRef}`,
+        html: `
+          <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background:#fff; border:1px solid #e8ddd0; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.04);">
+            <div style="background:#faf6f0; padding:36px 20px; text-align:center; border-bottom:2px solid #c9a45c;">
+              <img src="https://annavedahfoods.com/Logo.webp" alt="Annavedah Foods" style="height:54px; margin-bottom:14px;" />
+              <h1 style="color:#8b1a1a; margin:0; font-size:26px;">Thanks for writing in!</h1>
+              <p style="color:#6b5347; font-size:13px; margin:8px 0 0;">Reference ${ticketRef} &middot; ${submittedAt}</p>
+            </div>
+            <div style="padding:36px 32px;">
+              <p style="color:#2d1b15; font-size:16px; margin:0 0 12px;">Hi ${eFirst},</p>
+              <p style="color:#6b5347; font-size:15px; line-height:1.6;">Your message has reached our team and we'll personally get back to you. Here's what you sent us, just so you have a copy:</p>
+
+              <div style="background:#faf6f0; border:1px solid #e8ddd0; border-radius:10px; padding:16px; margin:20px 0;">
+                <p style="margin:0 0 6px; font-size:12px; color:#a39189; text-transform:uppercase; letter-spacing:0.5px;">Topic — ${eReason}</p>
+                <p style="margin:0; color:#2d1b15; line-height:1.6; white-space:pre-line; font-size:14px;">${eMessage}</p>
+              </div>
+
+              <p style="color:#6b5347; font-size:14px; margin-top:24px;">Warm regards,<br/><strong style="color:#2d1b15;">Team Annavedah</strong></p>
+            </div>
+            <div style="background:#2d1b15; padding:18px; text-align:center;">
+              <p style="color:#a39189; font-size:11px; margin:0;">© ${new Date().getFullYear()} Annavedah Foods. All rights reserved.</p>
+            </div>
           </div>
-          <div style="background:#2d1b15; padding:18px; text-align:center;">
-            <p style="color:#a39189; font-size:11px; margin:0;">© ${new Date().getFullYear()} Annavedah Foods. All rights reserved.</p>
-          </div>
-        </div>
-      `,
-    });
+        `,
+      });
+    } else {
+      console.warn(`[CONTACT] RESEND_API_KEY not configured. Message from ${email}: ${message}`);
+    }
 
     return NextResponse.json({ message: 'Message sent successfully' });
   } catch (error) {

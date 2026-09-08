@@ -1,13 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Loader2, Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { validateEmail, validateRequired } from '@/lib/validations';
-
-import { useEffect } from 'react';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -19,7 +18,12 @@ export default function LoginPage() {
 
   useEffect(() => {
     const oauthError = new URLSearchParams(window.location.search).get('oauth_error');
-    if (oauthError) queueMicrotask(() => setError(oauthError));
+    if (oauthError) {
+      queueMicrotask(() => {
+        setError(oauthError);
+        toast.error(oauthError);
+      });
+    }
 
     fetch('/api/auth/me', { cache: 'no-store' })
       .then((response) => {
@@ -77,7 +81,7 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to login');
+        throw new Error(data.error || 'Incorrect email or password');
       }
 
       window.dispatchEvent(new Event('auth-changed'));
@@ -91,7 +95,9 @@ export default function LoginPage() {
         router.push('/dashboard');
       }
     } catch (err: any) {
-      setError(err.message);
+      const message = err.message || 'Incorrect email or password';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -139,7 +145,9 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => {
-              setError("Facebook sign-in is not configured. Please use your email and password.");
+              const msg = "Facebook sign-in is not configured. Please use your email and password.";
+              setError(msg);
+              toast.error(msg);
             }}
             className="w-full bg-[#1877F2] hover:bg-[#166FE5] text-white font-bold text-xs py-3.5 rounded-xl shadow-sm flex items-center justify-center gap-3 transition-all cursor-pointer"
           >
@@ -157,6 +165,17 @@ export default function LoginPage() {
           </div>
         </div>
 
+        {/* Error notification banner */}
+        {error && (
+          <div
+            role="alert"
+            className="mb-6 p-4 rounded-xl text-sm flex items-center gap-3 bg-red-50 border border-red-200 text-red-600 animate-in fade-in duration-200"
+          >
+            <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-500" />
+            <span className="font-medium">{error}</span>
+          </div>
+        )}
+
         <form onSubmit={handleLogin} className="space-y-5" noValidate>
           <div>
             <label className="block text-sm font-semibold text-[#2d1b15] mb-2">Email Address</label>
@@ -166,6 +185,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
+                  if (error) setError('');
                   if (touched.email) validateField('email', e.target.value);
                 }}
                 onBlur={() => handleBlur('email')}
@@ -195,6 +215,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
+                  if (error) setError('');
                   if (touched.password) validateField('password', e.target.value);
                 }}
                 onBlur={() => handleBlur('password')}

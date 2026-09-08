@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { products, type Product } from '@/lib/content';
+import { products as fallbackProducts, type Product } from '@/lib/content';
+import { useProductsData } from '@/components/products-context';
 import { useCart } from '@/components/cart-context';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { validateEmail } from '@/lib/validations';
@@ -52,6 +53,7 @@ const PRE_CURATED_GIFTS = [
 
 export default function GiftingPage() {
   const { add } = useCart();
+  const { products: contextProducts } = useProductsData();
   const [selectedBox, setSelectedBox] = useState(GIFT_PACKAGING_OPTIONS[0]);
   const [customItems, setCustomItems] = useState<Product[]>([]);
   const [customNote, setCustomNote] = useState('');
@@ -259,7 +261,18 @@ export default function GiftingPage() {
                   </div>
 
                   <button
-                    onClick={() => add(products[0]?.id || 1)}
+                    onClick={() => {
+                      const matchedProduct =
+                        contextProducts.find((p) => p.slug === g.slug) ||
+                        fallbackProducts.find((p) => p.slug === g.slug);
+                      if (matchedProduct) {
+                        const pack = matchedProduct.packPrices?.[0] || {
+                          size: '1 Box',
+                          price: matchedProduct.price || g.price,
+                        };
+                        add(matchedProduct.id, pack);
+                      }
+                    }}
                     className="bg-[#2d1b15] hover:bg-[#8b1a1a] text-white font-extrabold text-xs px-5 py-3 rounded-xl uppercase tracking-wider transition-all"
                   >
                     ADD TO CART

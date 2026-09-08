@@ -4,12 +4,10 @@ import { db } from '@/lib/db';
 import { refundRequests, users, orders } from '@/lib/schema';
 import { and, eq, inArray } from 'drizzle-orm';
 import { put } from '@vercel/blob';
-import { Resend } from 'resend';
+import { resend } from '@/lib/resend';
 import { escapeHtml, getAdminEmails, isSafeHeaderValue } from '@/lib/email-utils';
 import { rateLimitOr429 } from '@/lib/rate-limit';
 import { userOwnsOrder } from '@/lib/order-records';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: Request) {
   const session = await verifySession();

@@ -1,19 +1,19 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, ensureDbSchema } from '@/lib/db';
 import { users, otps } from '@/lib/schema';
 import { eq, and, gt } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { createSession } from '@/lib/auth';
-import { Resend } from 'resend';
 import { getClientIp, rateLimitOr429 } from '@/lib/rate-limit';
 import { escapeHtml } from '@/lib/email-utils';
 import { claimGuestOrders } from '@/lib/order-records';
 import { normalizeEmail } from '@/lib/normalize-email';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { getResendClient } from '@/lib/resend';
 
 export async function POST(req: Request) {
   try {
+    await ensureDbSchema();
+    const resend = getResendClient();
     const { name, email: rawEmail, password, phone, otp } = await req.json();
     const email = normalizeEmail(rawEmail);
 
@@ -50,8 +50,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Password must include a number' }, { status: 400 });
     }
 
-    const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
-    if (existingUser.length > 0) {
+    const [existingUser] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
+    if (existingUser) {
       return NextResponse.json({ error: 'User already exists' }, { status: 400 });
     }
 
@@ -69,37 +69,45 @@ export async function POST(req: Request) {
       });
 
       try {
-        await resend.emails.send({
-          from: 'Annavedah Foods <support@annavedahfoods.com>',
-          to: email,
-          subject: generatedOtp + ' is your Annavedah Foods verification code',
-          html: '<div style="font-family: \'Helvetica Neue\', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e8ddd0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">' +
-            '<div style="background-color: #faf6f0; padding: 32px 20px; text-align: center; border-bottom: 2px solid #c9a45c;">' +
-            '<img src="https://annavedahfoods.com/Logo.webp" alt="Annavedah Foods Logo" style="height: 60px; width: auto; margin-bottom: 16px;" />' +
-            '<h1 style="color: #8b1a1a; margin: 0; font-size: 28px; letter-spacing: -0.5px;">Verify Your Email</h1>' +
-            '<p style="color: #6b5347; font-size: 13px; margin: 8px 0 0;">Final step to activate your account</p>' +
-            '</div>' +
-            '<div style="padding: 40px 32px; text-align: center;">' +
-            '<p style="color: #2d1b15; font-size: 16px; line-height: 1.6; margin-top: 0;">Hi <strong>' + escapeHtml(name) + '</strong>,</p>' +
-            '<p style="color: #6b5347; font-size: 15px; line-height: 1.6;">Welcome to Annavedah Foods! Enter the 6-digit code below on the verification screen to finish creating your account.</p>' +
-            '<div style="background-color: #faf6f0; padding: 28px 20px; border-radius: 12px; margin: 28px auto; max-width: 320px; border: 1px dashed #c9a45c;">' +
-              '<p style="margin:0 0 8px; color:#a39189; font-size:11px; letter-spacing:1px; text-transform:uppercase;">Your verification code</p>' +
-              '<div style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #2d1b15;">' + generatedOtp + '</div>' +
-              '<p style="margin:10px 0 0; color:#a39189; font-size:12px;">Expires in 10 minutes</p>' +
-            '</div>' +
-            '<div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:14px 16px; text-align:left; font-size:13px; color:#78350f; line-height:1.6;">' +
-              '<strong>🔒 Security tips</strong><br/>' +
-              '• Annavedah Foods will never ask you for this code over phone, chat, or email.<br/>' +
-              '• Codes are valid for one use only and expire in 10 minutes.<br/>' +
-              '• If you didn\'t start signing up, ignore this email — your address won\'t be used.' +
-            '</div>' +
-            '<p style="color: #6b5347; font-size: 13px; margin: 24px 0 0;">Need help? Reply to this email or write to <a href="mailto:support@annavedahfoods.com" style="color:#8b1a1a;">support@annavedahfoods.com</a>.</p>' +
-            '</div>' +
-            '<div style="background-color: #2d1b15; padding: 24px; text-align: center;">' +
-            '<p style="color: #e8ddd0; font-size: 12px; margin: 0 0 4px;">Annavedah Foods &middot; support@annavedahfoods.com</p>' +
-            '<p style="color: #a39189; font-size: 11px; margin: 0;">© ' + new Date().getFullYear() + ' Annavedah Foods. All rights reserved.</p>' +
-            '</div></div>',
-        });
+        if (resend) {
+          const { error: sendError } = await resend.emails.send({
+            from: 'Annavedah Foods <support@annavedahfoods.com>',
+            to: email,
+            subject: generatedOtp + ' is your Annavedah Foods verification code',
+            html: '<div style="font-family: \'Helvetica Neue\', Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e8ddd0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.04);">' +
+              '<div style="background-color: #faf6f0; padding: 32px 20px; text-align: center; border-bottom: 2px solid #c9a45c;">' +
+              '<img src="https://annavedahfoods.com/Logo.webp" alt="Annavedah Foods Logo" style="height: 60px; width: auto; margin-bottom: 16px;" />' +
+              '<h1 style="color: #8b1a1a; margin: 0; font-size: 28px; letter-spacing: -0.5px;">Verify Your Email</h1>' +
+              '<p style="color: #6b5347; font-size: 13px; margin: 8px 0 0;">Final step to activate your account</p>' +
+              '</div>' +
+              '<div style="padding: 40px 32px; text-align: center;">' +
+              '<p style="color: #2d1b15; font-size: 16px; line-height: 1.6; margin-top: 0;">Hi <strong>' + escapeHtml(name) + '</strong>,</p>' +
+              '<p style="color: #6b5347; font-size: 15px; line-height: 1.6;">Welcome to Annavedah Foods! Enter the 6-digit code below on the verification screen to finish creating your account.</p>' +
+              '<div style="background-color: #faf6f0; padding: 28px 20px; border-radius: 12px; margin: 28px auto; max-width: 320px; border: 1px dashed #c9a45c;">' +
+                '<p style="margin:0 0 8px; color:#a39189; font-size:11px; letter-spacing:1px; text-transform:uppercase;">Your verification code</p>' +
+                '<div style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #2d1b15;">' + generatedOtp + '</div>' +
+                '<p style="margin:10px 0 0; color:#a39189; font-size:12px;">Expires in 10 minutes</p>' +
+              '</div>' +
+              '<div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:14px 16px; text-align:left; font-size:13px; color:#78350f; line-height:1.6;">' +
+                '<strong>🔒 Security tips</strong><br/>' +
+                '• Annavedah Foods will never ask you for this code over phone, chat, or email.<br/>' +
+                '• Codes are valid for one use only and expire in 10 minutes.<br/>' +
+                '• If you didn\'t start signing up, ignore this email — your address won\'t be used.' +
+              '</div>' +
+              '<p style="color: #6b5347; font-size: 13px; margin: 24px 0 0;">Need help? Reply to this email or write to <a href="mailto:support@annavedahfoods.com" style="color:#8b1a1a;">support@annavedahfoods.com</a>.</p>' +
+              '</div>' +
+              '<div style="background-color: #2d1b15; padding: 24px; text-align: center;">' +
+              '<p style="color: #e8ddd0; font-size: 12px; margin: 0 0 4px;">Annavedah Foods &middot; support@annavedahfoods.com</p>' +
+              '<p style="color: #a39189; font-size: 11px; margin: 0;">© ' + new Date().getFullYear() + ' Annavedah Foods. All rights reserved.</p>' +
+              '</div></div>',
+          });
+          if (sendError) {
+            console.error('Failed to send OTP email (Resend error):', sendError);
+            return NextResponse.json({ error: sendError.message || 'Failed to send verification email' }, { status: 500 });
+          }
+        } else {
+          console.warn(`[AUTH] RESEND_API_KEY not configured. Generated OTP for ${email}: ${generatedOtp}`);
+        }
       } catch (emailError) {
         console.error('Failed to send OTP email:', emailError);
         return NextResponse.json({ error: 'Failed to send verification email' }, { status: 500 });
@@ -144,7 +152,8 @@ export async function POST(req: Request) {
 
     // Send Welcome Email via Resend
     try {
-      await resend.emails.send({
+      if (resend) {
+        await resend.emails.send({
         from: 'Annavedah Foods <support@annavedahfoods.com>',
         to: newUser.email,
         subject: 'Welcome to Annavedah Foods, ' + newUser.name.split(' ')[0] + '! 🌾',
@@ -188,14 +197,23 @@ export async function POST(req: Request) {
           '<p style="color: #e8ddd0; font-size: 12px; margin: 0 0 4px;">Annavedah Foods &middot; support@annavedahfoods.com</p>' +
           '<p style="color: #a39189; font-size: 11px; margin: 0;">© ' + new Date().getFullYear() + ' Annavedah Foods. All rights reserved.</p>' +
           '</div></div>',
-      });
+        });
+      }
     } catch (emailError) {
       console.error('Failed to send welcome email:', emailError);
     }
 
     return NextResponse.json({ user: newUser }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Registration error:', error);
+    const message = error?.message || '';
+    const causeMessage = error?.cause?.message || '';
+    if (message.includes('DATABASE_URL is not configured') || causeMessage.includes('DATABASE_URL is not configured')) {
+      return NextResponse.json(
+        { error: 'Database connection is not configured. Please set DATABASE_URL in .env.local.' },
+        { status: 503 }
+      );
+    }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

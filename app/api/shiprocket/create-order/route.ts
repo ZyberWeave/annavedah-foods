@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkServiceability, createShiprocketOrder, type ShiprocketOrderPayload } from '@/lib/shiprocket'
-import { Resend } from 'resend'
+import { resend } from '@/lib/resend'
 import { findOrderByOrderId, persistOrderRecord, userOwnsOrder } from '@/lib/order-records'
 import { verifySession } from '@/lib/auth'
 import { escapeHtml, getAdminEmails, isSafeHeaderValue, validateOrderItems } from '@/lib/email-utils'
@@ -13,8 +13,6 @@ import { PAID_ORDER_STATUSES } from '@/lib/order-status'
 import { isTestServiceablePincode } from '@/lib/serviceability-overrides'
 import { deductInventoryForOrder, restoreInventoryForRefund } from '@/lib/inventory'
 import { GST_PERCENT } from '@/lib/tax'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: NextRequest) {
   try {
