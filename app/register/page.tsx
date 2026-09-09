@@ -133,14 +133,13 @@ export default function RegisterPage() {
 
       const params = new URLSearchParams(window.location.search);
       const redirectPath = params.get('redirect');
-      if (redirectPath?.startsWith('/') && !redirectPath.startsWith('//') && !redirectPath.includes('\\')) {
-        router.push(redirectPath);
-      } else {
-        router.push('/dashboard');
-      }
+      const targetUrl = (redirectPath?.startsWith('/') && !redirectPath.startsWith('//') && !redirectPath.includes('\\'))
+        ? redirectPath
+        : '/dashboard';
+
+      window.location.assign(targetUrl);
     } catch (err: any) {
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   };

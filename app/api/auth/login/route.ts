@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db, ensureDbSchema } from '@/lib/db';
+import { db } from '@/lib/db';
 import { users } from '@/lib/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
@@ -9,8 +9,6 @@ import { normalizeEmail } from '@/lib/normalize-email';
 
 export async function POST(req: Request) {
   try {
-    await ensureDbSchema();
-
     const { email: rawEmail, password } = await req.json();
     const email = normalizeEmail(rawEmail);
 
@@ -30,7 +28,14 @@ export async function POST(req: Request) {
     if (emailBlock) return emailBlock;
 
     const [user] = await db
-      .select({ id: users.id, name: users.name, email: users.email, password: users.password, role: users.role })
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        password: users.password,
+        role: users.role,
+        passwordChangedAt: users.passwordChangedAt,
+      })
       .from(users)
       .where(eq(users.email, email))
       .limit(1);
@@ -45,7 +50,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Incorrect email or password' }, { status: 401 });
     }
 
-    await createSession(user.id, user.role);
+    await createSession(user.id, user.role, user.passwordChangedAt);
 
     return NextResponse.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role } }, { status: 200 });
   } catch (error: any) {

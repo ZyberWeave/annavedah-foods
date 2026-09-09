@@ -27,7 +27,7 @@ export default function LoginPage() {
 
     fetch('/api/auth/me', { cache: 'no-store' })
       .then((response) => {
-        if (response.ok) router.replace('/dashboard');
+        if (response.ok) window.location.assign('/dashboard');
       })
       .catch(() => {});
   }, [router]);
@@ -71,14 +71,20 @@ export default function LoginPage() {
 
     setLoading(true);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
+        signal: controller.signal,
       });
 
-      const data = await res.json();
+      clearTimeout(timeoutId);
+
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         throw new Error(data.error || 'Incorrect email or password');
@@ -86,19 +92,21 @@ export default function LoginPage() {
 
       window.dispatchEvent(new Event('auth-changed'));
 
-      // All users go to dashboard from the regular login
+      // Full-page navigation guarantees fresh cookie recognition across middleware and RSC
       const params = new URLSearchParams(window.location.search);
       const redirectPath = params.get('redirect');
-      if (redirectPath?.startsWith('/') && !redirectPath.startsWith('//') && !redirectPath.includes('\\')) {
-        router.push(redirectPath);
-      } else {
-        router.push('/dashboard');
-      }
+      const targetUrl = (redirectPath?.startsWith('/') && !redirectPath.startsWith('//') && !redirectPath.includes('\\'))
+        ? redirectPath
+        : '/dashboard';
+
+      window.location.assign(targetUrl);
     } catch (err: any) {
-      const message = err.message || 'Incorrect email or password';
+      clearTimeout(timeoutId);
+      const message = err.name === 'AbortError'
+        ? 'Login request timed out. Please check your internet connection and try again.'
+        : (err.message || 'Incorrect email or password');
       setError(message);
       toast.error(message);
-    } finally {
       setLoading(false);
     }
   };

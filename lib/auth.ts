@@ -25,18 +25,27 @@ export async function decrypt(session: string | undefined = '') {
   }
 }
 
-export async function createSession(userId: number, role: string) {
+export async function createSession(userId: number, role: string, passwordChangedAt?: Date | null) {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
   // Pin the session to the current passwordChangedAt stamp on the user row.
   // verifySession() compares this against the latest DB value, so any
   // password reset / change invalidates every previously issued cookie.
-  const [u] = await db
-    .select({ pwc: users.passwordChangedAt })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-  const pwc = u?.pwc ? new Date(u.pwc).getTime() : 0;
+  let pwc = 0;
+  if (passwordChangedAt !== undefined) {
+    pwc = passwordChangedAt ? new Date(passwordChangedAt).getTime() : 0;
+  } else {
+    try {
+      const [u] = await db
+        .select({ pwc: users.passwordChangedAt })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+      pwc = u?.pwc ? new Date(u.pwc).getTime() : 0;
+    } catch {
+      pwc = 0;
+    }
+  }
 
   const session = await encrypt({ userId, role, expiresAt, pwc });
 

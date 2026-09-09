@@ -37,11 +37,18 @@ export async function ensureDbSchema(): Promise<void> {
     schemaEnsuredPromise = (async () => {
       for (const stmt of DDL_STATEMENTS) {
         try {
-          if (typeof (sql as any).query === 'function') {
-            await (sql as any).query(stmt);
-          } else if (typeof sql === 'function') {
-            await (sql as any)([stmt]);
-          }
+          const runStmt = async () => {
+            if (typeof (sql as any).query === 'function') {
+              await (sql as any).query(stmt);
+            } else if (typeof sql === 'function') {
+              await (sql as any)([stmt]);
+            }
+          };
+          // 3-second timeout per DDL statement to prevent connection stalls
+          await Promise.race([
+            runStmt(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('DDL timeout')), 3000)),
+          ]);
         } catch {
           // Non-blocking: continue to next statement if one already exists or fails
         }
