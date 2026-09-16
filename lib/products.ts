@@ -164,6 +164,10 @@ function toPublicProduct(product: ProductWithCosts): Product {
     return { ...sanitizedProduct, name: 'Semi-Polished Indrayani Rice' };
   }
 
+  if (sanitizedProduct.slug === 'mango-powder') {
+    return { ...sanitizedProduct, name: 'Mango powder' };
+  }
+
   return sanitizedProduct;
 }
 
