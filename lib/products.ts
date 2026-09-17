@@ -30,6 +30,18 @@ const BUNDLED_PRODUCT_IMAGE_OVERRIDES: Record<string, string> = {
   'mango-powder': '/Products/dried powders/Mango powder.png',
 };
 
+// This catalogue row was originally entered with the green-mung slug, even
+// though the photographed pack is Pivala Mung. Keep the public catalogue
+// accurate while the existing orders and admin references continue to use the
+// stable database slug.
+const PUBLIC_PRODUCT_OVERRIDES: Record<string, Partial<Pick<Product, 'name' | 'nameHindi' | 'localName'>>> = {
+  'hirve-mung': {
+    name: 'Pivala Mung',
+    nameHindi: 'Pivala Mung',
+    localName: 'Gawran Pivale Moog',
+  },
+};
+
 function isPubliclyListedProduct(product: Pick<Product, 'slug' | 'category'>) {
   if (PUBLICLY_RETIRED_CATEGORIES.has(product.category)) return false;
   if (PUBLICLY_RETIRED_SLUGS.has(product.slug)) return false;
@@ -168,7 +180,10 @@ function toPublicProduct(product: ProductWithCosts): Product {
     return { ...sanitizedProduct, name: 'Mango powder' };
   }
 
-  return sanitizedProduct;
+  return {
+    ...sanitizedProduct,
+    ...PUBLIC_PRODUCT_OVERRIDES[sanitizedProduct.slug],
+  };
 }
 
 function mapRowToAdminProduct(row: ProductRow): AdminProduct {

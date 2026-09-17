@@ -22,5 +22,9 @@ export type ProductDetails = {
 const productDetails = productDetailsData as Record<string, ProductDetails>
 
 export function getProductDetails(slug: string): ProductDetails | null {
-  return productDetails[slug] ?? null
+  // The legacy `hirve-mung` catalogue slug points to the photographed Pivala
+  // Mung pack. Use the matching editorial details so the product name and
+  // copy never contradict the packet shown to customers.
+  const canonicalSlug = slug === 'hirve-mung' ? 'pivala-mung' : slug
+  return productDetails[canonicalSlug] ?? null
 }

@@ -5,7 +5,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import type { Product } from '@/lib/content'
-import { categories } from '@/lib/public-content'
 import { useCart } from '@/components/cart-context'
 import { useProductsData } from '@/components/products-context'
 import { ShoppingCart, Check, Search, SlidersHorizontal, X, ArrowUpDown, ChevronDown } from 'lucide-react'
@@ -161,6 +160,14 @@ export default function ProductsPage() {
   // Flash sale countdown — 48 hours from now
   const [flashEnd] = useState(() => new Date(Date.now() + 48 * 3600 * 1000))
 
+  // Only show categories that can currently return a product. This prevents a
+  // stale category label (for example, Snacks before stock is added) from
+  // sending visitors to an empty catalogue state.
+  const availableCategories = useMemo(
+    () => ['All', ...Array.from(new Set(products.map((product) => product.category)))],
+    [products],
+  )
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const hasUrlParams = params.has('search') || params.has('category') || params.has('tag') || params.has('sort')
@@ -169,7 +176,7 @@ export default function ProductsPage() {
       const searchParam = params.get('search')
       if (searchParam) setSearchQuery(searchParam)
       const categoryParam = params.get('category')
-      if (categoryParam && categories.includes(categoryParam)) setSelectedCategory(categoryParam)
+      if (categoryParam) setSelectedCategory(categoryParam)
       const tagParam = params.get('tag')
       if (tagParam) setActiveTags(tagParam.split(',').filter(Boolean))
       const sortParam = params.get('sort') as SortKey | null
@@ -192,6 +199,12 @@ export default function ProductsPage() {
     }
     setIsRestored(true)
   }, [])
+
+  useEffect(() => {
+    if (isRestored && !availableCategories.includes(selectedCategory)) {
+      setSelectedCategory('All')
+    }
+  }, [availableCategories, isRestored, selectedCategory])
 
   useEffect(() => {
     if (!isRestored) return
@@ -234,7 +247,7 @@ export default function ProductsPage() {
         prices.some((price) => price >= currentMinPrice && price <= currentMaxPrice)
       const matchesTags =
         activeTags.length === 0 ||
-        activeTags.some((tag) => product.benefits.some((b) => b.toLowerCase().includes(tag.toLowerCase())))
+        activeTags.every((tag) => product.benefits.some((b) => b.toLowerCase().includes(tag.toLowerCase())))
       return matchesCategory && matchesSearch && matchesPrice && matchesTags
     })
 
@@ -312,7 +325,7 @@ export default function ProductsPage() {
       <div>
         <h3 className="text-xl font-bold text-[#2d1b15] mb-4">Categories</h3>
         <div className="flex flex-col gap-2">
-          {categories.map((category) => (
+          {availableCategories.map((category) => (
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
@@ -451,7 +464,7 @@ export default function ProductsPage() {
 
               {/* Category quick-links */}
               <div className="flex flex-wrap gap-2 pt-2">
-                {['Grains', 'Pulses', 'Powders', 'Essentials', 'Snacks'].map((cat) => (
+                {availableCategories.filter((category) => category !== 'All').map((cat) => (
                   <button
                     key={cat}
                     onClick={() => { setSelectedCategory(cat); document.getElementById('shop-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}
