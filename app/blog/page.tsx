@@ -96,10 +96,9 @@ export default function BlogIndexPage() {
           )}
         </div>
 
-        {/* Blog grid — alternating card sizes */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-auto">
-          {filtered.map((post, index) => {
-            const isFeatured = index === 0 && !searchQuery // first card spans 2 cols
+        {/* Consistent card sizing keeps each row aligned. */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch auto-rows-fr">
+          {filtered.map((post) => {
             const readTime = Math.max(2, Math.ceil(post.body.join(' ').split(' ').length / 180))
             const formattedDate = new Date(post.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 
@@ -107,12 +106,12 @@ export default function BlogIndexPage() {
               <Link
                 key={post.slug}
                 href={`/blog/${post.slug}`}
-                className={`group self-start flex flex-col rounded-3xl overflow-hidden border-2 border-transparent hover:border-[#c9a45c] transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${isFeatured ? 'md:col-span-2' : ''}`}
+                className="group h-full flex flex-col rounded-3xl overflow-hidden border-2 border-transparent hover:border-[#c9a45c] transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
                 style={{ background: '#fff' }}
               >
                 {/* Blog image */}
                 {post.image && (
-                  <div className={`relative w-full shrink-0 overflow-hidden ${isFeatured ? 'h-64 md:h-80' : 'h-48'}`}>
+                  <div className="relative w-full h-48 shrink-0 overflow-hidden">
                     <Image
                       src={post.image}
                       alt={post.title}
@@ -124,7 +123,7 @@ export default function BlogIndexPage() {
                 )}
 
                 {/* Card content */}
-                <div className="relative px-7 pt-8 pb-6 flex flex-col">
+                <div className="relative px-7 pt-6 pb-6 flex flex-col flex-1">
                   {/* Reading time + date */}
                   <div className="flex items-center justify-between mb-5">
                     <span className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#b0a090' }}>
@@ -137,7 +136,7 @@ export default function BlogIndexPage() {
 
                   {/* Title */}
                   <h2
-                    className={`font-bold leading-snug mb-3 group-hover:text-[#8b1a1a] transition-colors ${isFeatured ? 'text-3xl md:text-4xl' : 'text-xl'}`}
+                    className="min-h-14 line-clamp-2 text-xl font-bold leading-snug mb-3 group-hover:text-[#8b1a1a] transition-colors"
                     style={{ color: '#2d1b15' }}
                   >
                     {post.title}
@@ -145,7 +144,7 @@ export default function BlogIndexPage() {
 
                   {/* Summary */}
                   <p
-                    className="text-sm leading-relaxed mb-5"
+                    className="min-h-10 line-clamp-2 text-sm leading-relaxed mb-5"
                     style={{ color: '#6b5347' }}
                   >
                     {post.summary}
@@ -165,7 +164,7 @@ export default function BlogIndexPage() {
                   </div>
 
                   {/* CTA arrow */}
-                  <div className="flex items-center gap-2 text-sm font-bold" style={{ color: '#8b1a1a' }}>
+                  <div className="mt-auto flex items-center gap-2 text-sm font-bold" style={{ color: '#8b1a1a' }}>
                     Read article
                     <svg
                       className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1.5"

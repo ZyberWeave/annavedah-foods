@@ -68,7 +68,7 @@ function PLPProductCard({ product, add }: { product: Product; add: (id: number, 
             alt={product.name}
             fill
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-contain p-3 md:p-6 transition-all duration-500 group-hover:scale-105 drop-shadow-xl group-hover:drop-shadow-2xl"
+            className="object-contain p-3 md:p-6 transition-[filter] duration-500 drop-shadow-xl group-hover:drop-shadow-2xl"
           />
         </Link>
       </div>

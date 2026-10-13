@@ -299,7 +299,7 @@ function PLPProductCard({ product, index, add }: any) {
       }}
     >
       {/* Product Image */}
-      <div className="relative aspect-square overflow-hidden bg-[url('/product-bg.webp')] bg-cover bg-center border-b border-[#e8ddd0] group-hover:border-[#c9a45c] transition-colors duration-300">
+      <div className="relative aspect-[4/3] overflow-hidden bg-[url('/product-bg.webp')] bg-cover bg-center border-b border-[#e8ddd0] group-hover:border-[#c9a45c] transition-colors duration-300">
         <Link href={`/products/${product.slug}`} className="block h-full w-full">
           <motion.div
             className="absolute inset-0"
@@ -311,7 +311,7 @@ function PLPProductCard({ product, index, add }: any) {
               alt={product.name}
               fill
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-contain p-3 md:p-6 drop-shadow-xl transition-all duration-500 group-hover:drop-shadow-2xl"
+              className="object-contain p-3 md:p-6 drop-shadow-xl transition-[filter] duration-500 group-hover:drop-shadow-2xl"
             />
           </motion.div>
         </Link>

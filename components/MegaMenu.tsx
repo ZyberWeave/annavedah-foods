@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronDown } from 'lucide-react'
-import { categories, banners } from '@/lib/public-content'
+import { banners } from '@/lib/public-content'
 import { useProductsData } from '@/components/products-context'
 
 export default function MegaMenu() {
@@ -30,7 +30,7 @@ export default function MegaMenu() {
     closeTimer.current = setTimeout(() => setOpen(false), 150)
   }
 
-  const realCategories = categories.filter((c) => c !== 'All')
+  const realCategories = Array.from(new Set(products.map((product) => product.category)))
 
   return (
     <div className="relative" onMouseEnter={enter} onMouseLeave={leave}>
