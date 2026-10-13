@@ -79,6 +79,12 @@ export async function POST(req: Request) {
       });
 
       // Confirmation to customer
+      // Email clients need an absolute, publicly reachable image URL. VERCEL_URL
+      // serves the deployed public asset even when the custom domain is misconfigured.
+      const emailLogoUrl = process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}/Logo.webp`
+        : 'https://annavedah-foods-l3vr.vercel.app/Logo.webp'
+
       await resend.emails.send({
         from: 'Annavedah Foods <noreply@annavedahfoods.com>',
         to: email,
@@ -86,7 +92,7 @@ export async function POST(req: Request) {
         html: `
           <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background:#fff; border:1px solid #e8ddd0; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.04);">
             <div style="background:#faf6f0; padding:36px 20px; text-align:center; border-bottom:2px solid #c9a45c;">
-              <img src="https://annavedahfoods.com/Logo.webp" alt="Annavedah Foods" style="height:54px; margin-bottom:14px;" />
+              <img src="${emailLogoUrl}" alt="Annavedah Foods" width="54" height="54" style="display:block; width:54px; height:54px; object-fit:contain; margin:0 auto 14px;" />
               <h1 style="color:#8b1a1a; margin:0; font-size:26px;">Thanks for writing in!</h1>
               <p style="color:#6b5347; font-size:13px; margin:8px 0 0;">Reference ${ticketRef} &middot; ${submittedAt}</p>
             </div>
