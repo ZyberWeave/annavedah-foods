@@ -299,11 +299,11 @@ function PLPProductCard({ product, index, add }: any) {
       }}
     >
       {/* Product Image */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-[url('/product-bg.webp')] bg-cover bg-center border-b border-[#e8ddd0] group-hover:border-[#c9a45c] transition-colors duration-300">
+      <div className="relative aspect-[3/2] overflow-hidden bg-[url('/product-bg.webp')] bg-cover bg-center border-b border-[#e8ddd0] group-hover:border-[#c9a45c] transition-colors duration-300">
         <Link href={`/products/${product.slug}`} className="block h-full w-full">
           <motion.div
             className="absolute inset-0"
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.04 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
           >
             <Image
@@ -311,7 +311,7 @@ function PLPProductCard({ product, index, add }: any) {
               alt={product.name}
               fill
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-contain p-3 md:p-6 drop-shadow-xl transition-[filter] duration-500 group-hover:drop-shadow-2xl"
+              className="object-contain p-4 md:p-8 drop-shadow-xl transition-[filter] duration-500 group-hover:drop-shadow-2xl"
             />
           </motion.div>
         </Link>
@@ -339,7 +339,7 @@ function PLPProductCard({ product, index, add }: any) {
 
       {/* Product Info */}
       <motion.div 
-        className="p-3 md:p-6 space-y-2 md:space-y-4 flex-1 flex flex-col"
+        className="p-3 md:p-5 space-y-2 md:space-y-3 flex-1 flex flex-col"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: index * 0.05 }}
@@ -354,12 +354,12 @@ function PLPProductCard({ product, index, add }: any) {
             {product.category}
           </motion.span>
           <Link href={`/products/${product.slug}`} className="block group-hover:text-[#8b1a1a] transition-colors">
-            <h3 className="min-h-10 md:min-h-[3.75rem] text-sm sm:text-base md:text-2xl leading-tight font-bold text-[#2d1b15] group-hover:text-[#8b1a1a] line-clamp-2">{product.name}</h3>
+            <h3 className="min-h-10 md:min-h-12 text-sm sm:text-base md:text-2xl leading-tight font-bold text-[#2d1b15] group-hover:text-[#8b1a1a] line-clamp-2">{product.name}</h3>
           </Link>
           {product.nameHindi !== product.name && <p className="text-xs md:text-sm text-[#6b5347] line-clamp-1">{product.nameHindi}</p>}
         </div>
         
-        <p className="hidden md:block text-[#6b5347] text-sm leading-relaxed flex-1">{product.description}</p>
+        <p className="hidden md:block text-[#6b5347] text-sm leading-relaxed line-clamp-2 flex-1">{product.description}</p>
 
         {product.packPrices.length > 0 && (
           <div className="flex flex-wrap gap-1 md:gap-2 pt-1 md:pt-2">
@@ -393,7 +393,7 @@ function PLPProductCard({ product, index, add }: any) {
         >
           {currentPrice > 0 ? (
             <div className="flex items-baseline gap-2">
-              <span className="text-xl md:text-3xl font-bold text-[#8b1a1a]">₹{currentPrice}</span>
+              <span className="text-xl md:text-2xl font-bold text-[#8b1a1a]">₹{currentPrice}</span>
             </div>
           ) : (
             <span className="text-[11px] md:text-sm font-semibold text-amber-700 bg-amber-100 px-2 md:px-3 py-1 rounded-full">
@@ -402,13 +402,13 @@ function PLPProductCard({ product, index, add }: any) {
           )}
         </motion.div>
         
-        <div className="flex gap-1 md:gap-2 pt-3 md:pt-4 mt-auto border-t border-[#e8ddd0]/50">
-          <Button asChild variant="outline" className="min-w-0 flex-1 shrink h-9 md:h-12 px-1.5 sm:px-2 border-2 border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10 font-semibold rounded-lg md:rounded-xl transition-all text-[11px] sm:text-xs md:text-sm">
+        <div className="flex gap-1 md:gap-2 pt-3 md:pt-3 mt-auto border-t border-[#e8ddd0]/50">
+          <Button asChild variant="outline" className="min-w-0 flex-1 shrink h-9 md:h-11 px-1.5 sm:px-2 border-2 border-[#c9a45c] text-[#8b1a1a] hover:bg-[#c9a45c]/10 font-semibold rounded-lg md:rounded-xl transition-all text-[11px] sm:text-xs md:text-sm">
             <Link href={`/products/${product.slug}`} onPointerDown={(event) => event.stopPropagation()}>Details</Link>
           </Button>
           {currentPrice > 0 ? (
             <Button
-              className="min-w-0 flex-1 shrink h-9 md:h-12 px-1.5 sm:px-2 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-semibold rounded-lg md:rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 text-[11px] sm:text-xs md:text-sm gap-1 md:gap-2"
+              className="min-w-0 flex-1 shrink h-9 md:h-11 px-1.5 sm:px-2 bg-[#8b1a1a] hover:bg-[#6d1414] text-white font-semibold rounded-lg md:rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 text-[11px] sm:text-xs md:text-sm gap-1 md:gap-2"
               onPointerDown={(event) => event.stopPropagation()}
               onClick={(event) => {
                 event.stopPropagation()
