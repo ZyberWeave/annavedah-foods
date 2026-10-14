@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Loader2, UploadCloud, CheckCircle2, AlertCircle, Package, RefreshCw, ShieldAlert, Clock, Truck, HelpCircle } from 'lucide-react';
@@ -17,6 +17,8 @@ const REFUND_REASONS = [
 ];
 
 export default function RefundRequestPage() {
+  const [orders, setOrders] = useState<any[]>([]);
+  const [selectedQuantities, setSelectedQuantities] = useState<Record<number, number>>({});
   const [orderId, setOrderId] = useState('');
   const [reasonCategory, setReasonCategory] = useState('');
   const [reason, setReason] = useState('');
@@ -28,6 +30,23 @@ export default function RefundRequestPage() {
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    fetch('/api/orders').then((res) => res.ok ? res.json() : { orders: [] })
+      .then((data) => setOrders(Array.isArray(data.orders)
+        ? data.orders.filter((order: any) => ['success', 'processing', 'shipped', 'delivered'].includes(order.status))
+        : []))
+      .catch(() => setOrders([]));
+  }, []);
+
+  const selectedOrder = useMemo(() => orders.find((order) => order.orderId === orderId), [orders, orderId]);
+  const orderItems: Array<{ name: string; qty: number; price: number }> = useMemo(() => {
+    try { return selectedOrder?.items ? JSON.parse(selectedOrder.items) : []; } catch { return []; }
+  }, [selectedOrder]);
+  const requestedItems = orderItems.flatMap((item, index) => {
+    const qty = selectedQuantities[index] || 0;
+    return qty > 0 ? [{ name: item.name, slug: item.slug, qty, price: item.price }] : [];
+  });
 
   const validateField = (field: string, value: string) => {
     let result;
@@ -52,13 +71,15 @@ export default function RefundRequestPage() {
     const orderResult = validateRequired(orderId, 'Order ID');
     const categoryResult = validateRequired(reasonCategory, 'Reason for refund');
     const reasonResult = validateMinLength(reason, 20, 'Additional details');
+    const hasItems = requestedItems.length > 0;
     setFieldErrors({
       orderId: orderResult.valid ? '' : orderResult.message,
       reasonCategory: categoryResult.valid ? '' : categoryResult.message,
       reason: reasonResult.valid ? '' : reasonResult.message,
     });
     setTouched({ orderId: true, reasonCategory: true, reason: true });
-    return orderResult.valid && categoryResult.valid && reasonResult.valid;
+    if (!hasItems) setError('Select at least one product and quantity to return.');
+    return orderResult.valid && categoryResult.valid && reasonResult.valid && hasItems;
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,6 +113,7 @@ export default function RefundRequestPage() {
       formData.append('orderId', orderId);
       formData.append('reasonCategory', reasonCategory);
       formData.append('reason', reason);
+      formData.append('requestedItems', JSON.stringify(requestedItems));
       if (image) {
         formData.append('image', image);
       }
@@ -164,19 +186,21 @@ export default function RefundRequestPage() {
           <div>
             <label className="block text-sm font-semibold text-[#2d1b15] mb-2">Order ID <span className="text-red-400">*</span></label>
             <div className="relative">
-              <input
-                type="text"
+              <select
                 value={orderId}
                 onChange={(e) => {
                   setOrderId(e.target.value);
+                  setSelectedQuantities({});
                   if (touched.orderId) validateField('orderId', e.target.value);
                 }}
                 onBlur={() => handleBlur('orderId', orderId)}
-                placeholder="e.g. order_Ph8X..."
                 className={inputClass('orderId', orderId)}
                 aria-invalid={!!fieldErrors.orderId}
                 aria-describedby="orderId-error"
-              />
+              >
+                <option value="">Choose an order</option>
+                {orders.map((order) => <option key={order.orderId} value={order.orderId}>#{order.orderId} · ₹{order.total}</option>)}
+              </select>
               {touched.orderId && !fieldErrors.orderId && orderId && (
                 <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500" />
               )}
@@ -188,6 +212,24 @@ export default function RefundRequestPage() {
               </p>
             )}
           </div>
+
+          {selectedOrder && (
+            <div>
+              <label className="block text-sm font-semibold text-[#2d1b15] mb-2">Select product(s) and quantity to return <span className="text-red-400">*</span></label>
+              <div className="space-y-2">
+                {orderItems.map((item, index) => (
+                  <div key={`${item.name}-${index}`} className="flex items-center justify-between gap-4 rounded-xl border border-[#e8ddd0] p-3">
+                    <div><p className="text-sm font-semibold text-[#2d1b15]">{item.name}</p><p className="text-xs text-[#6b5347]">Ordered: {item.qty} · ₹{item.price} each</p></div>
+                    <select aria-label={`Quantity of ${item.name} to return`} value={selectedQuantities[index] || 0} onChange={(e) => setSelectedQuantities((prev) => ({ ...prev, [index]: Number(e.target.value) }))} className="rounded-lg border border-[#e8ddd0] bg-white px-3 py-2 text-sm">
+                      <option value={0}>Keep item</option>
+                      {Array.from({ length: item.qty }, (_, i) => i + 1).map((qty) => <option key={qty} value={qty}>Return {qty}</option>)}
+                    </select>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-[#6b5347]">You can return one product or multiple products, and choose the quantity for each.</p>
+            </div>
+          )}
 
           {/* Reason Category Selector */}
           <div>

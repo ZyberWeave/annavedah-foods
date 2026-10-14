@@ -9,11 +9,15 @@ import { toPositiveInt } from '@/lib/validate-id';
 import { restoreInventoryForRefundOnce, type OrderItem } from '@/lib/inventory';
 import { isCancellationReason } from '@/lib/order-cancellation';
 
-async function restoreRefundInventory(refundId: number, orderId: string): Promise<boolean> {
+async function restoreRefundInventory(refundId: number, orderId: string, requestedItems: OrderItem[] | null): Promise<boolean> {
   try {
-    const [ord] = await db.select().from(orders).where(eq(orders.orderId, orderId)).limit(1);
-    if (!ord?.items) return false;
-    const parsedItems: OrderItem[] = JSON.parse(ord.items);
+    let parsedItems = requestedItems ?? [];
+    // Older refund requests predate item selection and represent the full order.
+    if (!parsedItems.length) {
+      const [ord] = await db.select().from(orders).where(eq(orders.orderId, orderId)).limit(1);
+      if (!ord?.items) return false;
+      parsedItems = JSON.parse(ord.items) as OrderItem[];
+    }
     const restored = await restoreInventoryForRefundOnce(refundId, parsedItems);
     return restored.success;
   } catch (error) {
@@ -87,6 +91,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
       const isCod = order?.paymentId === 'COD' || (order?.paymentId ?? '').startsWith('COD');
       const needsGatewayCall = !!(order && order.paymentId && !isCod);
+      const requestedItems = existing.requestedItems as OrderItem[] | null;
+      const refundAmount = requestedItems?.length
+        ? Math.min(order?.total ?? 0, requestedItems.reduce((sum, item) => sum + item.price * item.qty, 0))
+        : order?.total ?? 0;
 
       if (needsGatewayCall && !razorpayRefundId) {
         const sentinel = 'IN_PROGRESS_' + crypto.randomUUID();
@@ -117,7 +125,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           const razorpay = getRazorpay();
           // amount in paise; orders.total is stored in rupees
           gatewayRefund = await razorpay.payments.refund(order!.paymentId!, {
-            amount: Math.round(order!.total * 100),
+            amount: Math.round(refundAmount * 100),
             speed: 'normal',
             notes: { refundRequestId: String(refundId), orderId: existing.orderId },
           });
@@ -173,7 +181,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     // Inventory is part of refund completion, not a best-effort side effect.
     // If it fails, leave the request pending. A retry reuses the stored
     // gateway refund id and only retries inventory/finalization.
-    if (status === 'approved' && !(await restoreRefundInventory(refundId, existing.orderId))) {
+    if (status === 'approved' && !(await restoreRefundInventory(refundId, existing.orderId, existing.requestedItems as OrderItem[] | null))) {
       return NextResponse.json(
         {
           error: 'Payment refund is recorded, but inventory restoration failed. Retry approval to finish reconciliation.',

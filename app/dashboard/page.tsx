@@ -125,7 +125,7 @@ function DashboardContent() {
       if (!res.ok) throw new Error(data?.error || 'Could not cancel this order');
 
       setOrders((current) => current.map((order) =>
-        order.orderId === orderId ? { ...order, cancellationStatus: 'pending' } : order
+        order.orderId === orderId ? { ...order, refundRequestStatus: 'pending', isCancellationRequest: true } : order
       ));
       toast.success('Cancellation request submitted');
     } catch (error) {
@@ -534,10 +534,12 @@ function OrderCard({
           {parsedItems.length} items in this order
         </p>
       )}
-      {order.status !== 'cancelled' && order.cancellationStatus ? (
-        <div className="mt-3 pt-3 border-t border-[#e8ddd0]/60 flex items-center gap-2 text-xs font-semibold text-amber-700">
-          <Clock className="w-4 h-4" />
-          {order.cancellationStatus === 'approved' ? 'Cancellation approved' : 'Cancellation request pending'}
+      {order.refundRequestStatus ? (
+        <div className={`mt-3 pt-3 border-t border-[#e8ddd0]/60 flex items-center gap-2 text-xs font-semibold ${order.refundRequestStatus === 'rejected' ? 'text-red-700' : order.refundRequestStatus === 'approved' ? 'text-emerald-700' : 'text-amber-700'}`}>
+          {order.refundRequestStatus === 'rejected' ? <XCircle className="w-4 h-4" /> : order.refundRequestStatus === 'approved' ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
+          {order.isCancellationRequest
+            ? order.refundRequestStatus === 'approved' ? 'Cancellation approved' : order.refundRequestStatus === 'rejected' ? 'Cancellation request declined' : 'Cancellation request pending'
+            : order.refundRequestStatus === 'approved' ? 'Refund approved' : order.refundRequestStatus === 'rejected' ? 'Refund request declined' : 'Refund request pending'}
         </div>
       ) : order.status === 'success' && onCancel ? (
         <div className="mt-3 pt-3 border-t border-[#e8ddd0]/60 flex justify-end">

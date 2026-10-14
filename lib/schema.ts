@@ -72,6 +72,7 @@ export const refundRequests = pgTable('refund_requests', {
   userId: integer('user_id').references(() => users.id).notNull(),
   orderId: text('order_id').notNull(),
   reason: text('reason').notNull(),
+  requestedItems: jsonb('requested_items').$type<Array<{ name: string; slug: string; qty: number; price: number }>>(),
   imageUrl: text('image_url'),
   status: varchar('status', { length: 50 }).default('pending').notNull(), // pending, approved, rejected
   // Idempotency for the Razorpay refund call. Filled in BEFORE the gateway

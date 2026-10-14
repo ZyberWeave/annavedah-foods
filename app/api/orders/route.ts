@@ -28,23 +28,25 @@ export async function GET(req: NextRequest) {
       ))
       .orderBy(desc(orders.createdAt))
 
-    const cancellationRequests = await db
-      .select({ orderId: refundRequests.orderId, status: refundRequests.status, reason: refundRequests.reason })
+    const customerRefundRequests = await db
+      .select({ orderId: refundRequests.orderId, status: refundRequests.status, reason: refundRequests.reason, createdAt: refundRequests.createdAt })
       .from(refundRequests)
-      .where(and(
-        eq(refundRequests.userId, session.userId),
-        inArray(refundRequests.status, ['pending', 'approved']),
-      ))
-    const cancellationStatusByOrderId = new Map(
-      cancellationRequests
-        .filter((request) => isCancellationReason(request.reason))
-        .map((request) => [request.orderId, request.status]),
-    )
+      .where(eq(refundRequests.userId, session.userId))
+      .orderBy(desc(refundRequests.createdAt))
+    const latestRequestByOrderId = new Map<string, { status: string; reason: string }>()
+    for (const request of customerRefundRequests) {
+      if (!latestRequestByOrderId.has(request.orderId)) {
+        latestRequestByOrderId.set(request.orderId, { status: request.status, reason: request.reason })
+      }
+    }
 
     return NextResponse.json({
       orders: userOrders.map((order) => ({
         ...order,
-        cancellationStatus: cancellationStatusByOrderId.get(order.orderId) ?? null,
+        refundRequestStatus: latestRequestByOrderId.get(order.orderId)?.status ?? null,
+        isCancellationRequest: latestRequestByOrderId.has(order.orderId)
+          ? isCancellationReason(latestRequestByOrderId.get(order.orderId)!.reason)
+          : false,
       })),
     }, { status: 200 })
   } catch (err: unknown) {

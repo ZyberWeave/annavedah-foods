@@ -23,6 +23,7 @@ export async function POST(req: Request) {
     const formData = await req.formData();
     const orderId = formData.get('orderId') as string;
     const reason = formData.get('reason') as string;
+    const requestedItemsRaw = formData.get('requestedItems') as string | null;
     const file = formData.get('image') as File | null;
 
     if (!orderId || !reason) {
@@ -53,6 +54,24 @@ export async function POST(req: Request) {
         { error: 'This order is not eligible for a refund.' },
         { status: 400 },
       );
+    }
+
+    let orderedItems: Array<{ name: string; qty: number; price: number }> = [];
+    try { orderedItems = order.items ? JSON.parse(order.items) : []; } catch { orderedItems = []; }
+    let requestedItems: Array<{ name: string; slug: string; qty: number; price: number }>;
+    try { requestedItems = requestedItemsRaw ? JSON.parse(requestedItemsRaw) : []; } catch { requestedItems = []; }
+    if (!Array.isArray(requestedItems) || requestedItems.length === 0 || requestedItems.length > orderedItems.length) {
+      return NextResponse.json({ error: 'Select at least one product to return.' }, { status: 400 });
+    }
+    const validatedItems: typeof requestedItems = [];
+    const seenItems = new Set<string>();
+    for (const requested of requestedItems) {
+      const match = orderedItems.find((item) => item.slug === requested?.slug);
+      if (!match || !Number.isInteger(requested.qty) || requested.qty < 1 || requested.qty > match.qty || seenItems.has(requested.slug)) {
+        return NextResponse.json({ error: 'Selected product or quantity is invalid for this order.' }, { status: 400 });
+      }
+      seenItems.add(requested.slug);
+      validatedItems.push({ name: match.name, slug: match.slug, qty: requested.qty, price: match.price });
     }
 
     // One open refund per order. Reject if there's already a pending or
@@ -95,6 +114,7 @@ export async function POST(req: Request) {
         userId: session.userId,
         orderId,
         reason,
+        requestedItems: validatedItems,
         imageUrl,
       }).returning();
       newRefund = inserted[0] ?? null;
@@ -116,10 +136,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Could not create refund request' }, { status: 500 });
     }
 
-    let orderItems: Array<{ name: string; qty: number; price: number }> = [];
-    if (order?.items) {
-      try { orderItems = JSON.parse(order.items); } catch { orderItems = []; }
-    }
+    const orderItems = validatedItems;
     const orderTotal = order?.total ?? null;
     const orderPaymentId = order?.paymentId ?? null;
     const orderPlacedAt = order?.createdAt
@@ -170,7 +187,7 @@ export async function POST(req: Request) {
               '<p style="color: #2d1b15; font-size: 14px; margin: 0; font-weight: bold;">Your reason</p>' +
               '<p style="color: #6b5347; font-size: 15px; margin: 8px 0 0; font-style: italic; line-height: 1.6;">"' + safeReason + '"</p>' +
             '</div>' +
-            (orderItems.length ? '<h3 style="color: #2d1b15; font-size: 16px; margin: 28px 0 12px; border-bottom: 1px solid #e8ddd0; padding-bottom: 8px;">Items in this Order</h3>' +
+            (orderItems.length ? '<h3 style="color: #2d1b15; font-size: 16px; margin: 28px 0 12px; border-bottom: 1px solid #e8ddd0; padding-bottom: 8px;">Items Requested for Return</h3>' +
               '<table style="width: 100%; border-collapse: collapse; font-size: 14px;">' + itemsRowsHtml + '</table>' : '') +
             '<h3 style="color: #2d1b15; font-size: 16px; margin: 32px 0 12px; border-bottom: 1px solid #e8ddd0; padding-bottom: 8px;">What Happens Next</h3>' +
             '<ol style="color: #6b5347; font-size: 14px; line-height: 1.8; padding-left: 20px; margin: 0;">' +

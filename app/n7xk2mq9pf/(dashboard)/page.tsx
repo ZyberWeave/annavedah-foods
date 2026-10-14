@@ -158,6 +158,14 @@ export default function AdminDashboardPage() {
                         </div>
                         <p className="text-sm text-[#6b5347] mb-1">Order: {refund.orderId}</p>
                         <p className="text-sm text-[#2d1b15]">{refund.reason}</p>
+                        {refund.requestedItems?.length > 0 && (
+                          <div className="mt-2 text-xs text-[#6b5347]">
+                            <span className="font-semibold">Requested return: </span>
+                            {refund.requestedItems.map((item: { name: string; qty: number }, index: number) => (
+                              <span key={`${item.name}-${index}`}>{index ? ', ' : ''}{item.qty}× {item.name}</span>
+                            ))}
+                          </div>
+                        )}
                         <p className="text-xs text-[#c9a45c] mt-1">{new Date(refund.createdAt).toLocaleDateString()}</p>
                       </div>
                       <div className="flex items-center gap-4 flex-shrink-0">
