@@ -33,10 +33,11 @@ function orderItemMatchesProduct(
 
 // Public GET — approved reviews for a product
 export async function GET(request: NextRequest) {
+  const noStoreHeaders = { 'Cache-Control': 'no-store, max-age=0' };
   try {
     const slug = request.nextUrl.searchParams.get('slug');
     if (!slug) {
-      return NextResponse.json({ reviews: [] });
+      return NextResponse.json({ reviews: [], stats: { count: 0, avg: 0, r5: 0, r4: 0, r3: 0, r2: 0, r1: 0 } }, { headers: noStoreHeaders });
     }
 
     const rows = await db
@@ -61,10 +62,13 @@ export async function GET(request: NextRequest) {
 
     const stats = statsResult[0] ?? { count: 0, avg: 0, r5: 0, r4: 0, r3: 0, r2: 0, r1: 0 };
 
-    return NextResponse.json({ reviews: rows, stats });
+    return NextResponse.json({ reviews: rows, stats }, { headers: noStoreHeaders });
   } catch (err) {
     console.error('Error fetching reviews:', err);
-    return NextResponse.json({ reviews: [], stats: { count: 0, avg: 0, r5: 0, r4: 0, r3: 0, r2: 0, r1: 0 } });
+    return NextResponse.json(
+      { reviews: [], stats: { count: 0, avg: 0, r5: 0, r4: 0, r3: 0, r2: 0, r1: 0 } },
+      { headers: noStoreHeaders },
+    );
   }
 }
 

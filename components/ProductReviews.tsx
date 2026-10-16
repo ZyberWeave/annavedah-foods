@@ -76,7 +76,8 @@ export default function ProductReviews({ productSlug }: { productSlug: string })
 
   const fetchReviews = useCallback(async () => {
     try {
-      const res = await fetch(`/api/reviews?slug=${encodeURIComponent(productSlug)}`)
+      const res = await fetch(`/api/reviews?slug=${encodeURIComponent(productSlug)}`, { cache: 'no-store' })
+      if (!res.ok) return
       const data = await res.json()
       setReviews(data.reviews || [])
       setStats(data.stats || { count: 0, avg: 0, r5: 0, r4: 0, r3: 0, r2: 0, r1: 0 })
@@ -175,6 +176,21 @@ export default function ProductReviews({ productSlug }: { productSlug: string })
       }
 
       setFilter(null)
+      if (data.review) {
+        setReviews((current) => [data.review, ...current.filter((review) => review.id !== data.review.id)])
+        setStats((current) => {
+          const nextCount = current.count + 1
+          return {
+            count: nextCount,
+            avg: Number((((current.avg * current.count) + data.review.rating) / nextCount).toFixed(1)),
+            r1: current.r1 + (data.review.rating === 1 ? 1 : 0),
+            r2: current.r2 + (data.review.rating === 2 ? 1 : 0),
+            r3: current.r3 + (data.review.rating === 3 ? 1 : 0),
+            r4: current.r4 + (data.review.rating === 4 ? 1 : 0),
+            r5: current.r5 + (data.review.rating === 5 ? 1 : 0),
+          }
+        })
+      }
       await fetchReviews()
       setSubmitted(true)
       setTimeout(() => {
