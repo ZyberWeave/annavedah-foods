@@ -37,8 +37,13 @@ export default function PrivacyPage() {
             <p>We use third-party services like Razorpay for payment processing. These services have their own privacy policies regarding how they handle your data.</p>
           </section>
 
+          <section className="space-y-4">
+            <h2 className="text-2xl font-bold text-[#8b1a1a]">6. Google Sign-In</h2>
+            <p>When you sign in with Google, we receive your verified email address and basic profile information, including your name and a link to your profile photo when available. We use your email address to sign you into an existing Annavedah Foods account or create a new one. We store your name, email address, and the profile photo link with your account. If we create an account, we use your email address to link any previous guest orders placed with that address to your account.</p>
+          </section>
+
           <div className="pt-8 border-t border-[#e8ddd0] text-center italic text-sm">
-            Last updated: April 2026
+            Last updated: November 2026
           </div>
         </div>
       </div>
