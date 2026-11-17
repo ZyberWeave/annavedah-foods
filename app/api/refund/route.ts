@@ -7,7 +7,7 @@ import { put } from '@vercel/blob';
 import { resend } from '@/lib/resend';
 import { escapeHtml, getAdminEmails, isSafeHeaderValue } from '@/lib/email-utils';
 import { rateLimitOr429 } from '@/lib/rate-limit';
-import { userOwnsOrder } from '@/lib/order-records';
+import { userOwnsOrder, type PersistedOrderItem } from '@/lib/order-records';
 
 export async function POST(req: Request) {
   const session = await verifySession();
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       );
     }
 
-    let orderedItems: Array<{ name: string; qty: number; price: number }> = [];
+    let orderedItems: PersistedOrderItem[] = [];
     try { orderedItems = order.items ? JSON.parse(order.items) : []; } catch { orderedItems = []; }
     let requestedItems: Array<{ name: string; slug: string; qty: number; price: number }>;
     try { requestedItems = requestedItemsRaw ? JSON.parse(requestedItemsRaw) : []; } catch { requestedItems = []; }
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Selected product or quantity is invalid for this order.' }, { status: 400 });
       }
       seenItems.add(requested.slug);
-      validatedItems.push({ name: match.name, slug: match.slug, qty: requested.qty, price: match.price });
+      validatedItems.push({ name: match.name, slug: requested.slug, qty: requested.qty, price: match.price });
     }
 
     // One open refund per order. Reject if there's already a pending or

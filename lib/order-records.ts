@@ -46,6 +46,7 @@ export type PersistedOrderItem = {
   name: string;
   qty: number;
   price: number;
+  slug?: string;
 };
 
 export async function persistOrderRecord({

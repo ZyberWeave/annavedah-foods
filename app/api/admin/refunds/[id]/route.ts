@@ -91,7 +91,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
       const isCod = order?.paymentId === 'COD' || (order?.paymentId ?? '').startsWith('COD');
       const needsGatewayCall = !!(order && order.paymentId && !isCod);
-      const requestedItems = existing.requestedItems as OrderItem[] | null;
+      const requestedItems = existing.requestedItems;
       const refundAmount = requestedItems?.length
         ? Math.min(order?.total ?? 0, requestedItems.reduce((sum, item) => sum + item.price * item.qty, 0))
         : order?.total ?? 0;

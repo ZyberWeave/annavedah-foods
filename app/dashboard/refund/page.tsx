@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, UploadCloud, CheckCircle2, AlertCircle, Package, RefreshCw, ShieldAlert, Clock, Truck, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 import { validateRequired, validateMinLength } from '@/lib/validations';
+import type { PersistedOrderItem } from '@/lib/order-records';
 
 const REFUND_REASONS = [
   { value: 'damaged', label: 'Damaged Product', description: 'Product arrived broken or damaged', icon: ShieldAlert },
@@ -40,7 +41,7 @@ export default function RefundRequestPage() {
   }, []);
 
   const selectedOrder = useMemo(() => orders.find((order) => order.orderId === orderId), [orders, orderId]);
-  const orderItems: Array<{ name: string; qty: number; price: number }> = useMemo(() => {
+  const orderItems = useMemo<PersistedOrderItem[]>(() => {
     try { return selectedOrder?.items ? JSON.parse(selectedOrder.items) : []; } catch { return []; }
   }, [selectedOrder]);
   const requestedItems = orderItems.flatMap((item, index) => {
