@@ -7,7 +7,7 @@ import { products as fallbackProducts, type Product } from '@/lib/content';
 import { useProductsData } from '@/components/products-context';
 import { useCart } from '@/components/cart-context';
 import Breadcrumbs from '@/components/Breadcrumbs';
-import { validateEmail } from '@/lib/validations';
+import { validateContactName, validateEmail } from '@/lib/validations';
 
 const GIFT_PACKAGING_OPTIONS = [
   { id: 'heritage-wood', name: 'Heritage Carved Wooden Box', price: 299, desc: 'Handcrafted royal wooden gift box with velvet lining.' },
@@ -80,6 +80,8 @@ export default function GiftingPage() {
 
   const customItemsTotal = customItems.reduce((sum, item) => sum + item.price, 0);
   const customBoxTotalPrice = selectedBox.price + customItemsTotal;
+  const corporateNameValidation = validateContactName(corpName);
+  const showCorporateNameError = corpName.length > 0 && !corporateNameValidation.valid;
   const corporateEmailValidation = validateEmail(corpEmail);
   const showCorporateEmailError = corpEmail.length > 0 && !corporateEmailValidation.valid;
 
@@ -94,6 +96,10 @@ export default function GiftingPage() {
   const handleSubmitCorporateInquiry = async (e: React.FormEvent) => {
     e.preventDefault();
     setCorpError('');
+
+    if (!corporateNameValidation.valid) {
+      return;
+    }
 
     const emailValidation = validateEmail(corpEmail);
     if (!emailValidation.valid) {
@@ -303,14 +309,24 @@ export default function GiftingPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmitCorporateInquiry} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <input
-                type="text"
-                required
-                placeholder="Company / Contact Name *"
-                value={corpName}
-                onChange={(e) => setCorpName(e.target.value)}
-                className="bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-amber-400"
-              />
+              <div>
+                <input
+                  type="text"
+                  required
+                  aria-label="Company / Contact Name"
+                  placeholder="Company / Contact Name *"
+                  value={corpName}
+                  onChange={(e) => setCorpName(e.target.value)}
+                  aria-invalid={showCorporateNameError}
+                  aria-describedby={showCorporateNameError ? 'corporate-name-error' : undefined}
+                  className={`w-full bg-white/10 border rounded-xl px-4 py-3 text-xs text-white placeholder-gray-400 focus:outline-none ${showCorporateNameError ? 'border-red-400 focus:border-red-400' : 'border-white/20 focus:border-amber-400'}`}
+                />
+                {showCorporateNameError && (
+                  <p id="corporate-name-error" className="mt-1.5 text-xs font-semibold text-red-300">
+                    {corporateNameValidation.message}
+                  </p>
+                )}
+              </div>
               <div>
                 <input
                   type="email"

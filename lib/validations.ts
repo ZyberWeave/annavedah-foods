@@ -48,6 +48,13 @@ export function validateName(name: string, label = 'Name'): ValidationResult {
   return { valid: true, message: '' }
 }
 
+export function validateContactName(name: string): ValidationResult {
+  if (!/\p{L}/u.test(name)) {
+    return { valid: false, message: 'Enter a name that includes at least one letter.' }
+  }
+  return { valid: true, message: '' }
+}
+
 // ─── City ─────────────────────────────────────────────────────────────────────
 // Supports international letters (including combining marks) and punctuation
 // commonly used in place names, while rejecting digits and other symbols.

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { escapeHtml, getAdminEmails, isSafeHeaderValue } from '@/lib/email-utils';
 import { getClientIp, rateLimitOr429 } from '@/lib/rate-limit';
 import { getResendClient } from '@/lib/resend';
+import { validateContactName } from '@/lib/validations';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -18,6 +19,10 @@ export async function POST(req: Request) {
     }
     if (typeof name !== 'string' || name.length > 100) {
       return NextResponse.json({ error: 'Name must be under 100 characters' }, { status: 400 });
+    }
+    const nameValidation = validateContactName(name);
+    if (!nameValidation.valid) {
+      return NextResponse.json({ error: nameValidation.message }, { status: 400 });
     }
     if (typeof email !== 'string' || !EMAIL_RE.test(email) || email.length > 200 || !isSafeHeaderValue(email)) {
       return NextResponse.json({ error: 'Please enter a valid email address' }, { status: 400 });
